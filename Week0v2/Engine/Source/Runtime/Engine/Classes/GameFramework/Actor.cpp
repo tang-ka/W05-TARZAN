@@ -203,13 +203,13 @@ void AActor::DuplicateSubObjects(const UObject* SourceObj)
         dupComponent->Owner = this;
         OwnedComponents.Add(dupComponent);
         RootComponent = Cast<USceneComponent>(dupComponent);
-        // if (const USceneComponent* OldScene = Cast<USceneComponent>(Component))
-        // {
-        //     if (USceneComponent* NewScene = Cast<USceneComponent>(ClonedComponent))
-        //     {
-        //         SceneCloneMap.Add(OldScene, NewScene);
-        //     }
-        // }
+        if (const USceneComponent* OldScene = Cast<USceneComponent>(Component))
+        {
+            if (USceneComponent* NewScene = Cast<USceneComponent>(dupComponent))
+            {
+                SceneCloneMap.Add(OldScene, NewScene);
+            }
+        }
     }
 
     for (const auto& Pair : SceneCloneMap)

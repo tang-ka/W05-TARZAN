@@ -11,6 +11,7 @@ class UBillboardComponent : public UPrimitiveComponent
 public:
     UBillboardComponent();
     virtual ~UBillboardComponent() override;
+    UBillboardComponent(const UBillboardComponent& other);
 
     virtual void InitializeComponent() override;
     virtual void TickComponent(float DeltaTime) override;
@@ -22,7 +23,10 @@ public:
     void SetTexture(FWString _fileName);
     void SetUUIDParent(USceneComponent* _parent);
     FMatrix CreateBillboardMatrix();
-
+    virtual UObject* Duplicate() const override;
+    virtual void DuplicateSubObjects(const UObject* Source) override;
+    virtual void PostDuplicate() override;
+    
     ID3D11Buffer* vertexTextureBuffer;
     ID3D11Buffer* indexTextureBuffer;
     UINT numVertices;

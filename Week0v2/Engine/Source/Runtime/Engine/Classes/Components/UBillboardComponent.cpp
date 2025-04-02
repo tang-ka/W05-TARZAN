@@ -30,6 +30,12 @@ UBillboardComponent::~UBillboardComponent()
 	}
 }
 
+UBillboardComponent::UBillboardComponent(const UBillboardComponent& other) : UPrimitiveComponent(other),
+vertexTextureBuffer(other.vertexTextureBuffer),indexTextureBuffer(other.indexTextureBuffer), numIndices(other.numIndices),
+numVertices(other.numVertices), finalIndexU(other.finalIndexU), finalIndexV(other.finalIndexV),Texture(other.Texture)
+{
+}
+
 void UBillboardComponent::InitializeComponent()
 {
     Super::InitializeComponent();
@@ -95,6 +101,24 @@ FMatrix UBillboardComponent::CreateBillboardMatrix()
 	FMatrix M = S * R * T;
 
 	return M;
+}
+
+UObject* UBillboardComponent::Duplicate() const
+{
+    UBillboardComponent* ClonedActor = FObjectFactory::ConstructObjectFrom<UBillboardComponent>(this);
+    ClonedActor->DuplicateSubObjects(this);
+    ClonedActor->PostDuplicate();
+    return ClonedActor;
+}
+
+void UBillboardComponent::DuplicateSubObjects(const UObject* Source)
+{
+    UPrimitiveComponent::DuplicateSubObjects(Source);
+}
+
+void UBillboardComponent::PostDuplicate()
+{
+    UPrimitiveComponent::PostDuplicate();
 }
 
 void UBillboardComponent::CreateQuadTextureVertexBuffer()
