@@ -1,4 +1,4 @@
-﻿#include "ControlEditorPanel.h"
+#include "ControlEditorPanel.h"
 
 #include "World.h"
 #include "Actors/Player.h"
@@ -285,6 +285,8 @@ void ControlEditorPanel::CreateModifyButton(ImVec2 ButtonSize, ImFont* IconFont)
                     SpawnedActor = World->SpawnActor<AActor>();
                     SpawnedActor->SetActorLabel(TEXT("OBJ_SpotLight"));
                     SpawnedActor->AddComponent<ULightComponentBase>();
+                    UBillboardComponent* BillboardComponent = SpawnedActor->AddComponent<UBillboardComponent>();
+                    BillboardComponent->SetTexture(L"Assets/Texture/spotLight.png");
                     break;
                 }
                 case OBJ_PARTICLE:
