@@ -14,7 +14,7 @@ class USceneComponent;
 class UTransformGizmo;
 
 
-class UWorld : public UObject
+class UWorld final : public UObject
 {
     DECLARE_CLASS(UWorld, UObject)
 

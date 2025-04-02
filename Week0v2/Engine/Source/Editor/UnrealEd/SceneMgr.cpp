@@ -14,7 +14,7 @@
 #include "Camera/CameraComponent.h"
 #include "UObject/Casts.h"
 #include "Engine/StaticMeshActor.h"
-#include "World.h"
+#include "Engine/World.h"
 #include "Engine/FLoaderOBJ.h"
 #include "LevelEditor/SLevelEditor.h"
 

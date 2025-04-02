@@ -1,5 +1,5 @@
 #include "PrimitiveBatch.h"
-#include "EngineLoop.h"
+#include "LaunchEngineLoop.h"
 #include "UnrealEd/EditorViewportClient.h"
 extern FEngineLoop GEngineLoop;
 

@@ -3,9 +3,9 @@
 #include "sstream"
 #include "ostream"
 #include "Math/JungleMath.h"
-#include "EngineLoop.h"
+#include "LaunchEngineLoop.h"
 #include "UnrealClient.h"
-#include "World.h"
+#include "Engine/World.h"
 #include "GameFramework/Actor.h"
 
 FVector FEditorViewportClient::Pivot = FVector(0.0f, 0.0f, 0.0f);

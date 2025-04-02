@@ -1,7 +1,7 @@
 #include "Renderer.h"
 #include <d3dcompiler.h>
 
-#include "World.h"
+#include "Engine/World.h"
 #include "Actors/Player.h"
 #include "BaseGizmos/GizmoBaseComponent.h"
 #include "Components/LightComponent.h"
@@ -11,7 +11,7 @@
 #include "Components/UText.h"
 #include "Components/Material/Material.h"
 #include "D3D11RHI/GraphicDevice.h"
-#include "Launch/EngineLoop.h"
+#include "Launch/LaunchEngineLoop.h"
 #include "Math/JungleMath.h"
 #include "UnrealEd/EditorViewportClient.h"
 #include "UnrealEd/PrimitiveBatch.h"

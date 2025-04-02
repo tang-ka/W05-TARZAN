@@ -1,7 +1,7 @@
 #include "Engine/Source/Editor/PropertyEditor/ShowFlags.h"
 #include "UParticleSubUVComp.h"
 #include "UnrealEd/EditorViewportClient.h"
-#include "World.h"
+#include "Engine/World.h"
 #include "LevelEditor/SLevelEditor.h"
 
 

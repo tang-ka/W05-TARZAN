@@ -4,7 +4,7 @@
 #include "Slate/Widgets/Layout/SSplitter.h"
 #include "UnrealClient.h"
 #include "UnrealEd/EditorViewportClient.h"
-#include "EngineLoop.h"
+#include "LaunchEngineLoop.h"
 #include "fstream"
 #include "sstream"
 #include "ostream"

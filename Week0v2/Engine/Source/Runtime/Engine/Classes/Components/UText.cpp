@@ -1,6 +1,6 @@
 #include "UText.h"
 
-#include "World.h"
+#include "Engine/World.h"
 #include "Engine/Source/Editor/PropertyEditor/ShowFlags.h"
 #include "UnrealEd/EditorViewportClient.h"
 #include "LevelEditor/SLevelEditor.h"

@@ -57,3 +57,4 @@ public:
     UnrealEd* GetUnrealEditor() const { return UnrealEditor; }
     FSceneMgr* GetSceneManager() const { return SceneMgr; }
 };
+extern FEngineLoop GEngineLoop;
