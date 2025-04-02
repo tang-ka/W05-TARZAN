@@ -421,6 +421,7 @@
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Actors\Player.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Engine\StaticMeshActor.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\GameFramework\Actor.cpp" />
+    <ClInclude Include="RenderResourceManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\Source\ThirdParty\DirectXTK\Include\DDSTextureLoader.h" />
@@ -508,5 +509,8 @@
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="Week0v2.natvis" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="RenderResourceManager.cpp" />
   </ItemGroup>
 </Project>

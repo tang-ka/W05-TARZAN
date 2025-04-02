@@ -60,8 +60,10 @@ void UPrimitiveBatch::RenderBatch(const FMatrix& View, const FMatrix& Projection
 }
 void UPrimitiveBatch::InitializeVertexBuffer()
 {
+    FSimpleVertex vertices[2]{ {0}, {0} };
+
     if (!pVertexBuffer)
-        pVertexBuffer = FEngineLoop::renderer.CreateStaticVerticesBuffer();
+        pVertexBuffer = FEngineLoop::renderer.GetResourceManager().CreateVertexBuffer(vertices, 2);
 }
 
 void UPrimitiveBatch::UpdateBoundingBoxResources()
@@ -71,7 +73,7 @@ void UPrimitiveBatch::UpdateBoundingBoxResources()
 
         ReleaseBoundingBoxResources();
 
-        pBoundingBoxBuffer = FEngineLoop::renderer.CreateBoundingBoxBuffer(static_cast<UINT>(allocatedBoundingBoxCapacity));
+        pBoundingBoxBuffer = FEngineLoop::renderer.GetResourceManager().CreateStructuredBuffer<FBoundingBox>(static_cast<UINT>(allocatedBoundingBoxCapacity));
         pBoundingBoxSRV = FEngineLoop::renderer.CreateBoundingBoxSRV(pBoundingBoxBuffer, static_cast<UINT>(allocatedBoundingBoxCapacity));
     }
 
@@ -94,7 +96,7 @@ void UPrimitiveBatch::UpdateConeResources()
 
         ReleaseConeResources();
 
-        pConesBuffer = FEngineLoop::renderer.CreateConeBuffer(static_cast<UINT>(allocatedConeCapacity));
+        pConesBuffer = FEngineLoop::renderer.GetResourceManager().CreateStructuredBuffer<FCone>(static_cast<UINT>(allocatedConeCapacity));
         pConesSRV = FEngineLoop::renderer.CreateConeSRV(pConesBuffer, static_cast<UINT>(allocatedConeCapacity));
     }
 
@@ -117,7 +119,7 @@ void UPrimitiveBatch::UpdateOBBResources()
 
         ReleaseOBBResources();
 
-        pOBBBuffer = FEngineLoop::renderer.CreateOBBBuffer(static_cast<UINT>(allocatedOBBCapacity));
+        pOBBBuffer = FEngineLoop::renderer.GetResourceManager().CreateStructuredBuffer<FOBB>(static_cast<UINT>(allocatedOBBCapacity));
         pOBBSRV = FEngineLoop::renderer.CreateOBBSRV(pOBBBuffer, static_cast<UINT>(allocatedOBBCapacity));
     }
 
