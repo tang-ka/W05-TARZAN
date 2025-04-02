@@ -10,20 +10,19 @@
 #include "Components/SkySphereComponent.h"
 #include "UnrealEd/SceneMgr.h"
 #include "UObject/UObjectIterator.h"
+#include "Level.h"
 
+
+void UWorld::DuplicateSubObjects(FDuplicationMap& DupMap)
+{
+    Level->Duplicate(DupMap);
+}
 
 void UWorld::Initialize()
 {
     // TODO: Load Scene
     CreateBaseObject();
-    //SpawnObject(OBJ_CUBE);
-    FManagerOBJ::CreateStaticMesh("Assets/Dodge/Dodge.obj");
-
-    FManagerOBJ::CreateStaticMesh("Assets/SkySphere.obj");
-    AActor* SpawnedActor = SpawnActor<AActor>();
-    USkySphereComponent* skySphere = SpawnedActor->AddComponent<USkySphereComponent>();
-    skySphere->SetStaticMesh(FManagerOBJ::GetStaticMesh(L"SkySphere.obj"));
-    skySphere->GetStaticMesh()->GetMaterials()[0]->Material->SetDiffuse(FVector((float)32/255, (float)171/255, (float)191/255));
+    Level = FObjectFactory::ConstructObject<ULevel>();
 }
 
 void UWorld::CreateBaseObject()
@@ -47,11 +46,6 @@ void UWorld::ReleaseBaseObject()
         LocalGizmo = nullptr;
     }
     
-    // if (camera)
-    // {
-    //     delete camera;
-    //     camera = nullptr;
-    // }
 
     if (EditorPlayer)
     {
@@ -68,14 +62,14 @@ void UWorld::Tick(float DeltaTime)
 	LocalGizmo->Tick(DeltaTime);
 
     // SpawnActor()에 의해 Actor가 생성된 경우, 여기서 BeginPlay 호출
-    for (AActor* Actor : PendingBeginPlayActors)
+    for (AActor* Actor : Level->PendingBeginPlayActors)
     {
         Actor->BeginPlay();
     }
     PendingBeginPlayActors.Empty();
 
     // 매 틱마다 Actor->Tick(...) 호출
-	for (AActor* Actor : ActorsArray)
+	for (AActor* Actor : Level->GetActors())
 	{
 	    Actor->Tick(DeltaTime);
 	}
@@ -83,7 +77,7 @@ void UWorld::Tick(float DeltaTime)
 
 void UWorld::Release()
 {
-	for (AActor* Actor : ActorsArray)
+	for (AActor* Actor : Level->GetActors())
 	{
 		Actor->EndPlay(EEndPlayReason::WorldTransition);
         TSet<UActorComponent*> Components = Actor->GetComponents();
@@ -93,7 +87,7 @@ void UWorld::Release()
 	    }
 	    GUObjectArray.MarkRemoveObject(Actor);
 	}
-    ActorsArray.Empty();
+    Level->GetActors().Empty();
 
 	pickingGizmo = nullptr;
 	ReleaseBaseObject();
@@ -150,7 +144,7 @@ bool UWorld::DestroyActor(AActor* ThisActor)
     }
 
     // World에서 제거
-    ActorsArray.Remove(ThisActor);
+    Level->GetActors().Remove(ThisActor);
 
     // 제거 대기열에 추가
     GUObjectArray.MarkRemoveObject(ThisActor);

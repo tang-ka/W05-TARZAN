@@ -5,6 +5,7 @@
 #include "UnrealEd/EditorViewportClient.h"
 #include "UnrealEd/UnrealEd.h"
 #include "UnrealClient.h"
+#include "GameFramework/Actor.h"
 #include "slate/Widgets/Layout/SSplitter.h"
 #include "LevelEditor/SLevelEditor.h"
 #include "UnrealEd/SceneMgr.h"
@@ -40,9 +41,9 @@ int32 UEditorEngine::Init(HWND hwnd)
     FWorldContext EditorContext;
     EditorContext.WorldType = EWorldType::Editor;
     std::shared_ptr<UWorld> EditWorld = EditorContext.World();
-    EditWorld = FObjectFactory<UWorld>();
+    EditWorld = std::shared_ptr<UWorld>(FObjectFactory::ConstructObject<UWorld>());
     EditWorld->Initialize();
-    GWorld = EditWorld.get();
+    GWorld = EditWorld;
     worldContexts.Add(EditorContext);
     
     FWorldContext PIEContext;
@@ -71,14 +72,14 @@ void UEditorEngine::Render()
         {
             LevelEditor->SetViewportClient(i);
             renderer.PrepareRender();
-            renderer.Render(GetWorld(),LevelEditor->GetActiveViewportClient());
+            renderer.Render(GWorld.get(),LevelEditor->GetActiveViewportClient());
         }
         GetLevelEditor()->SetViewportClient(viewportClient);
     }
     else
     {
         renderer.PrepareRender();
-        renderer.Render(GetWorld(),LevelEditor->GetActiveViewportClient());
+        renderer.Render(GWorld.get(),LevelEditor->GetActiveViewportClient());
     }
 }
 
@@ -165,7 +166,6 @@ void UEditorEngine::Exit()
 {
     LevelEditor->Release();
     GWorld->Release();
-    delete GWorld;
     UIMgr->Shutdown();
     delete UIMgr;
     delete SceneMgr;

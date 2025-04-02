@@ -1,12 +1,19 @@
 ﻿#pragma once
-#include "GameFramework/Actor.h"
+#include "Container/Set.h"
 #include "UObject/Object.h"
+#include "UObject/ObjectMacros.h"
 
-class ULevel : UObject
+class AActor;
+class ULevel : public UObject
 {
+    DECLARE_CLASS(ULevel, UObject)
+public:
+    ULevel();
+    ~ULevel();
 private:
     TSet<AActor*> Actors;
 
 public:
-    const TSet<AActor*>& GetActors() const { return Actors; }
+    TSet<AActor*>& GetActors() { return Actors; }
+    TArray<AActor*> PendingBeginPlayActors;
 };

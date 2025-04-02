@@ -22,6 +22,7 @@ class UWorld final : public UObject
 public:
     UWorld() = default;
 
+    virtual void DuplicateSubObjects(FDuplicationMap& DupMap) override;
     void Initialize();
     void CreateBaseObject();
     void ReleaseBaseObject();
@@ -71,7 +72,7 @@ public:
     USceneComponent* GetPickingGizmo() const { return pickingGizmo; }
     void SetPickingGizmo(UObject* Object);
 };
-UWorld* GWorld = nullptr;
+// UWorld* GWorld = nullptr;
 
 template <typename T>
     requires std::derived_from<T, AActor>
@@ -81,7 +82,8 @@ T* UWorld::SpawnActor()
     // TODO: 일단 AddComponent에서 Component마다 초기화
     // 추후에 RegisterComponent() 만들어지면 주석 해제
     // Actor->InitializeComponents();
-    ActorsArray.Add(Actor);
-    PendingBeginPlayActors.Add(Actor);
+    
+    Level->GetActors().Add(Actor);
+    Level->PendingBeginPlayActors.Add(Actor);
     return Actor;
 }

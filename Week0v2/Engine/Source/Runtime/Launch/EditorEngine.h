@@ -39,7 +39,7 @@ public:
     HWND hWnd;
 private:
     UImGuiManager* UIMgr;
-    // UWorld* GWorld;
+    std::shared_ptr<UWorld> GWorld;
     SLevelEditor* LevelEditor;
     UnrealEd* UnrealEditor;
     FSceneMgr* SceneMgr;
@@ -47,7 +47,7 @@ private:
     bool bTestInput = false;
 
 public:
-     UWorld* GetWorld() const { return GWorld; }
+    std::shared_ptr<UWorld> GetWorld() const { return GWorld; }
     SLevelEditor* GetLevelEditor() const { return LevelEditor; }
     UnrealEd* GetUnrealEditor() const { return UnrealEditor; }
     FSceneMgr* GetSceneManager() const { return SceneMgr; }
