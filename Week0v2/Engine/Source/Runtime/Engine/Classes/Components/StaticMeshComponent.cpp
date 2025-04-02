@@ -120,14 +120,14 @@ int UStaticMeshComponent::CheckRayIntersection(FVector& rayOrigin, FVector& rayD
 UObject* UStaticMeshComponent::Duplicate() const
 {
     UStaticMeshComponent* NewComp = FObjectFactory::ConstructObjectFrom<UStaticMeshComponent>(this);
-    NewComp->DuplicateSubObjects();
+    NewComp->DuplicateSubObjects(this);
     NewComp->PostDuplicate();
     return NewComp;
 }
 
-void UStaticMeshComponent::DuplicateSubObjects()
+void UStaticMeshComponent::DuplicateSubObjects(const UObject* Source)
 {
-    UMeshComponent::DuplicateSubObjects();
+    UMeshComponent::DuplicateSubObjects(Source);
     // staticMesh는 복사 생성자에서 복제됨
 }
 

@@ -19,7 +19,7 @@ public:
     );
     FBoundingBox AABB;
     virtual UObject* Duplicate() const override;
-    virtual void DuplicateSubObjects() override;
+    virtual void DuplicateSubObjects(const UObject* Source) override;
     virtual void PostDuplicate() override;
 private:
     FString m_Type;

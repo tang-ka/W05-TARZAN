@@ -138,13 +138,13 @@ void UActorComponent::UnregisterComponent()
 UObject* UActorComponent::Duplicate() const
 {
     UActorComponent* NewComp = FObjectFactory::ConstructObjectFrom<UActorComponent>(this);
-    NewComp->DuplicateSubObjects();
+    NewComp->DuplicateSubObjects(this);
     NewComp->PostDuplicate();
     return NewComp;
 }
-void UActorComponent::DuplicateSubObjects()
+void UActorComponent::DuplicateSubObjects(const UObject* Source)
 {
-    UObject::DuplicateSubObjects();
+    UObject::DuplicateSubObjects(Source);
 }
 void UActorComponent::PostDuplicate()
 {
