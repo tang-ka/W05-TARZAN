@@ -16,15 +16,13 @@ class UEditorEngine
 {
 public:
     UEditorEngine();
-    int32 Init(HINSTANCE hInstance);
+    int32 Init(HWND hwnd);
     void Render();
     void Tick();
     void Exit();
     float GetAspectRatio(IDXGISwapChain* swapChain) const;
     void Input();
 
-private:
-    void WindowInit(HINSTANCE hInstance);
 
 public:
     static FGraphicsDevice graphicDevice;

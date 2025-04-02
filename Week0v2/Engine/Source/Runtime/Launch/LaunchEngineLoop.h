@@ -12,6 +12,9 @@ public:
     void Tick();
     void Exit();
 
+    void WindowInit(HINSTANCE hInstance);
+
+    HWND hWnd;
 private:
     // TODO : 이후에 게임 엔진이 필요할 시 따로 관리 될 예정
     bool bIsEditor = true;
