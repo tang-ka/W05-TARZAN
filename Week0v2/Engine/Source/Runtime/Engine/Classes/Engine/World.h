@@ -23,7 +23,6 @@ class UWorld final : public UObject
 public:
     UWorld() = default;
 
-    virtual void DuplicateSubObjects(FDuplicationMap& DupMap) override;
     void InitWorld();
     void CreateBaseObject();
     void ReleaseBaseObject();
@@ -31,6 +30,9 @@ public:
     void Release();
     void ReloadScene(const FString& FileName);
     void ClearScene();
+    virtual UObject* Duplicate() const override;
+    virtual void DuplicateSubObjects() override;
+    virtual void PostDuplicate() override;
     /**
      * World에 Actor를 Spawn합니다.
      * @tparam T AActor를 상속받은 클래스
@@ -47,15 +49,13 @@ private:
     const FString defaultMapName = "Default";
     ULevel* Level;
     /** World에서 관리되는 모든 Actor의 목록 */
-    TSet<AActor*> ActorsArray;
     /** Actor가 Spawn되었고, 아직 BeginPlay가 호출되지 않은 Actor들 */
-    TArray<AActor*> PendingBeginPlayActors;
     AActor* SelectedActor = nullptr;
     USceneComponent* pickingGizmo = nullptr;
     AEditorPlayer* EditorPlayer = nullptr;
 public:
     EWorldType::Type WorldType = EWorldType::None;
-    const TSet<AActor*>& GetActors() const { return ActorsArray; }
+    const TSet<AActor*>& GetActors() const { return Level->GetActors(); }
     ULevel* GetLevel() const { return Level; }
     UTransformGizmo* LocalGizmo = nullptr;
     AEditorPlayer* GetEditorPlayer() const { return EditorPlayer; }

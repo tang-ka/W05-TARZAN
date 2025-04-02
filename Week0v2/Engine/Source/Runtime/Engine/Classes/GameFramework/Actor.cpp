@@ -53,14 +53,6 @@ void AActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
     UninitializeComponents();
 }
 
-void AActor::DuplicateSubObjects(FDuplicationMap& DupMap)
-{
-    for (auto component : OwnedComponents)
-    {
-        component = Cast<UActorComponent>(component->Duplicate(DupMap));
-        component->DuplicateSubObjects(DupMap);
-    }
-}
 
 bool AActor::Destroy()
 {

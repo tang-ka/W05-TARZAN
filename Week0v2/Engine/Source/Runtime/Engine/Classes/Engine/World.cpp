@@ -13,11 +13,6 @@
 #include "Level.h"
 
 
-void UWorld::DuplicateSubObjects(FDuplicationMap& DupMap)
-{
-    Level->Duplicate(DupMap);
-    Level->DuplicateSubObjects(DupMap);
-}
 
 void UWorld::InitWorld()
 {
@@ -57,7 +52,7 @@ void UWorld::ReleaseBaseObject()
 
 void UWorld::Tick(ELevelTick tickType, float deltaSeconds)
 {
-    if (tickType != LEVELTICK_PauseTick and tickType != LEVELTICK_TimeOnly)
+    if (tickType == LEVELTICK_ViewportsOnly)
     {
         EditorPlayer->Tick(deltaSeconds);
         LocalGizmo->Tick(deltaSeconds);
@@ -69,7 +64,7 @@ void UWorld::Tick(ELevelTick tickType, float deltaSeconds)
         {
             Actor->BeginPlay();
         }
-        PendingBeginPlayActors.Empty();
+        Level->PendingBeginPlayActors.Empty();
 
         // 매 틱마다 Actor->Tick(...) 호출
         for (AActor* Actor : Level->GetActors())
@@ -109,6 +104,27 @@ void UWorld::ClearScene()
     }
     ReleaseBaseObject();
 }
+
+UObject* UWorld::Duplicate() const
+{
+    UWorld* CloneWorld = FObjectFactory::ConstructObjectFrom<UWorld>(this);
+    CloneWorld->DuplicateSubObjects();
+    CloneWorld->PostDuplicate();
+    return CloneWorld;
+}
+
+void UWorld::DuplicateSubObjects()
+{
+    UObject::DuplicateSubObjects();
+    EditorPlayer = Cast<AEditorPlayer>(EditorPlayer->Duplicate());
+    Level = Cast<ULevel>(Level->Duplicate());
+}
+
+void UWorld::PostDuplicate()
+{
+    UObject::PostDuplicate();
+}
+
 void UWorld::ReloadScene(const FString& FileName)
 {
     FString NewFile = GEngine->GetSceneManager()->LoadSceneFromFile(FileName);

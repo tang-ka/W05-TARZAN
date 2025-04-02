@@ -10,8 +10,9 @@ class ULevel : public UObject
 public:
     ULevel();
     ~ULevel();
-
-    void DuplicateSubObjects(FDuplicationMap& DupMap);
+    virtual UObject* Duplicate() const override;
+    virtual void DuplicateSubObjects() override;
+    virtual void PostDuplicate() override;
 private:
     TSet<AActor*> Actors;
 

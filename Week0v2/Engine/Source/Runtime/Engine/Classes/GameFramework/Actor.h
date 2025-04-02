@@ -33,7 +33,6 @@ public:
      * @note Destroyed와는 다른점은, EndPlay는 레벨 전환, 게임 종료, 또는 Destroy() 호출 시 항상 실행됩니다.
      */
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason);
-    virtual void DuplicateSubObjects(FDuplicationMap& DupMap) override;
 
 public:
     /** 이 Actor를 제거합니다. */
