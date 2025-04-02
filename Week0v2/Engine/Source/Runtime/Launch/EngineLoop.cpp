@@ -249,6 +249,46 @@ void FEngineLoop::Input()
     }
 }
 
+void FEngineLoop::PreparePIE()
+{
+    // 1. World 복제
+    UWorld* EditorWorld = GetEditorWorldContext()->GetWorld();
+    UWorld* PIEWorld = UWorld::DuplicateWorldForPIE(EditorWorld);
+
+    GWorld = PIEWorld;
+
+    // 2. 복제한 World Type PIE로 변경
+    PIEWorld->SetType(EWorldType::PIE);
+}
+
+void FEngineLoop::StartPIE()
+{
+    // 1. BeingPlay() 호출
+    GWorld->BeginPlay();
+}
+
+void FEngineLoop::PausedPIE()
+{
+    
+}
+
+void FEngineLoop::ResumingPIE()
+{
+
+}
+
+void FEngineLoop::StopPIE()
+{
+    // 1. World Clear
+    if (GWorld && GWorld->IsPIEWorld())
+    {
+        GWorld->ClearScene();
+        delete GWorld;
+    }
+
+    GWorld = GetEditorWorldContext()->GetWorld();
+}
+
 void FEngineLoop::Exit()
 {
     LevelEditor->Release();

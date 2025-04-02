@@ -13,6 +13,12 @@ class AEditorPlayer;
 class USceneComponent;
 class UTransformGizmo;
 
+// 임시
+enum class EWorldType
+{
+    Editor,
+    PIE,
+};
 
 class UWorld : public UObject
 {
@@ -75,6 +81,12 @@ public:
     UObject* GetWorldGizmo() const { return worldGizmo; }
     USceneComponent* GetPickingGizmo() const { return pickingGizmo; }
     void SetPickingGizmo(UObject* Object);
+
+    // 임시
+    void SetType(EWorldType type);
+    bool IsPIEWorld() const;
+    void BeginPlay();
+    static UWorld* DuplicateWorldForPIE(UWorld* world);
 };
 
 

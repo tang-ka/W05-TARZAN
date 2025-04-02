@@ -27,6 +27,15 @@ public:
     float GetAspectRatio(IDXGISwapChain* swapChain) const;
     void Input();
 
+    void PreparePIE();
+    void StartPIE();
+    void PausedPIE();
+    void ResumingPIE();
+    void StopPIE();
+
+    // 임시
+    FWorldContext* GetEditorWorldContext() { return &WorldContexts[0]; }
+
 private:
     void WindowInit(HINSTANCE hInstance);
 
@@ -42,6 +51,9 @@ public:
 
 private:
     UImGuiManager* UIMgr;
+    // 임시
+    TArray<FWorldContext> WorldContexts;
+
     UWorld* GWorld;
     SLevelEditor* LevelEditor;
     UnrealEd* UnrealEditor;
