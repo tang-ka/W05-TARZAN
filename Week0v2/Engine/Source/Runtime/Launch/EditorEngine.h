@@ -18,7 +18,7 @@ public:
     UEditorEngine();
     int32 Init(HWND hwnd);
     void Render();
-    void Tick();
+    void Tick(float deltaSeconds);
     void Exit();
     float GetAspectRatio(IDXGISwapChain* swapChain) const;
     void Input();

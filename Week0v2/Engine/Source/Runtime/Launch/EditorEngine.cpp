@@ -10,78 +10,6 @@
 #include "UnrealEd/SceneMgr.h"
 
 
-// extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-//
-// static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
-// {
-//     if (ImGui_ImplWin32_WndProcHandler(hWnd, message, wParam, lParam))
-//     {
-//         return true;
-//     }
-//     int zDelta = 0;
-//     switch (message)
-//     {
-//     case WM_DESTROY:
-//         PostQuitMessage(0);
-//         break;
-//     case WM_SIZE:
-//         if (wParam != SIZE_MINIMIZED)
-//         {
-//             //UGraphicsDevice 객체의 OnResize 함수 호출
-//             if (UEditorEngine::graphicDevice.SwapChain)
-//             {
-//                 UEditorEngine::graphicDevice.OnResize(hWnd);
-//             }
-//             for (int i = 0; i < 4; i++)
-//             {
-//                 if (GEngine.GetLevelEditor())
-//                 {
-//                     if (GEngine.GetLevelEditor()->GetViewports()[i])
-//                     {
-//                         GEngine.GetLevelEditor()->GetViewports()[i]->ResizeViewport(UEditorEngine::graphicDevice.SwapchainDesc);
-//                     }
-//                 }
-//             }
-//         }
-//      Console::GetInstance().OnResize(hWnd);
-//         if (GEngine.GetUnrealEditor())
-//         {
-//             GEngine.GetUnrealEditor()->OnResize(hWnd);
-//         }
-//         ViewportTypePanel::GetInstance().OnResize(hWnd);
-//         break;
-//     case WM_MOUSEWHEEL:
-//         if (ImGui::GetIO().WantCaptureMouse)
-//             return 0;
-//         zDelta = GET_WHEEL_DELTA_WPARAM(wParam); // 휠 회전 값 (+120 / -120)
-//         if (GEngine.GetLevelEditor())
-//         {
-//             if (GEngine.GetLevelEditor()->GetActiveViewportClient()->IsPerspective())
-//             {
-//                 if (GEngine.GetLevelEditor()->GetActiveViewportClient()->GetIsOnRBMouseClick())
-//                 {
-//                     GEngine.GetLevelEditor()->GetActiveViewportClient()->SetCameraSpeedScalar(
-//                         static_cast<float>(GEngine.GetLevelEditor()->GetActiveViewportClient()->GetCameraSpeedScalar() + zDelta * 0.01)
-//                     );
-//                 }
-//                 else
-//                 {
-//                     GEngine.GetLevelEditor()->GetActiveViewportClient()->CameraMoveForward(zDelta * 0.1f);
-//                 }
-//             }
-//             else
-//             {
-//                 FEditorViewportClient::SetOthoSize(-zDelta * 0.01f);
-//             }
-//         }
-//         break;
-//     default:
-//         return DefWindowProc(hWnd, message, wParam, lParam);
-//     }
-//
-//     return 0;
-// }
-
 FGraphicsDevice UEditorEngine::graphicDevice;
 FRenderer UEditorEngine::renderer;
 FResourceMgr UEditorEngine::resourceMgr;
@@ -133,12 +61,6 @@ void UEditorEngine::Render()
         for (int i = 0; i < 4; ++i)
         {
             LevelEditor->SetViewportClient(i);
-            // graphicDevice.DeviceContext->RSSetViewports(1, &LevelEditor->GetViewports()[i]->GetD3DViewport());
-            // graphicDevice.ChangeRasterizer(LevelEditor->GetActiveViewportClient()->GetViewMode());
-            // renderer.ChangeViewMode(LevelEditor->GetActiveViewportClient()->GetViewMode());
-            // renderer.PrepareShader();
-            // renderer.UpdateLightBuffer();
-            // RenderWorld();
             renderer.PrepareRender();
             renderer.Render(GetWorld(),LevelEditor->GetActiveViewportClient());
         }
@@ -146,47 +68,16 @@ void UEditorEngine::Render()
     }
     else
     {
-        // graphicDevice.DeviceContext->RSSetViewports(1, &LevelEditor->GetActiveViewportClient()->GetD3DViewport());
-        // graphicDevice.ChangeRasterizer(LevelEditor->GetActiveViewportClient()->GetViewMode());
-        // renderer.ChangeViewMode(LevelEditor->GetActiveViewportClient()->GetViewMode());
-        // renderer.PrepareShader();
-        // renderer.UpdateLightBuffer();
-        // RenderWorld();
         renderer.PrepareRender();
         renderer.Render(GetWorld(),LevelEditor->GetActiveViewportClient());
     }
 }
 
-void UEditorEngine::Tick()
+void UEditorEngine::Tick(float deltaSeconds)
 {
-    LARGE_INTEGER frequency;
-    const double targetFrameTime = 1000.0 / targetFPS; // 한 프레임의 목표 시간 (밀리초 단위)
-
-    QueryPerformanceFrequency(&frequency);
-
-    LARGE_INTEGER startTime, endTime;
-    double elapsedTime = 1.0;
-
-    while (bIsExit == false)
-    {
-        QueryPerformanceCounter(&startTime);
-
-        MSG msg;
-        while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
-        {
-            TranslateMessage(&msg); // 키보드 입력 메시지를 문자메시지로 변경
-            DispatchMessage(&msg);  // 메시지를 WndProc에 전달
-
-            if (msg.message == WM_QUIT)
-            {
-                bIsExit = true;
-                break;
-            }
-        }
-
         Input();
-        GWorld->Tick(elapsedTime);
-        LevelEditor->Tick(elapsedTime);
+        GWorld->Tick(deltaSeconds);
+        LevelEditor->Tick(deltaSeconds);
         Render();
         UIMgr->BeginFrame();
         UnrealEditor->Render();
@@ -201,14 +92,6 @@ void UEditorEngine::Tick()
         // GUObjectArray.ProcessPendingDestroyObjects();
 
         graphicDevice.SwapBuffer();
-        do
-        {
-            Sleep(0);
-            QueryPerformanceCounter(&endTime);
-            elapsedTime = (endTime.QuadPart - startTime.QuadPart) * 1000.0 / frequency.QuadPart;
-        }
-        while (elapsedTime < targetFrameTime);
-    }
 }
 
 float UEditorEngine::GetAspectRatio(IDXGISwapChain* swapChain) const

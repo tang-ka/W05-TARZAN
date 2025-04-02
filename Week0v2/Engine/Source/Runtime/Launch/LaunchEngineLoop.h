@@ -18,6 +18,8 @@ public:
 private:
     // TODO : 이후에 게임 엔진이 필요할 시 따로 관리 될 예정
     bool bIsEditor = true;
+    bool bIsExit = false;
+    const int32 targetFPS = 60;
 };
 
 extern  FEngineLoop GEngineLoop;
