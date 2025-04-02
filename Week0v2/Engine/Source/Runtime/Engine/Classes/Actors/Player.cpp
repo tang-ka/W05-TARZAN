@@ -309,7 +309,7 @@ int AEditorPlayer::RayIntersectsObject(const FVector& pickPosition, USceneCompon
 
 	// ���� ��ȯ ���
 	FMatrix worldMatrix = scaleMatrix * rotationMatrix * translationMatrix;
-	FMatrix viewMatrix = GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->GetViewMatrix();
+	FMatrix viewMatrix = GEngine.GetLevelEditor()->GetActiveViewportClient()->GetViewMatrix();
     
     bool bIsOrtho = GetEngine().GetLevelEditor()->GetActiveViewportClient()->IsOrtho();
     
@@ -323,7 +323,7 @@ int AEditorPlayer::RayIntersectsObject(const FVector& pickPosition, USceneCompon
         // 오쏘에서는 픽킹 원점은 unproject된 픽셀의 위치
         FVector rayOrigin = worldPickPos;
         // 레이 방향은 카메라의 정면 방향 (평행)
-        FVector orthoRayDir = GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->ViewTransformOrthographic.GetForwardVector().Normalize();
+        FVector orthoRayDir = GEngine.GetLevelEditor()->GetActiveViewportClient()->ViewTransformOrthographic.GetForwardVector().Normalize();
 
         // 객체의 로컬 좌표계로 변환
         FMatrix localMatrix = FMatrix::Inverse(worldMatrix);

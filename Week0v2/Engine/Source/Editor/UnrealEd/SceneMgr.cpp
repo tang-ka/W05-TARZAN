@@ -32,7 +32,7 @@ void FSceneMgr::ParseSceneData(const FString& jsonStr)
         sceneData.NextUUID = j["NextUUID"].get<int>();
 
         auto perspectiveCamera = j["PerspectiveCamera"];
-        std::shared_ptr<FEditorViewportClient> activeViewportClient = GEngineLoop.GetLevelEditor()->GetActiveViewportClient();
+        std::shared_ptr<FEditorViewportClient> activeViewportClient = GEngine.GetLevelEditor()->GetActiveViewportClient();
 
         if (perspectiveCamera.contains("Location")) {
             auto location = perspectiveCamera["Location"].get<std::vector<float>>();
@@ -91,7 +91,7 @@ void FSceneMgr::ParseSceneData(const FString& jsonStr)
                 }
                 else if (TypeName == "StaticMeshComp")
                 {
-                    UWorld* World = GEngineLoop.GetWorld();
+                    UWorld* World = GEngine.GetWorld();
                     AActor* SpawnedActor = nullptr;
                     std::string Path = value["ObjStaticMeshAsset"].get<std::string>();
                     FString FileName = Path.substr(Path.find_last_of("/\\") + 1);

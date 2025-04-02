@@ -1,7 +1,7 @@
 #include "Core/HAL/PlatformType.h"
-#include "LaunchEngineLoop.h"
+#include "EditorEngine.h"
 
-FEngineLoop GEngineLoop;
+UEditorEngine GEngine;
 
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
@@ -11,9 +11,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     UNREFERENCED_PARAMETER(lpCmdLine);
     UNREFERENCED_PARAMETER(nShowCmd);
 
-    GEngineLoop.Init(hInstance);
-    GEngineLoop.Tick();
-    GEngineLoop.Exit();
+    GEngine.Init(hInstance);
+    GEngine.Tick();
+    GEngine.Exit();
 
     return 0;
 }

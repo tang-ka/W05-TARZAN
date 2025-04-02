@@ -58,7 +58,7 @@ int UBillboardComponent::CheckRayIntersection(FVector& rayOrigin, FVector& rayDi
 
 void UBillboardComponent::SetTexture(FWString _fileName)
 {
-	Texture = FEngineLoop::resourceMgr.GetTexture(_fileName);
+	Texture = UEditorEngine::resourceMgr.GetTexture(_fileName);
 }
 
 void UBillboardComponent::SetUUIDParent(USceneComponent* _parent)
@@ -102,8 +102,8 @@ void UBillboardComponent::CreateQuadTextureVertexBuffer()
 {
 	numVertices = sizeof(quadTextureVertices) / sizeof(FVertexTexture);
 	numIndices = sizeof(quadTextureInices) / sizeof(uint32);
-	vertexTextureBuffer = FEngineLoop::renderer.CreateVertexBuffer(quadTextureVertices, sizeof(quadTextureVertices));
-	indexTextureBuffer = FEngineLoop::renderer.CreateIndexBuffer(quadTextureInices, sizeof(quadTextureInices));
+	vertexTextureBuffer = UEditorEngine::renderer.CreateVertexBuffer(quadTextureVertices, sizeof(quadTextureVertices));
+	indexTextureBuffer = UEditorEngine::renderer.CreateIndexBuffer(quadTextureInices, sizeof(quadTextureInices));
 
 	if (!vertexTextureBuffer) {
 		Console::GetInstance().AddLog(LogLevel::Warning, "Buffer Error");
@@ -118,11 +118,11 @@ bool UBillboardComponent::CheckPickingOnNDC(const TArray<FVector>& checkQuad, fl
 	bool result = false;
 	POINT mousePos;
 	GetCursorPos(&mousePos);
-	ScreenToClient(GEngineLoop.hWnd, &mousePos);
+	ScreenToClient(GEngine.hWnd, &mousePos);
 
 	D3D11_VIEWPORT viewport;
 	UINT numViewports = 1;
-	FEngineLoop::graphicDevice.DeviceContext->RSGetViewports(&numViewports, &viewport);
+	UEditorEngine::graphicDevice.DeviceContext->RSGetViewports(&numViewports, &viewport);
 	float screenWidth = viewport.Width;
 	float screenHeight = viewport.Height;
 
@@ -135,7 +135,7 @@ bool UBillboardComponent::CheckPickingOnNDC(const TArray<FVector>& checkQuad, fl
 	pickPosition.z = 1.0f; // Near Plane
 
 	FMatrix M = CreateBillboardMatrix();
-    FMatrix V = GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->GetViewMatrix();;
+    FMatrix V = GEngine.GetLevelEditor()->GetActiveViewportClient()->GetViewMatrix();;
 	FMatrix P = projectionMatrix;
 	FMatrix MVP = M * V * P;
 

@@ -120,14 +120,14 @@ void UWorld::ClearScene()
 }
 void UWorld::ReloadScene(const FString& FileName)
 {
-    FString NewFile = GEngineLoop.GetSceneManager()->LoadSceneFromFile(FileName);
+    FString NewFile = GEngine.GetSceneManager()->LoadSceneFromFile(FileName);
 
     // if (SceneOctree && SceneOctree->GetRoot())
     //     SceneOctree->GetRoot()->TickBuffers(GCurrentFrame, 0);
 
     ClearScene(); // 기존 오브젝트 제거
     CreateBaseObject();
-    GEngineLoop.GetSceneManager()->ParseSceneData(NewFile);
+    GEngine.GetSceneManager()->ParseSceneData(NewFile);
 }
 
 bool UWorld::DestroyActor(AActor* ThisActor)

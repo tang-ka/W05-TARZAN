@@ -1,8 +1,8 @@
 #pragma once
-#include "LaunchEngineLoop.h"
+#include "EditorEngine.h"
 #include "NameTypes.h"
 
-extern FEngineLoop GEngineLoop;
+extern UEditorEngine GEngine;
 
 class UClass;
 class UWorld;
@@ -39,12 +39,12 @@ public:
 
     UWorld* GetWorld()
     {
-        return GEngineLoop.GetWorld();
+        return GEngine.GetWorld();
     }
 
-    FEngineLoop& GetEngine()
+    UEditorEngine& GetEngine()
     {
-        return GEngineLoop;
+        return GEngine;
     }
 
     FName GetFName() const { return NamePrivate; }

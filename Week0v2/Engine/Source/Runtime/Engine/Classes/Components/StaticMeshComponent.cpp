@@ -1,7 +1,7 @@
 #include "Components/StaticMeshComponent.h"
 
 #include "Engine/World.h"
-#include "Launch/LaunchEngineLoop.h"
+#include "Launch/EditorEngine.h"
 #include "UObject/ObjectFactory.h"
 #include "UnrealEd/PrimitiveBatch.h"
 

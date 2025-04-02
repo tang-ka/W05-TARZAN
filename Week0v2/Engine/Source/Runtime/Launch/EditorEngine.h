@@ -5,6 +5,7 @@
 #include "Engine/ResourceMgr.h"
 
 
+
 class FSceneMgr;
 class UnrealEd;
 class UImGuiManager;
@@ -14,10 +15,10 @@ class SSplitterV;
 class SSplitterH;
 class SLevelEditor;
 
-class FEngineLoop
+class UEditorEngine
 {
 public:
-    FEngineLoop();
+    UEditorEngine();
 
     int32 PreInit();
     int32 Init(HINSTANCE hInstance);
@@ -57,4 +58,4 @@ public:
     UnrealEd* GetUnrealEditor() const { return UnrealEditor; }
     FSceneMgr* GetSceneManager() const { return SceneMgr; }
 };
-extern FEngineLoop GEngineLoop;
+extern UEditorEngine GEngine;
