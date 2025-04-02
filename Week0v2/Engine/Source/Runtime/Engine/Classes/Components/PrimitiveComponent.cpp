@@ -1,8 +1,19 @@
 #include "PrimitiveComponent.h"
 
+#include "UObject/ObjectFactory.h"
+
 UPrimitiveComponent::UPrimitiveComponent()
 {
 }
+
+
+UPrimitiveComponent::UPrimitiveComponent(const UPrimitiveComponent& Other)
+    : USceneComponent(Other)
+    , AABB(Other.AABB)
+    , m_Type(Other.m_Type)
+{
+}
+
 
 UPrimitiveComponent::~UPrimitiveComponent()
 {
@@ -10,12 +21,12 @@ UPrimitiveComponent::~UPrimitiveComponent()
 
 void UPrimitiveComponent::InitializeComponent()
 {
-	Super::InitializeComponent();
+    Super::InitializeComponent();
 }
 
 void UPrimitiveComponent::TickComponent(float DeltaTime)
 {
-	Super::TickComponent(DeltaTime);
+    Super::TickComponent(DeltaTime);
 }
 
 int UPrimitiveComponent::CheckRayIntersection(FVector& rayOrigin, FVector& rayDirection, float& pfNearHitDistance)
@@ -64,7 +75,8 @@ int UPrimitiveComponent::CheckRayIntersection(FVector& rayOrigin, FVector& rayDi
     return nIntersections;
 }
 
-bool UPrimitiveComponent::IntersectRayTriangle(const FVector& rayOrigin, const FVector& rayDirection, const FVector& v0, const FVector& v1, const FVector& v2, float& hitDistance)
+bool UPrimitiveComponent::IntersectRayTriangle(const FVector& rayOrigin, const FVector& rayDirection, const FVector& v0, const FVector& v1,
+                                               const FVector& v2, float& hitDistance)
 {
     const float epsilon = 1e-6f;
     FVector edge1 = v1 - v0;
@@ -88,11 +100,29 @@ bool UPrimitiveComponent::IntersectRayTriangle(const FVector& rayOrigin, const F
         return false;
 
     float t = f * edge2.Dot(q);
-    if (t > epsilon) {
-
+    if (t > epsilon)
+    {
         hitDistance = t;
         return true;
     }
 
     return false;
+}
+
+UObject* UPrimitiveComponent::Duplicate() const
+{
+    UPrimitiveComponent* NewComp = FObjectFactory::ConstructObjectFrom<UPrimitiveComponent>(this);
+    NewComp->DuplicateSubObjects();
+    NewComp->PostDuplicate();
+    return NewComp;
+}
+
+void UPrimitiveComponent::DuplicateSubObjects()
+{
+    USceneComponent::DuplicateSubObjects();
+}
+
+void UPrimitiveComponent::PostDuplicate()
+{
+    USceneComponent::PostDuplicate();
 }

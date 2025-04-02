@@ -11,21 +11,38 @@ extern UEditorEngine* GEngine;
 
 class UClass;
 class UWorld;
-//
-class UObject;
-using FDuplicationMap = std::unordered_map<UObject*, UObject*>;
+
 
 class UObject
 {
 private:
 
+
+    UObject& operator=(const UObject&) = delete;
+    UObject(UObject&&) = delete;
+    UObject& operator=(UObject&&) = delete;
+
 public:
     using Super = UObject;
     using ThisClass = UObject;
-
+    UObject(const UObject& Other)
+        : ClassPrivate(Other.ClassPrivate)
+        , NamePrivate(Other.NamePrivate)
+        , UUID(Other.UUID)
+        , InternalIndex(Other.InternalIndex)
+    {
+    }
     static UClass* StaticClass();
 
+    virtual UObject* Duplicate() const
+    {
+        UObject* NewObject = new UObject();
+        NewObject->DuplicateSubObjects();       // 깊은 복사 수행
+        return NewObject;
+    }
 
+    virtual void DuplicateSubObjects() {} // 하위 클래스에서 override
+    virtual void PostDuplicate(){};
 private:
     friend class FObjectFactory;
     friend class FSceneMgr;
@@ -99,8 +116,5 @@ public:
 
         return result;
     }
-public:
-    virtual void DuplicateSubObjects(FDuplicationMap& DupMap);
-    virtual UObject* Duplicate();
-    virtual UObject* Duplicate(FDuplicationMap& DupMap);
+private:
 };
