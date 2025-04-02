@@ -22,7 +22,8 @@ class UWorld final : public UObject
 
 public:
     UWorld() = default;
-
+    UWorld(const UWorld& Other);
+    ;
     void InitWorld();
     void CreateBaseObject();
     void ReleaseBaseObject();
@@ -31,7 +32,7 @@ public:
     void ReloadScene(const FString& FileName);
     void ClearScene();
     virtual UObject* Duplicate() const override;
-    virtual void DuplicateSubObjects() override;
+    virtual void DuplicateSubObjects(const UObject* SourceObj) override;
     virtual void PostDuplicate() override;
     /**
      * World에 Actor를 Spawn합니다.

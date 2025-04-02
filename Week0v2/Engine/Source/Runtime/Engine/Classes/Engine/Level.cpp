@@ -12,17 +12,17 @@ ULevel::~ULevel()
 UObject* ULevel::Duplicate() const
 {
     ULevel* CloneLevel = FObjectFactory::ConstructObjectFrom<ULevel>(this);
-    CloneLevel->DuplicateSubObjects();
+    CloneLevel->DuplicateSubObjects(this);
     CloneLevel->PostDuplicate();
     return CloneLevel;
 }
 
-void ULevel::DuplicateSubObjects()
+void ULevel::DuplicateSubObjects(const UObject* SourceObj)
 {
-    UObject::DuplicateSubObjects();
+    UObject::DuplicateSubObjects(SourceObj);
     for (AActor* Actor : Actors)
     {
-        AActor* DupActor = static_cast<AActor*>(Actor->Duplicate()); 
+        Actor = static_cast<AActor*>(Actor->Duplicate()); 
     }
 }
 

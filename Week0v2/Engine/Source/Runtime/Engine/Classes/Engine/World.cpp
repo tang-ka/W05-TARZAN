@@ -13,6 +13,16 @@
 #include "Level.h"
 
 
+UWorld::UWorld(const UWorld& Other): UObject(Other)
+                                   , defaultMapName(Other.defaultMapName)
+                                   , Level(Other.Level ? static_cast<ULevel*>(Other.Level->Duplicate()) : nullptr)
+                                   , SelectedActor(Other.SelectedActor ? static_cast<AActor*>(Other.SelectedActor->Duplicate()) : nullptr)
+                                   , pickingGizmo(Other.pickingGizmo ? static_cast<USceneComponent*>(Other.pickingGizmo->Duplicate()) : nullptr)
+                                   , EditorPlayer(Other.EditorPlayer ? static_cast<AEditorPlayer*>(Other.EditorPlayer->Duplicate()) : nullptr)
+                                   , WorldType(Other.WorldType)
+                                   , LocalGizmo(Other.LocalGizmo ? static_cast<UTransformGizmo*>(Other.LocalGizmo->Duplicate()) : nullptr)
+{
+}
 
 void UWorld::InitWorld()
 {
@@ -108,14 +118,14 @@ void UWorld::ClearScene()
 UObject* UWorld::Duplicate() const
 {
     UWorld* CloneWorld = FObjectFactory::ConstructObjectFrom<UWorld>(this);
-    CloneWorld->DuplicateSubObjects();
+    CloneWorld->DuplicateSubObjects(this);
     CloneWorld->PostDuplicate();
     return CloneWorld;
 }
 
-void UWorld::DuplicateSubObjects()
+void UWorld::DuplicateSubObjects(const UObject* SourceObj)
 {
-    UObject::DuplicateSubObjects();
+    UObject::DuplicateSubObjects(SourceObj);
     EditorPlayer = Cast<AEditorPlayer>(EditorPlayer->Duplicate());
     Level = Cast<ULevel>(Level->Duplicate());
 }
