@@ -1,5 +1,8 @@
 #pragma once
 #include "Define.h"
+#include "EngineBaseTypes.h"
+#include "EngineTypes.h"
+#include "Level.h"
 #include "Container/Set.h"
 #include "UObject/ObjectFactory.h"
 #include "UObject/ObjectMacros.h"
@@ -13,21 +16,24 @@ class AEditorPlayer;
 class USceneComponent;
 class UTransformGizmo;
 
-
-class UWorld : public UObject
+class UWorld final : public UObject
 {
     DECLARE_CLASS(UWorld, UObject)
 
 public:
     UWorld() = default;
-
-    void Initialize();
+    UWorld(const UWorld& Other);
+    ;
+    void InitWorld();
     void CreateBaseObject();
     void ReleaseBaseObject();
-    void Tick(float DeltaTime);
+    void Tick(ELevelTick tickType, float deltaSeconds);
     void Release();
     void ReloadScene(const FString& FileName);
     void ClearScene();
+    virtual UObject* Duplicate() const override;
+    virtual void DuplicateSubObjects(const UObject* SourceObj) override;
+    virtual void PostDuplicate() override;
     /**
      * World에 Actor를 Spawn합니다.
      * @tparam T AActor를 상속받은 클래스
@@ -42,29 +48,18 @@ public:
 
 private:
     const FString defaultMapName = "Default";
-
+    ULevel* Level;
     /** World에서 관리되는 모든 Actor의 목록 */
-    TSet<AActor*> ActorsArray;
-
     /** Actor가 Spawn되었고, 아직 BeginPlay가 호출되지 않은 Actor들 */
-    TArray<AActor*> PendingBeginPlayActors;
-
     AActor* SelectedActor = nullptr;
-
     USceneComponent* pickingGizmo = nullptr;
-    UCameraComponent* camera = nullptr;
     AEditorPlayer* EditorPlayer = nullptr;
-
 public:
-    UObject* worldGizmo = nullptr;
-
-    const TSet<AActor*>& GetActors() const { return ActorsArray; }
-
+    EWorldType::Type WorldType = EWorldType::None;
+    const TSet<AActor*>& GetActors() const { return Level->GetActors(); }
+    ULevel* GetLevel() const { return Level; }
     UTransformGizmo* LocalGizmo = nullptr;
-    UCameraComponent* GetCamera() const { return camera; }
     AEditorPlayer* GetEditorPlayer() const { return EditorPlayer; }
-
-
     // EditorManager 같은데로 보내기
     AActor* GetSelectedActor() const { return SelectedActor; }
     void SetPickedActor(AActor* InActor)
@@ -72,11 +67,15 @@ public:
         SelectedActor = InActor;
     }
 
-    UObject* GetWorldGizmo() const { return worldGizmo; }
     USceneComponent* GetPickingGizmo() const { return pickingGizmo; }
     void SetPickingGizmo(UObject* Object);
-};
 
+    // 임시
+    bool IsPIEWorld() const;
+    void BeginPlay();
+    static UWorld* DuplicateWorldForPIE(UWorld* world);
+};
+// UWorld* GWorld = nullptr;
 
 template <typename T>
     requires std::derived_from<T, AActor>
@@ -86,7 +85,8 @@ T* UWorld::SpawnActor()
     // TODO: 일단 AddComponent에서 Component마다 초기화
     // 추후에 RegisterComponent() 만들어지면 주석 해제
     // Actor->InitializeComponents();
-    ActorsArray.Add(Actor);
-    PendingBeginPlayActors.Add(Actor);
+    
+    Level->GetActors().Add(Actor);
+    Level->PendingBeginPlayActors.Add(Actor);
     return Actor;
 }

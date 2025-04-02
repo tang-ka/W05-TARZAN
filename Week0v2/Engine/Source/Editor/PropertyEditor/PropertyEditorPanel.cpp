@@ -1,6 +1,6 @@
 #include "PropertyEditorPanel.h"
 
-#include "World.h"
+#include "Engine/World.h"
 #include "Actors/Player.h"
 #include "Components/LightComponent.h"
 #include "Components/StaticMeshComponent.h"

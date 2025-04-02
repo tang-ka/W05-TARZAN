@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/HAL/PlatformType.h"
 #include "D3D11RHI/GraphicDevice.h"
+#include "Engine/Engine.h"
 #include "Renderer/Renderer.h"
 #include "Engine/ResourceMgr.h"
 
@@ -14,18 +15,26 @@ class SSplitterV;
 class SSplitterH;
 class SLevelEditor;
 
-class FEngineLoop
-{
-public:
-    FEngineLoop();
+extern UWorld* GWorld;
 
-    int32 PreInit();
-    int32 Init(HINSTANCE hInstance);
+class UEditorEngine : public UEngine
+{
+    DECLARE_CLASS(UEditorEngine, UEngine)
+    
+public:
+    UEditorEngine();
+    int32 Init(HWND hwnd);
     void Render();
-    void Tick();
+    void Tick(float deltaSeconds);
     void Exit();
     float GetAspectRatio(IDXGISwapChain* swapChain) const;
     void Input();
+
+    void PreparePIE();
+    void StartPIE();
+    void PausedPIE();
+    void ResumingPIE();
+    void StopPIE();
 
 private:
     void WindowInit(HINSTANCE hInstance);
@@ -34,26 +43,21 @@ public:
     static FGraphicsDevice graphicDevice;
     static FRenderer renderer;
     static FResourceMgr resourceMgr;
-    static uint32 TotalAllocationBytes;
-    static uint32 TotalAllocationCount;
-
-
+    
     HWND hWnd;
-
 private:
     UImGuiManager* UIMgr;
-    UWorld* GWorld;
+    std::shared_ptr<UWorld> GWorld;
     SLevelEditor* LevelEditor;
     UnrealEd* UnrealEditor;
     FSceneMgr* SceneMgr;
-
-    bool bIsExit = false;
-    const int32 targetFPS = 60;
+    
     bool bTestInput = false;
 
 public:
-    UWorld* GetWorld() const { return GWorld; }
+    std::shared_ptr<UWorld> GetWorld() const { return GWorld; }
     SLevelEditor* GetLevelEditor() const { return LevelEditor; }
     UnrealEd* GetUnrealEditor() const { return UnrealEditor; }
     FSceneMgr* GetSceneManager() const { return SceneMgr; }
 };
+extern UEditorEngine* GEngine;

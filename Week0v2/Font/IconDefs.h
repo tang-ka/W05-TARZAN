@@ -16,4 +16,8 @@
 #define ICON_SLIDER		0xE9C4
 #define ICON_PLUS       0xE9C8
 
+#define ICON_PIE_PLAY   0xE9A8
+#define ICON_PIE_PAUSE  0xE99C
+#define ICON_PIE_STOP   0xE9E4
+
 #endif // !__ICON_FONT__

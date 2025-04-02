@@ -1,6 +1,6 @@
-﻿#include "ControlEditorPanel.h"
+#include "ControlEditorPanel.h"
 
-#include "World.h"
+#include "Engine/World.h"
 #include "Actors/Player.h"
 #include "Components/CubeComp.h"
 #include "Components/LightComponent.h"
@@ -15,6 +15,7 @@
 #include "UnrealEd/EditorViewportClient.h"
 #include "PropertyEditor/ShowFlags.h"
 #include "UnrealEd/SceneMgr.h"
+#include "UEditorStateManager.h"
 
 void ControlEditorPanel::Render()
 {
@@ -59,6 +60,13 @@ void ControlEditorPanel::Render()
 
     ImGui::SameLine();
 
+    ImVec2 PIEIconSize = ImVec2(IconSize.x + 8, IconSize.y);
+    ImGui::PushFont(IconFont);
+    CreatePIEButton(PIEIconSize);
+    ImGui::PopFont();
+
+    ImGui::SameLine();
+
     /* Get Window Content Region */
     float ContentWidth = ImGui::GetWindowContentRegionMax().x;
 
@@ -84,7 +92,7 @@ void ControlEditorPanel::CreateMenuButton(ImVec2 ButtonSize, ImFont* IconFont)
     if (bOpenMenu)
     {
         //std::unique_ptr<FSceneMgr> SceneMgr = std::make_unique<FSceneMgr>();
-        FSceneMgr* SceneMgr=GEngineLoop.GetSceneManager();
+        FSceneMgr* SceneMgr=GEngine->GetSceneManager();
         ImGui::SetNextWindowPos(ImVec2(10, 55), ImGuiCond_Always);
         ImGui::SetNextWindowSize(ImVec2(135, 170), ImGuiCond_Always);
         
@@ -106,7 +114,7 @@ void ControlEditorPanel::CreateMenuButton(ImVec2 ButtonSize, ImFont* IconFont)
                 ImGui::End();
                 return;
             }
-            GEngineLoop.GetWorld()->ReloadScene(FileName);
+            GEngine->GetWorld()->ReloadScene(FileName);
         }
 
         ImGui::Separator();
@@ -202,16 +210,16 @@ void ControlEditorPanel::CreateModifyButton(ImVec2 ButtonSize, ImFont* IconFont)
     if (ImGui::BeginPopup("SliderControl"))
     {
         ImGui::Text("Grid Scale");
-        GridScale = GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->GetGridSize();
+        GridScale = GEngine->GetLevelEditor()->GetActiveViewportClient()->GetGridSize();
         ImGui::SetNextItemWidth(120.0f);
         if (ImGui::DragFloat("##Grid Scale", &GridScale, 0.1f, 1.0f, 20.0f, "%.1f"))
         {
-            GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->SetGridSize(GridScale);
+            GEngine->GetLevelEditor()->GetActiveViewportClient()->SetGridSize(GridScale);
         }
         ImGui::Separator();
 
         ImGui::Text("Camera FOV");
-        FOV = &GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->ViewFOV;
+        FOV = &GEngine->GetLevelEditor()->GetActiveViewportClient()->ViewFOV;
         ImGui::SetNextItemWidth(120.0f);
         if (ImGui::DragFloat("##Fov", FOV, 0.1f, 30.0f, 120.0f, "%.1f"))
         {
@@ -221,11 +229,11 @@ void ControlEditorPanel::CreateModifyButton(ImVec2 ButtonSize, ImFont* IconFont)
         ImGui::Spacing();
 
         ImGui::Text("Camera Speed");
-        CameraSpeed = GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->GetCameraSpeedScalar();
+        CameraSpeed = GEngine->GetLevelEditor()->GetActiveViewportClient()->GetCameraSpeedScalar();
         ImGui::SetNextItemWidth(120.0f);
         if (ImGui::DragFloat("##CamSpeed", &CameraSpeed, 0.1f, 0.198f, 192.0f, "%.1f"))
         {
-            GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->SetCameraSpeedScalar(CameraSpeed);
+            GEngine->GetLevelEditor()->GetActiveViewportClient()->SetCameraSpeedScalar(CameraSpeed);
         }
         
         ImGui::EndPopup();
@@ -260,7 +268,7 @@ void ControlEditorPanel::CreateModifyButton(ImVec2 ButtonSize, ImFont* IconFont)
             if (ImGui::Selectable(primitive.label))
             {
                 // GEngineLoop.GetWorld()->SpawnObject(static_cast<OBJECTS>(primitive.obj));
-                UWorld* World = GEngineLoop.GetWorld();
+                UWorld* World = GEngine->GetWorld().get();
                 AActor* SpawnedActor = nullptr;
                 switch (static_cast<OBJECTS>(primitive.obj))
                 {
@@ -327,7 +335,7 @@ void ControlEditorPanel::CreateModifyButton(ImVec2 ButtonSize, ImFont* IconFont)
 
 void ControlEditorPanel::CreateFlagButton() const
 {
-    auto ActiveViewport = GEngineLoop.GetLevelEditor()->GetActiveViewportClient();
+    auto ActiveViewport = GEngine->GetLevelEditor()->GetActiveViewportClient();
 
     const char* ViewTypeNames[] = { "Perspective", "Top", "Bottom", "Left", "Right", "Front", "Back" };
     ELevelViewportType ActiveViewType = ActiveViewport->GetViewportType();
@@ -376,8 +384,8 @@ void ControlEditorPanel::CreateFlagButton() const
             if (ImGui::Selectable(ViewModeNames[i], bIsSelected))
             {
                 ActiveViewport->SetViewMode((EViewModeIndex)i);
-                FEngineLoop::graphicDevice.ChangeRasterizer(ActiveViewport->GetViewMode());
-                FEngineLoop::renderer.ChangeViewMode(ActiveViewport->GetViewMode());
+                UEditorEngine::graphicDevice.ChangeRasterizer(ActiveViewport->GetViewMode());
+                UEditorEngine::renderer.ChangeViewMode(ActiveViewport->GetViewMode());
             }
 
             if (bIsSelected)
@@ -417,10 +425,45 @@ void ControlEditorPanel::CreateFlagButton() const
     }
 }
 
+void ControlEditorPanel::CreatePIEButton(ImVec2 ButtonSize) const
+{
+    float TotalWidth = ButtonSize.x * 3.0f + 16.0f;
+    float ContentWidth = ImGui::GetWindowContentRegionMax().x;
+
+    // 중앙 정렬을 위한 커서 위치 설정
+    float CursorPosX = (ContentWidth - TotalWidth) * 0.5f;
+    ImGui::SetCursorPosX(CursorPosX);
+
+    if (ImGui::Button("\ue9a8", ButtonSize)) // Play
+    {
+        // TODO: PIE 시작
+        if (!UEditorStateManager::Get().IsPIERunning())
+            UEditorStateManager::Get().SetState(EEditorState::PreparingPlay);
+        else
+            UEditorStateManager::Get().SetState(EEditorState::Resuming);
+    }
+
+    ImGui::SameLine();
+
+    if (ImGui::Button("\ue99c", ButtonSize)) // Pause
+    {
+        // TODO: PIE 일시정지
+        UEditorStateManager::Get().SetState(EEditorState::Paused);
+    }
+
+    ImGui::SameLine();
+
+    if (ImGui::Button("\ue9e4", ButtonSize)) // Stop
+    {
+        // TODO: PIE 정지
+        UEditorStateManager::Get().SetState(EEditorState::Stopped);
+    }
+}
+
 // code is so dirty / Please refactor
 void ControlEditorPanel::CreateSRTButton(ImVec2 ButtonSize) const
 {
-    AEditorPlayer* Player = GEngineLoop.GetWorld()->GetEditorPlayer();
+    AEditorPlayer* Player = GEngine->GetWorld()->GetEditorPlayer();
 
     ImVec4 ActiveColor = ImVec4(0.00f, 0.00f, 0.85f, 1.0f);
     
