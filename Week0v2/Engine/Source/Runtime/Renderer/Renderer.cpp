@@ -971,24 +971,58 @@ void FRenderer::RenderBatch(
 
 void FRenderer::PrepareRender()
 {
-    for (const auto iter : TObjectRange<USceneComponent>())
+    UE_LOG(LogLevel::Display, "%d",  GEngine->GetWorld()->WorldType);
+    if (GEngine->GetWorld()->WorldType == EWorldType::Editor)
     {
-        if (UStaticMeshComponent* pStaticMeshComp = Cast<UStaticMeshComponent>(iter))
+        for (const auto iter : GEngine->GetWorld()->GetActors())
         {
-            if (!Cast<UGizmoBaseComponent>(iter))
-                StaticMeshObjs.Add(pStaticMeshComp);
+            for (const auto iter2 : iter->GetComponents())
+            {
+                if (UStaticMeshComponent* pStaticMeshComp = Cast<UStaticMeshComponent>(iter2))
+                {
+                    if (!Cast<UGizmoBaseComponent>(iter2))
+                        StaticMeshObjs.Add(pStaticMeshComp);
+                }
+                if (UGizmoBaseComponent* pGizmoComp = Cast<UGizmoBaseComponent>(iter2))
+                {
+                    GizmoObjs.Add(pGizmoComp);
+                }
+                if (UBillboardComponent* pBillboardComp = Cast<UBillboardComponent>(iter2))
+                {
+                    BillboardObjs.Add(pBillboardComp);
+                }
+                if (ULightComponentBase* pLightComp = Cast<ULightComponentBase>(iter2))
+                {
+                    LightObjs.Add(pLightComp);
+                }
+            }
         }
-        if (UGizmoBaseComponent* pGizmoComp = Cast<UGizmoBaseComponent>(iter))
+    }
+    else if (GEngine->GetWorld()->WorldType == EWorldType::PIE)
+    {
+        UE_LOG(LogLevel::Display, "ddddd" );
+        for (const auto iter : GEngine->GetWorld()->GetActors())
         {
-            GizmoObjs.Add(pGizmoComp);
-        }
-        if (UBillboardComponent* pBillboardComp = Cast<UBillboardComponent>(iter))
-        {
-            BillboardObjs.Add(pBillboardComp);
-        }
-        if (ULightComponentBase* pLightComp = Cast<ULightComponentBase>(iter))
-        {
-            LightObjs.Add(pLightComp);
+            for (const auto iter2 : iter->GetComponents())
+            {
+                if (UStaticMeshComponent* pStaticMeshComp = Cast<UStaticMeshComponent>(iter2))
+                {
+                    if (!Cast<UGizmoBaseComponent>(iter2))
+                        StaticMeshObjs.Add(pStaticMeshComp);
+                }
+                if (UGizmoBaseComponent* pGizmoComp = Cast<UGizmoBaseComponent>(iter2))
+                {
+                    GizmoObjs.Add(pGizmoComp);
+                }
+                if (UBillboardComponent* pBillboardComp = Cast<UBillboardComponent>(iter2))
+                {
+                    BillboardObjs.Add(pBillboardComp);
+                }
+                if (ULightComponentBase* pLightComp = Cast<ULightComponentBase>(iter2))
+                {
+                    LightObjs.Add(pLightComp);
+                }
+            }
         }
     }
 }

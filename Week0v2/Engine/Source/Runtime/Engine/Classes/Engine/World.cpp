@@ -15,12 +15,9 @@
 
 UWorld::UWorld(const UWorld& Other): UObject(Other)
                                    , defaultMapName(Other.defaultMapName)
-                                   , Level(Other.Level ? static_cast<ULevel*>(Other.Level->Duplicate()) : nullptr)
-                                   , SelectedActor(Other.SelectedActor ? static_cast<AActor*>(Other.SelectedActor->Duplicate()) : nullptr)
-                                   , pickingGizmo(Other.pickingGizmo ? static_cast<USceneComponent*>(Other.pickingGizmo->Duplicate()) : nullptr)
-                                   , EditorPlayer(Other.EditorPlayer ? static_cast<AEditorPlayer*>(Other.EditorPlayer->Duplicate()) : nullptr)
+                                   , Level(Other.Level)
                                    , WorldType(Other.WorldType)
-                                   , LocalGizmo(Other.LocalGizmo ? static_cast<UTransformGizmo*>(Other.LocalGizmo->Duplicate()) : nullptr)
+                                    , EditorPlayer(Other.EditorPlayer)
 {
 }
 
@@ -64,8 +61,10 @@ void UWorld::Tick(ELevelTick tickType, float deltaSeconds)
 {
     if (tickType == LEVELTICK_ViewportsOnly)
     {
-        EditorPlayer->Tick(deltaSeconds);
-        LocalGizmo->Tick(deltaSeconds);
+        if (EditorPlayer)
+            EditorPlayer->Tick(deltaSeconds);
+        if (LocalGizmo)
+            LocalGizmo->Tick(deltaSeconds);
     }
     // SpawnActor()에 의해 Actor가 생성된 경우, 여기서 BeginPlay 호출
     if (tickType == LEVELTICK_All)
@@ -126,7 +125,6 @@ UObject* UWorld::Duplicate() const
 void UWorld::DuplicateSubObjects(const UObject* SourceObj)
 {
     UObject::DuplicateSubObjects(SourceObj);
-    EditorPlayer = Cast<AEditorPlayer>(EditorPlayer->Duplicate());
     Level = Cast<ULevel>(Level->Duplicate());
 }
 

@@ -89,15 +89,17 @@ void UEditorEngine::Tick(float deltaSeconds)
     for (FWorldContext& WorldContext : worldContexts)
     {
         std::shared_ptr<UWorld> EditorWorld = WorldContext.World();
+        // GWorld = EditorWorld;
+        // GWorld->Tick(levelType, deltaSeconds);
         if (EditorWorld && WorldContext.WorldType == EWorldType::Editor)
         {
-            GWorld = EditorWorld;
+            // GWorld = EditorWorld;
             GWorld->Tick(LEVELTICK_ViewportsOnly, deltaSeconds);
         }
         else if (EditorWorld && WorldContext.WorldType == EWorldType::PIE)
         {
-            GWorld = EditorWorld;
-            GWorld->Tick(LEVELTICK_All, deltaSeconds);
+            // GWorld = EditorWorld;
+            GWorld->Tick(levelType, deltaSeconds);
         }
     }
     Input();
@@ -151,13 +153,12 @@ void UEditorEngine::Input()
 void UEditorEngine::PreparePIE()
 {
     // 1. World 복제
-    UWorld* EditorWorld = GetEditorWorldContext()->World().get();
-    //FDuplicationMap DupMap;
-    //UWorld* PIEWorld = EditorWorld->DuplicateSubObjects(DupMap);
-    UWorld* PIEWorld = UWorld::DuplicateWorldForPIE(EditorWorld);
-    PIEWorld->CreateBaseObject();
-
-    GWorld = std::shared_ptr<UWorld>(PIEWorld);
+    worldContexts[1].thisCurrentWorld = std::shared_ptr<UWorld>(Cast<UWorld>(GWorld->Duplicate()));
+    
+    GWorld = worldContexts[1].thisCurrentWorld;
+    GWorld->WorldType = EWorldType::PIE;
+    UE_LOG(LogLevel::Display, "%d",  GEngine->GetWorld()->WorldType);
+    levelType = LEVELTICK_All;
 
     // 2. 복제한 World Type PIE로 변경
     //PIEWorld->SetType(EWorldType::PIE);
@@ -171,7 +172,8 @@ void UEditorEngine::StartPIE()
 
 void UEditorEngine::PausedPIE()
 {
-
+    GWorld->WorldType = EWorldType::PIE;
+    levelType = LEVELTICK_PauseTick;
 }
 
 void UEditorEngine::ResumingPIE()
@@ -182,12 +184,16 @@ void UEditorEngine::ResumingPIE()
 void UEditorEngine::StopPIE()
 {
     // 1. World Clear
-    if (GWorld && GWorld->IsPIEWorld())
-    {
-        GWorld->ClearScene();
-    }
-
-    GWorld = GetEditorWorldContext()->World();
+    GWorld = worldContexts[0].thisCurrentWorld;
+    worldContexts[1].thisCurrentWorld.reset();
+    // GWorld->WorldType = EWorldType::Editor;
+    levelType = LEVELTICK_ViewportsOnly;
+    // if (GWorld && GWorld->IsPIEWorld())
+    // {
+    //     GWorld->ClearScene();
+    // }
+    //
+    // GWorld = GetEditorWorldContext()->World();
 }
 
 void UEditorEngine::Exit()

@@ -53,7 +53,7 @@ private:
     FSceneMgr* SceneMgr;
     
     bool bTestInput = false;
-
+    ELevelTick levelType = ELevelTick::LEVELTICK_ViewportsOnly;
 public:
     std::shared_ptr<UWorld> GetWorld() const { return GWorld; }
     SLevelEditor* GetLevelEditor() const { return LevelEditor; }
