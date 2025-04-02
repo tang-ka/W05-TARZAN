@@ -103,10 +103,6 @@ UEditorEngine::UEditorEngine()
 {
 }
 
-int32 UEditorEngine::PreInit()
-{
-    return 0;
-}
 
 int32 UEditorEngine::Init(HINSTANCE hInstance)
 {

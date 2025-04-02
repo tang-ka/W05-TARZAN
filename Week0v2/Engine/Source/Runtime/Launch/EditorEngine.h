@@ -3,9 +3,6 @@
 #include "D3D11RHI/GraphicDevice.h"
 #include "Renderer/Renderer.h"
 #include "Engine/ResourceMgr.h"
-
-
-
 class FSceneMgr;
 class UnrealEd;
 class UImGuiManager;
@@ -19,8 +16,6 @@ class UEditorEngine
 {
 public:
     UEditorEngine();
-
-    int32 PreInit();
     int32 Init(HINSTANCE hInstance);
     void Render();
     void Tick();

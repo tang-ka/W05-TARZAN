@@ -1,8 +1,9 @@
 #include "Core/HAL/PlatformType.h"
 #include "EditorEngine.h"
+#include "LaunchEngineLoop.h"
 
 UEditorEngine GEngine;
-
+FEngineLoop GEngineLoop; 
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
