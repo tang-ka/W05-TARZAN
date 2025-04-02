@@ -55,14 +55,3 @@ typedef ANSICHAR TCHAR;
 // 임시로 사용
 #include <string>
 using FWString = std::wstring;
-
-class UWorld;
-// 임시 사용 -> 머지 후 제거
-class FWorldContext
-{
-private:
-    UWorld* World;
-
-public:
-    UWorld* GetWorld() { return World; }
-};

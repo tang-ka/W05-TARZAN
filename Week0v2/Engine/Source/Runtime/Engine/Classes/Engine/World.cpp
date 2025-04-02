@@ -157,10 +157,7 @@ void UWorld::SetPickingGizmo(UObject* Object)
 	pickingGizmo = Cast<USceneComponent>(Object);
 }
 
-void UWorld::SetType(EWorldType type)
-{
-}
-
+/*************************임시******************************/
 bool UWorld::IsPIEWorld() const
 {
     return false;
@@ -168,9 +165,11 @@ bool UWorld::IsPIEWorld() const
 
 void UWorld::BeginPlay()
 {
+
 }
 
 UWorld* UWorld::DuplicateWorldForPIE(UWorld* world)
 {
     return nullptr;
 }
+/**********************************************************/

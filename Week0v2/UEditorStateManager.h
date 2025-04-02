@@ -1,9 +1,9 @@
 #pragma once
 #include "Core/Hal/PlatformType.h"
 #include "EngineBaseTypes.h"
-#include "EngineLoop.h"
+#include "EditorEngine.h"
 
-extern FEngineLoop GEngineLoop;
+extern UEditorEngine* GEngine;
 
 class UEditorStateManager
 {
@@ -38,24 +38,24 @@ inline void UEditorStateManager::SetState(EEditorState NewState)
         break;
 
     case EEditorState::PreparingPlay:       // Connect to play button
-        GEngineLoop.PreparePIE();           // 추후 Prepare에 실패했을 때 고려 할 수 있어야 할듯
+        GEngine->PreparePIE();           // 추후 Prepare에 실패했을 때 고려 할 수 있어야 할듯
         SetState(EEditorState::Playing);
         return;
 
     case EEditorState::Playing:             // auto Transition
-        GEngineLoop.StartPIE();
+        GEngine->StartPIE();
         break;
 
     case EEditorState::Paused:              // Connect to pause button
-        GEngineLoop.PausedPIE();
+        GEngine->PausedPIE();
         break;
 
     case EEditorState::Resuming:            // Connect to resume button
-        GEngineLoop.ResumingPIE();
+        GEngine->ResumingPIE();
         break;
 
     case EEditorState::Stopped:             // Connect to stop button
-        GEngineLoop.StopPIE();  
+        GEngine->StopPIE();
         SetState(EEditorState::Editing);
         return;
     }

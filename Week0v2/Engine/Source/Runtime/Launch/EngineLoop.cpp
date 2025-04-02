@@ -258,7 +258,7 @@ void FEngineLoop::PreparePIE()
     GWorld = PIEWorld;
 
     // 2. 복제한 World Type PIE로 변경
-    PIEWorld->SetType(EWorldType::PIE);
+    //PIEWorld->SetType(EWorldType::PIE);
 }
 
 void FEngineLoop::StartPIE()

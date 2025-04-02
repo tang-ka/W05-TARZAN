@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "EngineTypes.h"
 #include "Container/Array.h"
 #include "UObject/Object.h"
@@ -30,6 +30,7 @@ public:
 
 protected:
     TArray<FWorldContext> worldContexts;
+    FWorldContext* GetEditorWorldContext() { return &WorldContexts[0]; }
 
 public:
     TArray<FWorldContext>& GetWorldContexts() { return worldContexts; }

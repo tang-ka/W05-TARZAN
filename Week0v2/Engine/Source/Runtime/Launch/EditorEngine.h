@@ -36,9 +36,6 @@ public:
     void ResumingPIE();
     void StopPIE();
 
-    // 임시
-    FWorldContext* GetEditorWorldContext() { return &WorldContexts[0]; }
-
 private:
     void WindowInit(HINSTANCE hInstance);
 
@@ -50,9 +47,6 @@ public:
     HWND hWnd;
 private:
     UImGuiManager* UIMgr;
-    // 임시
-    TArray<FWorldContext> WorldContexts;
-
     std::shared_ptr<UWorld> GWorld;
     SLevelEditor* LevelEditor;
     UnrealEd* UnrealEditor;

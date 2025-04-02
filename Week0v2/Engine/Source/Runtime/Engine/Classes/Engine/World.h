@@ -14,13 +14,6 @@ class AEditorPlayer;
 class USceneComponent;
 class UTransformGizmo;
 
-// 임시
-enum class EWorldType
-{
-    Editor,
-    PIE,
-};
-
 class UWorld final : public UObject
 {
     DECLARE_CLASS(UWorld, UObject)
@@ -79,7 +72,6 @@ public:
     void SetPickingGizmo(UObject* Object);
 
     // 임시
-    void SetType(EWorldType type);
     bool IsPIEWorld() const;
     void BeginPlay();
     static UWorld* DuplicateWorldForPIE(UWorld* world);

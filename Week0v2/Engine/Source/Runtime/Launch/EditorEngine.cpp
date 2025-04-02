@@ -162,6 +162,48 @@ void UEditorEngine::Input()
     }
 }
 
+
+void UEditorEngine::PreparePIE()
+{
+    // 1. World 복제
+    UWorld* EditorWorld = GetEditorWorldContext()->World().get();
+    //FDuplicationMap DupMap;
+    //UWorld* PIEWorld = EditorWorld->DuplicateSubObjects(DupMap);
+    UWorld* PIEWorld = UWorld::DuplicateWorldForPIE(EditorWorld);
+
+    GWorld = std::shared_ptr<UWorld>(PIEWorld);
+
+    // 2. 복제한 World Type PIE로 변경
+    //PIEWorld->SetType(EWorldType::PIE);
+}
+
+void UEditorEngine::StartPIE()
+{
+    // 1. BeingPlay() 호출
+    GWorld->BeginPlay();
+}
+
+void UEditorEngine::PausedPIE()
+{
+
+}
+
+void UEditorEngine::ResumingPIE()
+{
+
+}
+
+void UEditorEngine::StopPIE()
+{
+    // 1. World Clear
+    if (GWorld && GWorld->IsPIEWorld())
+    {
+        GWorld->ClearScene();
+    }
+
+    GWorld = GetEditorWorldContext()->World();
+}
+
 void UEditorEngine::Exit()
 {
     LevelEditor->Release();
