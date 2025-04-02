@@ -170,6 +170,7 @@ void UEditorEngine::PreparePIE()
     //FDuplicationMap DupMap;
     //UWorld* PIEWorld = EditorWorld->DuplicateSubObjects(DupMap);
     UWorld* PIEWorld = UWorld::DuplicateWorldForPIE(EditorWorld);
+    PIEWorld->CreateBaseObject();
 
     GWorld = std::shared_ptr<UWorld>(PIEWorld);
 

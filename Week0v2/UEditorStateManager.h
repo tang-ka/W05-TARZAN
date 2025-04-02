@@ -8,6 +8,12 @@ extern UEditorEngine* GEngine;
 class UEditorStateManager
 {
 public:
+    static UEditorStateManager& Get()
+    {
+        static UEditorStateManager Instance;
+        return Instance;
+    }
+
     EEditorState GetCurrentState() const { return CurrentState; }
     void SetState(EEditorState NewState);
     bool IsPIERunning() 
@@ -18,19 +24,45 @@ public:
         CurrentState == EEditorState::Resuming; 
     }
 
-private:
-    bool IsValidTransition(EEditorState To);
+    bool IsPaused() { return CurrentState == EEditorState::Paused; }
 
 private:
-    EEditorState CurrentState;
+    UEditorStateManager() = default;
+    ~UEditorStateManager() = default;
+
+    UEditorStateManager(const UEditorStateManager&) = delete;
+    UEditorStateManager& operator=(const UEditorStateManager&) = delete;
+
+    bool IsValidTransition(EEditorState To);
+
+    std::string ToString(EEditorState State)
+    {
+        switch (State)
+        {
+        case EEditorState::Editing:        return "Editing";
+        case EEditorState::PreparingPlay:  return "PreparingPlay";
+        case EEditorState::Playing:        return "Playing";
+        case EEditorState::Paused:         return "Paused";
+        case EEditorState::Resuming:       return "Resuming";
+        case EEditorState::Stopped:        return "Stopped";
+        default:                           return "Unknown";
+        }
+    }
+
+private:
+    EEditorState CurrentState = EEditorState::Editing;
 };
 
 inline void UEditorStateManager::SetState(EEditorState NewState)
 {
     if (!IsValidTransition(NewState))
+    {
+        Console::GetInstance().AddLog(LogLevel::Error, "Try to change inValid state : from %s to %s", ToString(CurrentState).c_str(), ToString(NewState).c_str());
         return;
+    }
 
     CurrentState = NewState;
+    Console::GetInstance().AddLog(LogLevel::Display, "Change state : %s", ToString(CurrentState).c_str());
 
     switch (NewState)
     {

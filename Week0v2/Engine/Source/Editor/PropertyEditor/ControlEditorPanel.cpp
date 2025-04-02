@@ -15,6 +15,7 @@
 #include "UnrealEd/EditorViewportClient.h"
 #include "PropertyEditor/ShowFlags.h"
 #include "UnrealEd/SceneMgr.h"
+#include "UEditorStateManager.h"
 
 void ControlEditorPanel::Render()
 {
@@ -56,6 +57,13 @@ void ControlEditorPanel::Render()
     ImGui::SameLine();
 
     CreateModifyButton(IconSize, IconFont);
+
+    ImGui::SameLine();
+
+    ImVec2 PIEIconSize = ImVec2(IconSize.x + 8, IconSize.y);
+    ImGui::PushFont(IconFont);
+    CreatePIEButton(PIEIconSize);
+    ImGui::PopFont();
 
     ImGui::SameLine();
 
@@ -414,6 +422,41 @@ void ControlEditorPanel::CreateFlagButton() const
         }
         ActiveViewport->SetShowFlag(ConvertSelectionToFlags(selected));
         ImGui::EndPopup();
+    }
+}
+
+void ControlEditorPanel::CreatePIEButton(ImVec2 ButtonSize) const
+{
+    float TotalWidth = ButtonSize.x * 3.0f + 16.0f;
+    float ContentWidth = ImGui::GetWindowContentRegionMax().x;
+
+    // 중앙 정렬을 위한 커서 위치 설정
+    float CursorPosX = (ContentWidth - TotalWidth) * 0.5f;
+    ImGui::SetCursorPosX(CursorPosX);
+
+    if (ImGui::Button("\ue9a8", ButtonSize)) // Play
+    {
+        // TODO: PIE 시작
+        if (!UEditorStateManager::Get().IsPIERunning())
+            UEditorStateManager::Get().SetState(EEditorState::PreparingPlay);
+        else
+            UEditorStateManager::Get().SetState(EEditorState::Resuming);
+    }
+
+    ImGui::SameLine();
+
+    if (ImGui::Button("\ue99c", ButtonSize)) // Pause
+    {
+        // TODO: PIE 일시정지
+        UEditorStateManager::Get().SetState(EEditorState::Paused);
+    }
+
+    ImGui::SameLine();
+
+    if (ImGui::Button("\ue9e4", ButtonSize)) // Stop
+    {
+        // TODO: PIE 정지
+        UEditorStateManager::Get().SetState(EEditorState::Stopped);
     }
 }
 

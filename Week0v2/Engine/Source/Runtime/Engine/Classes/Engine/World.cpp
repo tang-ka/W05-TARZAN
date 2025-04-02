@@ -170,6 +170,6 @@ void UWorld::BeginPlay()
 
 UWorld* UWorld::DuplicateWorldForPIE(UWorld* world)
 {
-    return nullptr;
+    return new UWorld();
 }
 /**********************************************************/
