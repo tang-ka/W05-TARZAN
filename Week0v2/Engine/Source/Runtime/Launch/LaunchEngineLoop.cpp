@@ -158,6 +158,7 @@ void FEngineLoop::Tick()
 void FEngineLoop::Exit()
 {
     GEngine->Exit();
+    delete GEngine;
 }
 
 void FEngineLoop::ClearPendingCleanupObjects()
