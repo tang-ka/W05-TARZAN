@@ -3,11 +3,13 @@
 #include "UnrealEd/EditorPanel.h"
 
 class UStaticMeshComponent;
+class USceneComponent;
 
 class PropertyEditorPanel : public UEditorPanel
 {
 public:
     virtual void Render() override;
+    void DrawSceneComponentTree(USceneComponent* Component, UActorComponent*& PickedComponent);
     virtual void OnResize(HWND hWnd) override;
 
 
@@ -34,4 +36,8 @@ private:
     UStaticMeshComponent* SelectedStaticMeshComp = nullptr;
     FObjMaterialInfo tempMaterialInfo;
     bool IsCreateMaterial;
+    UActorComponent* PickedComponent = nullptr;
+    UActorComponent* LastComponent = nullptr;
+    bool bFirstFrame = true;
+
 };
