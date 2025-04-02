@@ -436,11 +436,12 @@ void ControlEditorPanel::CreatePIEButton(ImVec2 ButtonSize) const
 
     if (ImGui::Button("\ue9a8", ButtonSize)) // Play
     {
+        UEditorStateManager::Get().SetState(EEditorState::PreparingPlay);
         // TODO: PIE 시작
-        if (!UEditorStateManager::Get().IsPIERunning())
-            UEditorStateManager::Get().SetState(EEditorState::PreparingPlay);
-        else
-            UEditorStateManager::Get().SetState(EEditorState::Resuming);
+        // if (!UEditorStateManager::Get().IsPIERunning())
+        //     UEditorStateManager::Get().SetState(EEditorState::PreparingPlay);
+        // else
+        //     UEditorStateManager::Get().SetState(EEditorState::Resuming);
     }
 
     ImGui::SameLine();

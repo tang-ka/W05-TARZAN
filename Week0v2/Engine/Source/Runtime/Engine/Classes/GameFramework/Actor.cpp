@@ -7,7 +7,8 @@ AActor::AActor(const AActor& Other)
       RootComponent(nullptr),
       bTickInEditor(Other.bTickInEditor),
       bActorIsBeingDestroyed(Other.bActorIsBeingDestroyed),
-      ActorLabel(Other.ActorLabel)
+      ActorLabel(Other.ActorLabel),
+    OwnedComponents(Other.OwnedComponents)
 {
     // RootComponent 및 컴포넌트 복사는 DuplicateSubObjects에서 처리
 }
@@ -197,17 +198,17 @@ void AActor::DuplicateSubObjects(const UObject* SourceObj)
 
     for (UActorComponent* Component : Source->OwnedComponents)
     {
-        UActorComponent* ClonedComponent = static_cast<UActorComponent*>(Component->Duplicate());
-        ClonedComponent->Owner = this;
-        AddComponent(ClonedComponent);
+        Component = static_cast<UActorComponent*>(Component->Duplicate());
+        // ClonedComponent->Owner = this;
+        // AddComponent(ClonedComponent);
 
-        if (const USceneComponent* OldScene = Cast<USceneComponent>(Component))
-        {
-            if (USceneComponent* NewScene = Cast<USceneComponent>(ClonedComponent))
-            {
-                SceneCloneMap.Add(OldScene, NewScene);
-            }
-        }
+        // if (const USceneComponent* OldScene = Cast<USceneComponent>(Component))
+        // {
+        //     if (USceneComponent* NewScene = Cast<USceneComponent>(ClonedComponent))
+        //     {
+        //         SceneCloneMap.Add(OldScene, NewScene);
+        //     }
+        // }
     }
 
     for (const auto& Pair : SceneCloneMap)
