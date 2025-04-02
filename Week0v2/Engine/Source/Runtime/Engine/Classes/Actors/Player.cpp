@@ -1,4 +1,4 @@
-﻿#include "Player.h"
+#include "Player.h"
 
 #include "UnrealClient.h"
 #include "Engine/World.h"
@@ -14,6 +14,7 @@
 #include "PropertyEditor/ShowFlags.h"
 #include "UnrealEd/EditorViewportClient.h"
 #include "UObject/UObjectIterator.h"
+#include <Components/UText.h>
 
 
 using namespace DirectX;
