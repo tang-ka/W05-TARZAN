@@ -16,6 +16,7 @@
 void UWorld::DuplicateSubObjects(FDuplicationMap& DupMap)
 {
     Level->Duplicate(DupMap);
+    Level->DuplicateSubObjects(DupMap);
 }
 
 void UWorld::Initialize()

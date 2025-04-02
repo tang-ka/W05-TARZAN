@@ -10,6 +10,8 @@ class ULevel : public UObject
 public:
     ULevel();
     ~ULevel();
+
+    void DuplicateSubObjects(FDuplicationMap& DupMap);
 private:
     TSet<AActor*> Actors;
 
