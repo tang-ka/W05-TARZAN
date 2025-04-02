@@ -9,14 +9,24 @@ ULevel::~ULevel()
 {
 }
 
-void ULevel::DuplicateSubObjects(FDuplicationMap& DupMap)
+UObject* ULevel::Duplicate() const
 {
+    ULevel* CloneLevel = FObjectFactory::ConstructObjectFrom<ULevel>(this);
+    CloneLevel->DuplicateSubObjects(this);
+    CloneLevel->PostDuplicate();
+    return CloneLevel;
+}
+
+void ULevel::DuplicateSubObjects(const UObject* SourceObj)
+{
+    UObject::DuplicateSubObjects(SourceObj);
     for (AActor* Actor : Actors)
     {
-        if (Actor)
-        {
-            Actor = Cast<AActor>(Actor->Duplicate(DupMap));
-            Actor->DuplicateSubObjects(DupMap);
-        }
+        Actor = static_cast<AActor*>(Actor->Duplicate()); 
     }
+}
+
+void ULevel::PostDuplicate()
+{
+    UObject::PostDuplicate();
 }

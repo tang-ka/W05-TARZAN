@@ -2,6 +2,20 @@
 
 #include "GameFramework/Actor.h"
 
+UActorComponent::UActorComponent(const UActorComponent& Other)
+    : UObject(Other),
+      bCanEverTick(Other.bCanEverTick),
+      bRegistered(Other.bRegistered),
+      bWantsInitializeComponent(Other.bWantsInitializeComponent),
+      bHasBeenInitialized(Other.bHasBeenInitialized),
+      bHasBegunPlay(Other.bHasBegunPlay),
+      bIsBeingDestroyed(Other.bIsBeingDestroyed),
+      bIsActive(Other.bIsActive),
+      bTickEnabled(Other.bTickEnabled),
+      bAutoActive(Other.bAutoActive)
+{
+    // Owner는 복제 시점에 AActor가 직접 지정
+}
 
 void UActorComponent::InitializeComponent()
 {
@@ -82,4 +96,57 @@ void UActorComponent::Deactivate()
 {
     // TODO: Tick 멈추기
     bIsActive = false;
+}
+
+void UActorComponent::OnRegister()
+{
+    // Hook: Called by RegisterComponent()
+    if (bAutoActive)
+    {
+        Activate();
+    }
+
+    if (bWantsInitializeComponent && !bHasBeenInitialized)
+    {
+        InitializeComponent();
+    }
+}
+
+void UActorComponent::OnUnregister()
+{
+    // Hook: Called by UnregisterComponent()
+    Deactivate();
+}
+
+void UActorComponent::RegisterComponent()
+{
+    if (bRegistered)
+        return;
+
+    bRegistered = true;
+    OnRegister();
+}
+
+void UActorComponent::UnregisterComponent()
+{
+    if (!bRegistered)
+        return;
+
+    OnUnregister();
+    bRegistered = false;
+}
+UObject* UActorComponent::Duplicate() const
+{
+    UActorComponent* NewComp = FObjectFactory::ConstructObjectFrom<UActorComponent>(this);
+    NewComp->DuplicateSubObjects(this);
+    NewComp->PostDuplicate();
+    return NewComp;
+}
+void UActorComponent::DuplicateSubObjects(const UObject* Source)
+{
+    UObject::DuplicateSubObjects(Source);
+}
+void UActorComponent::PostDuplicate()
+{
+    
 }

@@ -1,5 +1,7 @@
 #pragma once
 #include "Define.h"
+#include "EngineBaseTypes.h"
+#include "EngineTypes.h"
 #include "Level.h"
 #include "Container/Set.h"
 #include "UObject/ObjectFactory.h"
@@ -20,15 +22,18 @@ class UWorld final : public UObject
 
 public:
     UWorld() = default;
-
-    virtual void DuplicateSubObjects(FDuplicationMap& DupMap) override;
-    void Initialize();
+    UWorld(const UWorld& Other);
+    ;
+    void InitWorld();
     void CreateBaseObject();
     void ReleaseBaseObject();
-    void Tick(float DeltaTime);
+    void Tick(ELevelTick tickType, float deltaSeconds);
     void Release();
     void ReloadScene(const FString& FileName);
     void ClearScene();
+    virtual UObject* Duplicate() const override;
+    virtual void DuplicateSubObjects(const UObject* SourceObj) override;
+    virtual void PostDuplicate() override;
     /**
      * World에 Actor를 Spawn합니다.
      * @tparam T AActor를 상속받은 클래스
@@ -45,22 +50,16 @@ private:
     const FString defaultMapName = "Default";
     ULevel* Level;
     /** World에서 관리되는 모든 Actor의 목록 */
-    TSet<AActor*> ActorsArray;
-
     /** Actor가 Spawn되었고, 아직 BeginPlay가 호출되지 않은 Actor들 */
-    TArray<AActor*> PendingBeginPlayActors;
-
     AActor* SelectedActor = nullptr;
-
     USceneComponent* pickingGizmo = nullptr;
     AEditorPlayer* EditorPlayer = nullptr;
 public:
-    const TSet<AActor*>& GetActors() const { return ActorsArray; }
+    EWorldType::Type WorldType = EWorldType::None;
+    const TSet<AActor*>& GetActors() const { return Level->GetActors(); }
     ULevel* GetLevel() const { return Level; }
     UTransformGizmo* LocalGizmo = nullptr;
     AEditorPlayer* GetEditorPlayer() const { return EditorPlayer; }
-
-
     // EditorManager 같은데로 보내기
     AActor* GetSelectedActor() const { return SelectedActor; }
     void SetPickedActor(AActor* InActor)

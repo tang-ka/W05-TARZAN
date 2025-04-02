@@ -40,9 +40,10 @@ int32 UEditorEngine::Init(HWND hwnd)
     
     FWorldContext EditorContext;
     EditorContext.WorldType = EWorldType::Editor;
-    std::shared_ptr<UWorld> EditWorld = EditorContext.World();
-    EditWorld = std::shared_ptr<UWorld>(FObjectFactory::ConstructObject<UWorld>());
-    EditWorld->Initialize();
+    EditorContext.thisCurrentWorld = std::shared_ptr<UWorld>(FObjectFactory::ConstructObject<UWorld>());
+    std::shared_ptr<UWorld> EditWorld  =EditorContext.thisCurrentWorld;
+    EditWorld->InitWorld();
+    EditWorld->WorldType = EWorldType::Editor;
     GWorld = EditWorld;
     worldContexts.Add(EditorContext);
     
@@ -90,33 +91,17 @@ void UEditorEngine::Tick(float deltaSeconds)
         std::shared_ptr<UWorld> EditorWorld = WorldContext.World();
         if (EditorWorld && WorldContext.WorldType == EWorldType::Editor)
         {
-            ULevel* Level = EditorWorld->GetLevel();
-            {
-                for (AActor* Actor : Level->GetActors())
-                {
-                    // if (Actor && Actor->bTickInEditor)
-                    // {
-                    //     Actor->Tick(deltaSeconds);
-                    // }
-                }
-            }
+            GWorld = EditorWorld;
+            GWorld->Tick(LEVELTICK_ViewportsOnly, deltaSeconds);
         }
         else if (EditorWorld && WorldContext.WorldType == EWorldType::PIE)
         {
-            ULevel* Level = EditorWorld->GetLevel();
-            {
-                for (AActor* Actor : Level->GetActors())
-                {
-                    if (Actor)
-                    {
-                        Actor->Tick(deltaSeconds);
-                    }
-                }
-            }
+            GWorld = EditorWorld;
+            GWorld->Tick(LEVELTICK_All, deltaSeconds);
         }
     }
     Input();
-    GWorld->Tick(deltaSeconds);
+    // GWorld->Tick(LEVELTICK_All, deltaSeconds);
     LevelEditor->Tick(deltaSeconds);
     Render();
     UIMgr->BeginFrame();

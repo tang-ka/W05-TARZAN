@@ -30,33 +30,4 @@ bool UObject::IsA(const UClass* SomeBase) const
     return ThisClass->IsChildOf(SomeBase);
 }
 
-void UObject::DuplicateSubObjects(FDuplicationMap& DupMap)
-{
-
-}
-
-UObject* UObject::Duplicate()
-{
-    FDuplicationMap DupMap;
-    return Duplicate(DupMap);
-}
-
-UObject* UObject::Duplicate(FDuplicationMap& DupMap)
-{
-    if (DupMap.find(this) != DupMap.end())
-    {
-        return DupMap[this];
-    }
-
-    // 새 객체 생성 (얕은 복사 수행)
-    UObject* NewObject = new UObject(*this);
-
-    // 복제 맵에 등록
-    DupMap[this] = NewObject;
-
-    // 서브 오브젝트는 깊은 복사로 처리
-    NewObject->DuplicateSubObjects(DupMap);
-    
-    return NewObject;
-}
 

@@ -13,13 +13,18 @@
 #include "Level.h"
 
 
-void UWorld::DuplicateSubObjects(FDuplicationMap& DupMap)
+UWorld::UWorld(const UWorld& Other): UObject(Other)
+                                   , defaultMapName(Other.defaultMapName)
+                                   , Level(Other.Level ? static_cast<ULevel*>(Other.Level->Duplicate()) : nullptr)
+                                   , SelectedActor(Other.SelectedActor ? static_cast<AActor*>(Other.SelectedActor->Duplicate()) : nullptr)
+                                   , pickingGizmo(Other.pickingGizmo ? static_cast<USceneComponent*>(Other.pickingGizmo->Duplicate()) : nullptr)
+                                   , EditorPlayer(Other.EditorPlayer ? static_cast<AEditorPlayer*>(Other.EditorPlayer->Duplicate()) : nullptr)
+                                   , WorldType(Other.WorldType)
+                                   , LocalGizmo(Other.LocalGizmo ? static_cast<UTransformGizmo*>(Other.LocalGizmo->Duplicate()) : nullptr)
 {
-    Level->Duplicate(DupMap);
-    Level->DuplicateSubObjects(DupMap);
 }
 
-void UWorld::Initialize()
+void UWorld::InitWorld()
 {
     // TODO: Load Scene
     CreateBaseObject();
@@ -47,7 +52,6 @@ void UWorld::ReleaseBaseObject()
         LocalGizmo = nullptr;
     }
     
-
     if (EditorPlayer)
     {
         delete EditorPlayer;
@@ -56,24 +60,28 @@ void UWorld::ReleaseBaseObject()
 
 }
 
-void UWorld::Tick(float DeltaTime)
+void UWorld::Tick(ELevelTick tickType, float deltaSeconds)
 {
-	// camera->TickComponent(DeltaTime);
-	EditorPlayer->Tick(DeltaTime);
-	LocalGizmo->Tick(DeltaTime);
-
-    // SpawnActor()에 의해 Actor가 생성된 경우, 여기서 BeginPlay 호출
-    for (AActor* Actor : Level->PendingBeginPlayActors)
+    if (tickType == LEVELTICK_ViewportsOnly)
     {
-        Actor->BeginPlay();
+        EditorPlayer->Tick(deltaSeconds);
+        LocalGizmo->Tick(deltaSeconds);
     }
-    PendingBeginPlayActors.Empty();
+    // SpawnActor()에 의해 Actor가 생성된 경우, 여기서 BeginPlay 호출
+    if (tickType == LEVELTICK_All)
+    {
+        for (AActor* Actor : Level->PendingBeginPlayActors)
+        {
+            Actor->BeginPlay();
+        }
+        Level->PendingBeginPlayActors.Empty();
 
-    // 매 틱마다 Actor->Tick(...) 호출
-	for (AActor* Actor : Level->GetActors())
-	{
-	    Actor->Tick(DeltaTime);
-	}
+        // 매 틱마다 Actor->Tick(...) 호출
+        for (AActor* Actor : Level->GetActors())
+        {
+            Actor->Tick(deltaSeconds);
+        }
+    }
 }
 
 void UWorld::Release()
@@ -106,6 +114,27 @@ void UWorld::ClearScene()
     }
     ReleaseBaseObject();
 }
+
+UObject* UWorld::Duplicate() const
+{
+    UWorld* CloneWorld = FObjectFactory::ConstructObjectFrom<UWorld>(this);
+    CloneWorld->DuplicateSubObjects(this);
+    CloneWorld->PostDuplicate();
+    return CloneWorld;
+}
+
+void UWorld::DuplicateSubObjects(const UObject* SourceObj)
+{
+    UObject::DuplicateSubObjects(SourceObj);
+    EditorPlayer = Cast<AEditorPlayer>(EditorPlayer->Duplicate());
+    Level = Cast<ULevel>(Level->Duplicate());
+}
+
+void UWorld::PostDuplicate()
+{
+    UObject::PostDuplicate();
+}
+
 void UWorld::ReloadScene(const FString& FileName)
 {
     FString NewFile = GEngine->GetSceneManager()->LoadSceneFromFile(FileName);

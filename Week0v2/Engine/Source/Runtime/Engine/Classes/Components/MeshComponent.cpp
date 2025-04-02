@@ -1,6 +1,12 @@
 #include "MeshComponent.h"
 
+#include "UObject/ObjectFactory.h"
 
+UMeshComponent::UMeshComponent(const UMeshComponent& Other)
+    : UPrimitiveComponent(Other),
+      OverrideMaterials(Other.OverrideMaterials)
+{
+}
 UMaterial* UMeshComponent::GetMaterial(uint32 ElementIndex) const
 {
     if (OverrideMaterials.IsValidIndex(ElementIndex))
@@ -54,3 +60,18 @@ void UMeshComponent::GetUsedMaterials(TArray<UMaterial*>& Out) const
         }
     }
 }
+UObject* UMeshComponent::Duplicate() const
+{
+    UMeshComponent* NewComp = FObjectFactory::ConstructObjectFrom<UMeshComponent>(this);
+    NewComp->DuplicateSubObjects(this);
+    NewComp->PostDuplicate();
+    return NewComp;
+}
+
+void UMeshComponent::DuplicateSubObjects(const UObject* Source)
+{
+    UPrimitiveComponent::DuplicateSubObjects(Source);
+    // OverrideMaterials는 복사 생성자에서 복제됨
+}
+
+void UMeshComponent::PostDuplicate() {}
