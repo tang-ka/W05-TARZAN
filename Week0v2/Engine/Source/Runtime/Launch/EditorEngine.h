@@ -45,6 +45,7 @@ public:
     static FResourceMgr resourceMgr;
     
     HWND hWnd;
+    ELevelTick levelType = ELevelTick::LEVELTICK_ViewportsOnly;
 private:
     UImGuiManager* UIMgr;
     std::shared_ptr<UWorld> GWorld;
@@ -53,7 +54,6 @@ private:
     FSceneMgr* SceneMgr;
     
     bool bTestInput = false;
-    ELevelTick levelType = ELevelTick::LEVELTICK_ViewportsOnly;
 public:
     std::shared_ptr<UWorld> GetWorld() const { return GWorld; }
     SLevelEditor* GetLevelEditor() const { return LevelEditor; }

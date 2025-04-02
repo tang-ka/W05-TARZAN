@@ -997,7 +997,7 @@ void FRenderer::PrepareRender()
     }
     else if (GEngine->GetWorld()->WorldType == EWorldType::PIE)
     {
-        UE_LOG(LogLevel::Display, "%d", GEngine->GetWorld()->GetActors().Num() );
+        // UE_LOG(LogLevel::Display, "%d", GEngine->GetWorld()->GetActors().Num() );
         for (const auto iter : GEngine->GetWorld()->GetActors())
         {
             

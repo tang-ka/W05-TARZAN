@@ -33,7 +33,7 @@ void AActor::Tick(float DeltaTime)
         if (Comp && Comp->IsComponentTickEnabled())
             Comp->TickComponent(DeltaTime);
     }
-    SetActorLocation(GetActorLocation() + FVector(1.0f, 0.0f, 0.0f));
+    // SetActorLocation(GetActorLocation() + FVector(1.0f, 0.0f, 0.0f));
 }
 
 void AActor::Destroyed()

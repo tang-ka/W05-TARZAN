@@ -166,12 +166,17 @@ void UEditorEngine::StartPIE()
 {
     // 1. BeingPlay() 호출
     GWorld->BeginPlay();
+    levelType = LEVELTICK_All;
+    UE_LOG(LogLevel::Error, "Start PIE");
 }
 
 void UEditorEngine::PausedPIE()
 {
-    GWorld->WorldType = EWorldType::PIE;
-    levelType = LEVELTICK_PauseTick;
+    if (levelType == LEVELTICK_All)
+        levelType = LEVELTICK_PauseTick;
+    else if (levelType == LEVELTICK_PauseTick)
+        levelType = LEVELTICK_All;
+    UE_LOG(LogLevel::Error, "Puase PIE");
 }
 
 void UEditorEngine::ResumingPIE()
