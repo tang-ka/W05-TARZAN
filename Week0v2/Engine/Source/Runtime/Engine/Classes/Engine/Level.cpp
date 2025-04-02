@@ -20,9 +20,10 @@ UObject* ULevel::Duplicate() const
 void ULevel::DuplicateSubObjects(const UObject* SourceObj)
 {
     UObject::DuplicateSubObjects(SourceObj);
-    for (AActor* Actor : Actors)
+    for (AActor* Actor : Cast<ULevel>(SourceObj)->GetActors())
     {
-        Actor = static_cast<AActor*>(Actor->Duplicate()); 
+        AActor* dupActor = static_cast<AActor*>(Actor->Duplicate());
+        Actors.Add(dupActor);
     }
 }
 

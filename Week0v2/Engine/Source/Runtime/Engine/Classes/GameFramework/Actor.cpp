@@ -10,7 +10,7 @@ AActor::AActor(const AActor& Other)
       ActorLabel(Other.ActorLabel),
     OwnedComponents(Other.OwnedComponents)
 {
-    // RootComponent 및 컴포넌트 복사는 DuplicateSubObjects에서 처리
+    OwnedComponents.Empty();
 }
 void AActor::BeginPlay()
 {
@@ -33,6 +33,7 @@ void AActor::Tick(float DeltaTime)
         if (Comp && Comp->IsComponentTickEnabled())
             Comp->TickComponent(DeltaTime);
     }
+    SetActorLocation(GetActorLocation() + FVector(1.0f, 0.0f, 0.0f));
 }
 
 void AActor::Destroyed()
@@ -198,10 +199,10 @@ void AActor::DuplicateSubObjects(const UObject* SourceObj)
 
     for (UActorComponent* Component : Source->OwnedComponents)
     {
-        Component = static_cast<UActorComponent*>(Component->Duplicate());
-        // ClonedComponent->Owner = this;
-        // AddComponent(ClonedComponent);
-
+        UActorComponent* dupComponent = static_cast<UActorComponent*>(Component->Duplicate());
+        dupComponent->Owner = this;
+        OwnedComponents.Add(dupComponent);
+        RootComponent = Cast<USceneComponent>(dupComponent);
         // if (const USceneComponent* OldScene = Cast<USceneComponent>(Component))
         // {
         //     if (USceneComponent* NewScene = Cast<USceneComponent>(ClonedComponent))

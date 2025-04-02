@@ -971,38 +971,36 @@ void FRenderer::RenderBatch(
 
 void FRenderer::PrepareRender()
 {
-    UE_LOG(LogLevel::Display, "%d",  GEngine->GetWorld()->WorldType);
     if (GEngine->GetWorld()->WorldType == EWorldType::Editor)
     {
-        for (const auto iter : GEngine->GetWorld()->GetActors())
+        for (const auto iter : TObjectRange<USceneComponent>())
         {
-            for (const auto iter2 : iter->GetComponents())
-            {
-                if (UStaticMeshComponent* pStaticMeshComp = Cast<UStaticMeshComponent>(iter2))
+                UE_LOG(LogLevel::Display, "%d", GUObjectArray.GetObjectItemArrayUnsafe().Num() );
+                if (UStaticMeshComponent* pStaticMeshComp = Cast<UStaticMeshComponent>(iter))
                 {
-                    if (!Cast<UGizmoBaseComponent>(iter2))
+                    if (!Cast<UGizmoBaseComponent>(iter))
                         StaticMeshObjs.Add(pStaticMeshComp);
                 }
-                if (UGizmoBaseComponent* pGizmoComp = Cast<UGizmoBaseComponent>(iter2))
+                if (UGizmoBaseComponent* pGizmoComp = Cast<UGizmoBaseComponent>(iter))
                 {
                     GizmoObjs.Add(pGizmoComp);
                 }
-                if (UBillboardComponent* pBillboardComp = Cast<UBillboardComponent>(iter2))
+                if (UBillboardComponent* pBillboardComp = Cast<UBillboardComponent>(iter))
                 {
                     BillboardObjs.Add(pBillboardComp);
                 }
-                if (ULightComponentBase* pLightComp = Cast<ULightComponentBase>(iter2))
+                if (ULightComponentBase* pLightComp = Cast<ULightComponentBase>(iter))
                 {
                     LightObjs.Add(pLightComp);
                 }
-            }
         }
     }
     else if (GEngine->GetWorld()->WorldType == EWorldType::PIE)
     {
-        UE_LOG(LogLevel::Display, "ddddd" );
+        UE_LOG(LogLevel::Display, "%d", GEngine->GetWorld()->GetActors().Num() );
         for (const auto iter : GEngine->GetWorld()->GetActors())
         {
+            
             for (const auto iter2 : iter->GetComponents())
             {
                 if (UStaticMeshComponent* pStaticMeshComp = Cast<UStaticMeshComponent>(iter2))
