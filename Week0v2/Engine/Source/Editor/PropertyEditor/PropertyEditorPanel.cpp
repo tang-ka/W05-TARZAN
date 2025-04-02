@@ -40,8 +40,8 @@ void PropertyEditorPanel::Render()
     /* Render Start */
     ImGui::Begin("Detail", nullptr, PanelFlags);
     
-    AEditorPlayer* player = GEngineLoop.GetWorld()->GetEditorPlayer();
-    AActor* PickedActor = GEngineLoop.GetWorld()->GetSelectedActor();
+    AEditorPlayer* player = GEngine->GetWorld()->GetEditorPlayer();
+    AActor* PickedActor = GEngine->GetWorld()->GetSelectedActor();
     UActorComponent* PickedComponent = nullptr;
 
     // TODO: 추후에 RTTI를 이용해서 프로퍼티 출력하기
