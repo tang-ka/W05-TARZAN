@@ -9,6 +9,7 @@
 #include "Define.h"
 #include "Container/Set.h"
 #include "RenderResourceManager.h"
+#include "ShaderManager.h"
 
 class ULightComponentBase;
 class UWorld;
@@ -166,5 +167,6 @@ public:
 
 private:
     FRenderResourceManager RenderResourceManager;
+    FShaderManager ShaderManager;
 };
 

@@ -82,7 +82,4 @@ public:
 
 private:
     ID3D11Device* Device = nullptr;
-    ID3D11Buffer* LightingBuffer = nullptr;
-    ID3D11Buffer* FlagBuffer = nullptr;
-
 };
