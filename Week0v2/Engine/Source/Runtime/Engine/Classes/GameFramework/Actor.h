@@ -88,7 +88,7 @@ public:
     bool SetActorScale(const FVector& NewScale);
     
     virtual UObject* Duplicate() const override;
-    virtual void DuplicateSubObjects() override;
+    virtual void DuplicateSubObjects(const UObject* Source) override;
     virtual void PostDuplicate() override;
 
 public:

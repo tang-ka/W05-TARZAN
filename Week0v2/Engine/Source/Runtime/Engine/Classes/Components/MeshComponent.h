@@ -24,7 +24,7 @@ protected:
 public:
     TArray<UMaterial*>& GetOverrideMaterials() { return OverrideMaterials; }
     virtual UObject* Duplicate() const override;
-    virtual void DuplicateSubObjects() override;
+    virtual void DuplicateSubObjects(const UObject* Source) override;
     virtual void PostDuplicate() override;
 };
 

@@ -182,16 +182,20 @@ void AActor::AddComponent(UActorComponent* Component)
 UObject* AActor::Duplicate() const
 {
     AActor* ClonedActor = FObjectFactory::ConstructObjectFrom<AActor>(this);
-    ClonedActor->DuplicateSubObjects();
+    ClonedActor->DuplicateSubObjects(this);
     ClonedActor->PostDuplicate();
     return ClonedActor;
 }
-void AActor::DuplicateSubObjects()
+void AActor::DuplicateSubObjects(const UObject* SourceObj)
 {
-    UObject::DuplicateSubObjects(); // 부모의 하위 오브젝트 복사 (필요 시)
+    UObject::DuplicateSubObjects(SourceObj);
+
+    const AActor* Source = Cast<AActor>(SourceObj);
+    if (!Source) return;
+
     TMap<const USceneComponent*, USceneComponent*> SceneCloneMap;
 
-    for (UActorComponent* Component : OwnedComponents)
+    for (UActorComponent* Component : Source->OwnedComponents)
     {
         UActorComponent* ClonedComponent = static_cast<UActorComponent*>(Component->Duplicate());
         ClonedComponent->Owner = this;
@@ -220,14 +224,15 @@ void AActor::DuplicateSubObjects()
         }
     }
 
-    if (RootComponent)
+    if (Source->RootComponent)
     {
-        if (USceneComponent** Found = SceneCloneMap.Find(RootComponent))
+        if (USceneComponent** Found = SceneCloneMap.Find(Source->RootComponent))
         {
             SetRootComponent(*Found);
         }
     }
 }
+
 void AActor::PostDuplicate()
 {
     // Override in subclasses if needed

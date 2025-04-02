@@ -37,11 +37,11 @@ public:
     virtual UObject* Duplicate() const
     {
         UObject* NewObject = new UObject();
-        NewObject->DuplicateSubObjects();       // 깊은 복사 수행
+        NewObject->DuplicateSubObjects(this);       // 깊은 복사 수행
         return NewObject;
     }
 
-    virtual void DuplicateSubObjects() {} // 하위 클래스에서 override
+    virtual void DuplicateSubObjects(const UObject* Source){}; // 하위 클래스에서 override
     virtual void PostDuplicate(){};
 private:
     friend class FObjectFactory;

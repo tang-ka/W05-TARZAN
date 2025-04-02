@@ -63,14 +63,14 @@ void UMeshComponent::GetUsedMaterials(TArray<UMaterial*>& Out) const
 UObject* UMeshComponent::Duplicate() const
 {
     UMeshComponent* NewComp = FObjectFactory::ConstructObjectFrom<UMeshComponent>(this);
-    NewComp->DuplicateSubObjects();
+    NewComp->DuplicateSubObjects(this);
     NewComp->PostDuplicate();
     return NewComp;
 }
 
-void UMeshComponent::DuplicateSubObjects()
+void UMeshComponent::DuplicateSubObjects(const UObject* Source)
 {
-    UPrimitiveComponent::DuplicateSubObjects();
+    UPrimitiveComponent::DuplicateSubObjects(Source);
     // OverrideMaterials는 복사 생성자에서 복제됨
 }
 

@@ -11,7 +11,7 @@ public:
     UStaticMeshComponent(const UStaticMeshComponent& Other);
 
     virtual UObject* Duplicate() const override;
-    virtual void DuplicateSubObjects() override;
+    virtual void DuplicateSubObjects(const UObject* Source) override;
     virtual void PostDuplicate() override;
 
 

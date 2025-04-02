@@ -148,14 +148,14 @@ void USceneComponent::SetAttachParent(USceneComponent* InParent)
 UObject* USceneComponent::Duplicate() const
 {
     USceneComponent* NewComp = FObjectFactory::ConstructObjectFrom<USceneComponent>(this);
-    NewComp->DuplicateSubObjects();
+    NewComp->DuplicateSubObjects(this);
     NewComp->PostDuplicate();
     return NewComp;
 }
 
-void USceneComponent::DuplicateSubObjects()
+void USceneComponent::DuplicateSubObjects(const UObject* Source)
 {
-    UActorComponent::DuplicateSubObjects();
+    UActorComponent::DuplicateSubObjects(Source);
     // AttachParent는 AActor::DuplicateSubObjects에서 복원
 }
 
