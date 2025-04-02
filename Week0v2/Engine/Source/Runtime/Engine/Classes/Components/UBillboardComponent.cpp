@@ -69,7 +69,7 @@ void UBillboardComponent::SetUUIDParent(USceneComponent* _parent)
 
 FMatrix UBillboardComponent::CreateBillboardMatrix()
 {
-	FMatrix CameraView = GetEngine().GetLevelEditor()->GetActiveViewportClient()->GetViewMatrix();
+	FMatrix CameraView = GetEngine()->GetLevelEditor()->GetActiveViewportClient()->GetViewMatrix();
 
 	CameraView.M[0][3] = 0.0f;
 	CameraView.M[1][3] = 0.0f;
@@ -118,7 +118,7 @@ bool UBillboardComponent::CheckPickingOnNDC(const TArray<FVector>& checkQuad, fl
 	bool result = false;
 	POINT mousePos;
 	GetCursorPos(&mousePos);
-	ScreenToClient(GEngine.hWnd, &mousePos);
+	ScreenToClient(GEngine->hWnd, &mousePos);
 
 	D3D11_VIEWPORT viewport;
 	UINT numViewports = 1;
@@ -129,13 +129,13 @@ bool UBillboardComponent::CheckPickingOnNDC(const TArray<FVector>& checkQuad, fl
 	FVector pickPosition;
 	int screenX = mousePos.x;
 	int screenY = mousePos.y;
-    FMatrix projectionMatrix = GetEngine().GetLevelEditor()->GetActiveViewportClient()->GetProjectionMatrix();
+    FMatrix projectionMatrix = GetEngine()->GetLevelEditor()->GetActiveViewportClient()->GetProjectionMatrix();
 	pickPosition.x = ((2.0f * screenX / viewport.Width) - 1);
 	pickPosition.y = -((2.0f * screenY / viewport.Height) - 1);
 	pickPosition.z = 1.0f; // Near Plane
 
 	FMatrix M = CreateBillboardMatrix();
-    FMatrix V = GEngine.GetLevelEditor()->GetActiveViewportClient()->GetViewMatrix();;
+    FMatrix V = GEngine->GetLevelEditor()->GetActiveViewportClient()->GetViewMatrix();;
 	FMatrix P = projectionMatrix;
 	FMatrix MVP = M * V * P;
 

@@ -1,12 +1,15 @@
 #pragma once
-#include "EditorEngine.h"
+#include "Define.h"
 #include "NameTypes.h"
+#include "Container/String.h"
 
-extern UEditorEngine GEngine;
+
+class UEditorEngine;
+extern UEditorEngine* GEngine;
 
 class UClass;
 class UWorld;
-
+//
 
 class UObject
 {
@@ -37,12 +40,10 @@ public:
     UObject();
     virtual ~UObject() = default;
 
-    UWorld* GetWorld()
-    {
-        return GEngine.GetWorld();
-    }
+    UWorld* GetWorld();
+    ;
 
-    UEditorEngine& GetEngine()
+    UEditorEngine* GetEngine()
     {
         return GEngine;
     }

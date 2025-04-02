@@ -30,16 +30,9 @@ void UWorld::CreateBaseObject()
 {
     if (EditorPlayer == nullptr)
     {
-        EditorPlayer = FObjectFactory::ConstructObject<AEditorPlayer>();;
+        EditorPlayer = FObjectFactory::ConstructObject<AEditorPlayer>();
     }
-
-    if (camera == nullptr)
-    {
-        camera = FObjectFactory::ConstructObject<UCameraComponent>();
-        camera->SetLocation(FVector(8.0f, 8.0f, 8.f));
-        camera->SetRotation(FVector(0.0f, 45.0f, -135.0f));
-    }
-
+    
     if (LocalGizmo == nullptr)
     {
         LocalGizmo = FObjectFactory::ConstructObject<UTransformGizmo>();
@@ -120,14 +113,14 @@ void UWorld::ClearScene()
 }
 void UWorld::ReloadScene(const FString& FileName)
 {
-    FString NewFile = GEngine.GetSceneManager()->LoadSceneFromFile(FileName);
+    FString NewFile = GEngine->GetSceneManager()->LoadSceneFromFile(FileName);
 
     // if (SceneOctree && SceneOctree->GetRoot())
     //     SceneOctree->GetRoot()->TickBuffers(GCurrentFrame, 0);
 
     ClearScene(); // 기존 오브젝트 제거
     CreateBaseObject();
-    GEngine.GetSceneManager()->ParseSceneData(NewFile);
+    GEngine->GetSceneManager()->ParseSceneData(NewFile);
 }
 
 bool UWorld::DestroyActor(AActor* ThisActor)

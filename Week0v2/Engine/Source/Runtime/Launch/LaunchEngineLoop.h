@@ -1,8 +1,9 @@
 ﻿#pragma once
+#include "UnrealEngine.h"
 #include "HAL/PlatformType.h"
 
 
-class FEngineLoop
+class FEngineLoop : IEngineLoop
 {
 public:
     FEngineLoop();
@@ -11,7 +12,7 @@ public:
     int32 Init(HINSTANCE hInstance);
     void Tick();
     void Exit();
-
+    virtual void ClearPendingCleanupObjects();
     void WindowInit(HINSTANCE hInstance);
 
     HWND hWnd;

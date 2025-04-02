@@ -13,8 +13,6 @@
 FGraphicsDevice UEditorEngine::graphicDevice;
 FRenderer UEditorEngine::renderer;
 FResourceMgr UEditorEngine::resourceMgr;
-uint32 UEditorEngine::TotalAllocationBytes = 0;
-uint32 UEditorEngine::TotalAllocationCount = 0;
 
 UEditorEngine::UEditorEngine()
     : hWnd(nullptr)

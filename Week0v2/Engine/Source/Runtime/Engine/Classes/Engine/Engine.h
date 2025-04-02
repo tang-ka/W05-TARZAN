@@ -1,16 +1,20 @@
 ﻿#pragma once
+#include "Container/Array.h"
 #include "UObject/Object.h"
+#include "UObject/ObjectMacros.h"
 
 struct FWorldContext
 {
     
 };
 
-
-
-class UEngine : UObject
+class UEngine : public UObject
 {
+    DECLARE_CLASS(UEngine, UObject)
+
 public:
+    UEngine();
+    ~UEngine();
     virtual void Tick(float deltaSceconds);
 
 protected:

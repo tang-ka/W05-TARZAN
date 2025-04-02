@@ -1,5 +1,6 @@
-#include "Engine/Source/Runtime/CoreUObject/UObject/Object.h"
+#include "Object.h"
 
+#include "EditorEngine.h"
 #include "UClass.h"
 #include "UObjectHash.h"
 
@@ -16,6 +17,11 @@ UObject::UObject()
     , InternalIndex(std::numeric_limits<uint32>::max())
     , NamePrivate("None")
 {
+}
+
+UWorld* UObject::GetWorld()
+{
+    return GEngine->GetWorld();
 }
 
 bool UObject::IsA(const UClass* SomeBase) const
