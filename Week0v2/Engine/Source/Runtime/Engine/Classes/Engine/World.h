@@ -1,5 +1,7 @@
 #pragma once
 #include "Define.h"
+#include "EngineBaseTypes.h"
+#include "EngineTypes.h"
 #include "Level.h"
 #include "Container/Set.h"
 #include "UObject/ObjectFactory.h"
@@ -22,10 +24,10 @@ public:
     UWorld() = default;
 
     virtual void DuplicateSubObjects(FDuplicationMap& DupMap) override;
-    void Initialize();
+    void InitWorld();
     void CreateBaseObject();
     void ReleaseBaseObject();
-    void Tick(float DeltaTime);
+    void Tick(ELevelTick tickType, float deltaSeconds);
     void Release();
     void ReloadScene(const FString& FileName);
     void ClearScene();
@@ -46,21 +48,17 @@ private:
     ULevel* Level;
     /** World에서 관리되는 모든 Actor의 목록 */
     TSet<AActor*> ActorsArray;
-
     /** Actor가 Spawn되었고, 아직 BeginPlay가 호출되지 않은 Actor들 */
     TArray<AActor*> PendingBeginPlayActors;
-
     AActor* SelectedActor = nullptr;
-
     USceneComponent* pickingGizmo = nullptr;
     AEditorPlayer* EditorPlayer = nullptr;
 public:
+    EWorldType::Type WorldType = EWorldType::None;
     const TSet<AActor*>& GetActors() const { return ActorsArray; }
     ULevel* GetLevel() const { return Level; }
     UTransformGizmo* LocalGizmo = nullptr;
     AEditorPlayer* GetEditorPlayer() const { return EditorPlayer; }
-
-
     // EditorManager 같은데로 보내기
     AActor* GetSelectedActor() const { return SelectedActor; }
     void SetPickedActor(AActor* InActor)

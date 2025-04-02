@@ -19,7 +19,7 @@ void UWorld::DuplicateSubObjects(FDuplicationMap& DupMap)
     Level->DuplicateSubObjects(DupMap);
 }
 
-void UWorld::Initialize()
+void UWorld::InitWorld()
 {
     // TODO: Load Scene
     CreateBaseObject();
@@ -47,7 +47,6 @@ void UWorld::ReleaseBaseObject()
         LocalGizmo = nullptr;
     }
     
-
     if (EditorPlayer)
     {
         delete EditorPlayer;
@@ -56,24 +55,28 @@ void UWorld::ReleaseBaseObject()
 
 }
 
-void UWorld::Tick(float DeltaTime)
+void UWorld::Tick(ELevelTick tickType, float deltaSeconds)
 {
-	// camera->TickComponent(DeltaTime);
-	EditorPlayer->Tick(DeltaTime);
-	LocalGizmo->Tick(DeltaTime);
-
-    // SpawnActor()에 의해 Actor가 생성된 경우, 여기서 BeginPlay 호출
-    for (AActor* Actor : Level->PendingBeginPlayActors)
+    if (tickType != LEVELTICK_PauseTick and tickType != LEVELTICK_TimeOnly)
     {
-        Actor->BeginPlay();
+        EditorPlayer->Tick(deltaSeconds);
+        LocalGizmo->Tick(deltaSeconds);
     }
-    PendingBeginPlayActors.Empty();
+    // SpawnActor()에 의해 Actor가 생성된 경우, 여기서 BeginPlay 호출
+    if (tickType == LEVELTICK_All)
+    {
+        for (AActor* Actor : Level->PendingBeginPlayActors)
+        {
+            Actor->BeginPlay();
+        }
+        PendingBeginPlayActors.Empty();
 
-    // 매 틱마다 Actor->Tick(...) 호출
-	for (AActor* Actor : Level->GetActors())
-	{
-	    Actor->Tick(DeltaTime);
-	}
+        // 매 틱마다 Actor->Tick(...) 호출
+        for (AActor* Actor : Level->GetActors())
+        {
+            Actor->Tick(deltaSeconds);
+        }
+    }
 }
 
 void UWorld::Release()
