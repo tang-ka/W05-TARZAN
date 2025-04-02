@@ -1,6 +1,6 @@
 #include "PropertyEditorPanel.h"
 
-#include "World.h"
+#include "Engine/World.h"
 #include "Actors/Player.h"
 #include "Components/LightComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -38,8 +38,8 @@ void PropertyEditorPanel::Render()
     /* Render Start */
     ImGui::Begin("Detail", nullptr, PanelFlags);
     
-    AEditorPlayer* player = GEngineLoop.GetWorld()->GetEditorPlayer();
-    AActor* PickedActor = GEngineLoop.GetWorld()->GetSelectedActor();
+    AEditorPlayer* player = GEngine->GetWorld()->GetEditorPlayer();
+    AActor* PickedActor = GEngine->GetWorld()->GetSelectedActor();
     if (PickedActor)
     {
         ImGui::SetItemDefaultFocus();

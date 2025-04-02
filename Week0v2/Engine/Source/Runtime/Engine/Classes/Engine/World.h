@@ -1,5 +1,6 @@
 #pragma once
 #include "Define.h"
+#include "Level.h"
 #include "Container/Set.h"
 #include "UObject/ObjectFactory.h"
 #include "UObject/ObjectMacros.h"
@@ -20,13 +21,14 @@ enum class EWorldType
     PIE,
 };
 
-class UWorld : public UObject
+class UWorld final : public UObject
 {
     DECLARE_CLASS(UWorld, UObject)
 
 public:
     UWorld() = default;
 
+    virtual void DuplicateSubObjects(FDuplicationMap& DupMap) override;
     void Initialize();
     void CreateBaseObject();
     void ReleaseBaseObject();
@@ -48,7 +50,7 @@ public:
 
 private:
     const FString defaultMapName = "Default";
-
+    ULevel* Level;
     /** World에서 관리되는 모든 Actor의 목록 */
     TSet<AActor*> ActorsArray;
 
@@ -58,16 +60,11 @@ private:
     AActor* SelectedActor = nullptr;
 
     USceneComponent* pickingGizmo = nullptr;
-    UCameraComponent* camera = nullptr;
     AEditorPlayer* EditorPlayer = nullptr;
-
 public:
-    UObject* worldGizmo = nullptr;
-
     const TSet<AActor*>& GetActors() const { return ActorsArray; }
-
+    ULevel* GetLevel() const { return Level; }
     UTransformGizmo* LocalGizmo = nullptr;
-    UCameraComponent* GetCamera() const { return camera; }
     AEditorPlayer* GetEditorPlayer() const { return EditorPlayer; }
 
 
@@ -78,7 +75,6 @@ public:
         SelectedActor = InActor;
     }
 
-    UObject* GetWorldGizmo() const { return worldGizmo; }
     USceneComponent* GetPickingGizmo() const { return pickingGizmo; }
     void SetPickingGizmo(UObject* Object);
 
@@ -88,7 +84,7 @@ public:
     void BeginPlay();
     static UWorld* DuplicateWorldForPIE(UWorld* world);
 };
-
+// UWorld* GWorld = nullptr;
 
 template <typename T>
     requires std::derived_from<T, AActor>
@@ -98,7 +94,8 @@ T* UWorld::SpawnActor()
     // TODO: 일단 AddComponent에서 Component마다 초기화
     // 추후에 RegisterComponent() 만들어지면 주석 해제
     // Actor->InitializeComponents();
-    ActorsArray.Add(Actor);
-    PendingBeginPlayActors.Add(Actor);
+    
+    Level->GetActors().Add(Actor);
+    Level->PendingBeginPlayActors.Add(Actor);
     return Actor;
 }

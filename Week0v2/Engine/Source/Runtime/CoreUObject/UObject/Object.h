@@ -1,26 +1,30 @@
 #pragma once
-#include "EngineLoop.h"
-#include "NameTypes.h"
 
-extern FEngineLoop GEngineLoop;
+#include "Define.h"
+#include "NameTypes.h"
+#include "Container/Map.h"
+#include "Container/String.h"
+
+
+class UEditorEngine;
+extern UEditorEngine* GEngine;
 
 class UClass;
 class UWorld;
-
+//
+class UObject;
+using FDuplicationMap = std::unordered_map<UObject*, UObject*>;
 
 class UObject
 {
 private:
-    UObject(const UObject&) = delete;
-    UObject& operator=(const UObject&) = delete;
-    UObject(UObject&&) = delete;
-    UObject& operator=(UObject&&) = delete;
 
 public:
     using Super = UObject;
     using ThisClass = UObject;
 
     static UClass* StaticClass();
+
 
 private:
     friend class FObjectFactory;
@@ -37,14 +41,12 @@ public:
     UObject();
     virtual ~UObject() = default;
 
-    UWorld* GetWorld()
-    {
-        return GEngineLoop.GetWorld();
-    }
+    UWorld* GetWorld();
+    ;
 
-    FEngineLoop& GetEngine()
+    UEditorEngine* GetEngine()
     {
-        return GEngineLoop;
+        return GEngine;
     }
 
     FName GetFName() const { return NamePrivate; }
@@ -97,5 +99,8 @@ public:
 
         return result;
     }
-private:
+public:
+    virtual void DuplicateSubObjects(FDuplicationMap& DupMap);
+    virtual UObject* Duplicate();
+    virtual UObject* Duplicate(FDuplicationMap& DupMap);
 };

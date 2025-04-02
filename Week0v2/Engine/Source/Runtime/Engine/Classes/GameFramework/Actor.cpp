@@ -1,6 +1,6 @@
 ﻿#include "Actor.h"
 
-#include "World.h"
+#include "Engine/World.h"
 
 void AActor::BeginPlay()
 {
@@ -40,6 +40,15 @@ void AActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
         }
     }
     UninitializeComponents();
+}
+
+void AActor::DuplicateSubObjects(FDuplicationMap& DupMap)
+{
+    for (auto component : OwnedComponents)
+    {
+        component = Cast<UActorComponent>(component->Duplicate(DupMap));
+        component->DuplicateSubObjects(DupMap);
+    }
 }
 
 bool AActor::Destroy()

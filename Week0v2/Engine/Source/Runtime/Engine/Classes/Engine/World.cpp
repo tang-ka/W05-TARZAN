@@ -1,4 +1,4 @@
-#include "Engine/Source/Runtime/Engine/World.h"
+#include "World.h"
 
 #include "Actors/Player.h"
 #include "BaseGizmos/TransformGizmo.h"
@@ -10,36 +10,29 @@
 #include "Components/SkySphereComponent.h"
 #include "UnrealEd/SceneMgr.h"
 #include "UObject/UObjectIterator.h"
+#include "Level.h"
 
+
+void UWorld::DuplicateSubObjects(FDuplicationMap& DupMap)
+{
+    Level->Duplicate(DupMap);
+    Level->DuplicateSubObjects(DupMap);
+}
 
 void UWorld::Initialize()
 {
     // TODO: Load Scene
     CreateBaseObject();
-    //SpawnObject(OBJ_CUBE);
-    FManagerOBJ::CreateStaticMesh("Assets/Dodge/Dodge.obj");
-
-    FManagerOBJ::CreateStaticMesh("Assets/SkySphere.obj");
-    AActor* SpawnedActor = SpawnActor<AActor>();
-    USkySphereComponent* skySphere = SpawnedActor->AddComponent<USkySphereComponent>();
-    skySphere->SetStaticMesh(FManagerOBJ::GetStaticMesh(L"SkySphere.obj"));
-    skySphere->GetStaticMesh()->GetMaterials()[0]->Material->SetDiffuse(FVector((float)32/255, (float)171/255, (float)191/255));
+    Level = FObjectFactory::ConstructObject<ULevel>();
 }
 
 void UWorld::CreateBaseObject()
 {
     if (EditorPlayer == nullptr)
     {
-        EditorPlayer = FObjectFactory::ConstructObject<AEditorPlayer>();;
+        EditorPlayer = FObjectFactory::ConstructObject<AEditorPlayer>();
     }
-
-    if (camera == nullptr)
-    {
-        camera = FObjectFactory::ConstructObject<UCameraComponent>();
-        camera->SetLocation(FVector(8.0f, 8.0f, 8.f));
-        camera->SetRotation(FVector(0.0f, 45.0f, -135.0f));
-    }
-
+    
     if (LocalGizmo == nullptr)
     {
         LocalGizmo = FObjectFactory::ConstructObject<UTransformGizmo>();
@@ -54,11 +47,6 @@ void UWorld::ReleaseBaseObject()
         LocalGizmo = nullptr;
     }
     
-    // if (camera)
-    // {
-    //     delete camera;
-    //     camera = nullptr;
-    // }
 
     if (EditorPlayer)
     {
@@ -75,14 +63,14 @@ void UWorld::Tick(float DeltaTime)
 	LocalGizmo->Tick(DeltaTime);
 
     // SpawnActor()에 의해 Actor가 생성된 경우, 여기서 BeginPlay 호출
-    for (AActor* Actor : PendingBeginPlayActors)
+    for (AActor* Actor : Level->PendingBeginPlayActors)
     {
         Actor->BeginPlay();
     }
     PendingBeginPlayActors.Empty();
 
     // 매 틱마다 Actor->Tick(...) 호출
-	for (AActor* Actor : ActorsArray)
+	for (AActor* Actor : Level->GetActors())
 	{
 	    Actor->Tick(DeltaTime);
 	}
@@ -90,7 +78,7 @@ void UWorld::Tick(float DeltaTime)
 
 void UWorld::Release()
 {
-	for (AActor* Actor : ActorsArray)
+	for (AActor* Actor : Level->GetActors())
 	{
 		Actor->EndPlay(EEndPlayReason::WorldTransition);
         TSet<UActorComponent*> Components = Actor->GetComponents();
@@ -100,7 +88,7 @@ void UWorld::Release()
 	    }
 	    GUObjectArray.MarkRemoveObject(Actor);
 	}
-    ActorsArray.Empty();
+    Level->GetActors().Empty();
 
 	pickingGizmo = nullptr;
 	ReleaseBaseObject();
@@ -120,14 +108,14 @@ void UWorld::ClearScene()
 }
 void UWorld::ReloadScene(const FString& FileName)
 {
-    FString NewFile = GEngineLoop.GetSceneManager()->LoadSceneFromFile(FileName);
+    FString NewFile = GEngine->GetSceneManager()->LoadSceneFromFile(FileName);
 
     // if (SceneOctree && SceneOctree->GetRoot())
     //     SceneOctree->GetRoot()->TickBuffers(GCurrentFrame, 0);
 
     ClearScene(); // 기존 오브젝트 제거
     CreateBaseObject();
-    GEngineLoop.GetSceneManager()->ParseSceneData(NewFile);
+    GEngine->GetSceneManager()->ParseSceneData(NewFile);
 }
 
 bool UWorld::DestroyActor(AActor* ThisActor)
@@ -157,7 +145,7 @@ bool UWorld::DestroyActor(AActor* ThisActor)
     }
 
     // World에서 제거
-    ActorsArray.Remove(ThisActor);
+    Level->GetActors().Remove(ThisActor);
 
     // 제거 대기열에 추가
     GUObjectArray.MarkRemoveObject(ThisActor);

@@ -2,6 +2,8 @@
 #include "PrimitiveComponent.h"
 #include "UTexture.h"
 
+struct FTexture;
+
 class UBillboardComponent : public UPrimitiveComponent
 {
     DECLARE_CLASS(UBillboardComponent, UPrimitiveComponent)

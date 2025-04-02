@@ -1,6 +1,6 @@
 #include "GizmoBaseComponent.h"
 
-#include "World.h"
+#include "Engine/World.h"
 #include "GameFramework/Actor.h"
 #include "LevelEditor/SLevelEditor.h"
 #include "UnrealEd/EditorViewportClient.h"
@@ -58,7 +58,7 @@ void UGizmoBaseComponent::TickComponent(float DeltaTime)
 
     if (AActor* PickedActor = GetWorld()->GetSelectedActor())
     {
-        std::shared_ptr<FEditorViewportClient> activeViewport = GetEngine().GetLevelEditor()->GetActiveViewportClient();
+        std::shared_ptr<FEditorViewportClient> activeViewport = GetEngine()->GetLevelEditor()->GetActiveViewportClient();
         if (activeViewport->IsPerspective())
         {
             float scaler = abs(
