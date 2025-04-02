@@ -126,6 +126,7 @@ void UWorld::DuplicateSubObjects(const UObject* SourceObj)
 {
     UObject::DuplicateSubObjects(SourceObj);
     Level = Cast<ULevel>(Level->Duplicate());
+    EditorPlayer = FObjectFactory::ConstructObject<AEditorPlayer>();
 }
 
 void UWorld::PostDuplicate()

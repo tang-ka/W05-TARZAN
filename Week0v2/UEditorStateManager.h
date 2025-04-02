@@ -69,12 +69,20 @@ inline void UEditorStateManager::SetState(EEditorState NewState)
     case EEditorState::Editing:
         break;
 
-    case EEditorState::PreparingPlay:       // Connect to play button
+    case EEditorState::PreparingPlay:
+        // Connect to play button
+            if (GEngine->levelType==LEVELTICK_PauseTick)
+            {
+                GEngine->levelType = LEVELTICK_All;
+                return;
+            }
         GEngine->PreparePIE();           // 추후 Prepare에 실패했을 때 고려 할 수 있어야 할듯
         SetState(EEditorState::Playing);
         return;
 
-    case EEditorState::Playing:             // auto Transition
+    case EEditorState::Playing:
+        // auto Transition
+            
         GEngine->StartPIE();
         break;
 
@@ -107,7 +115,7 @@ inline bool UEditorStateManager::IsValidTransition(EEditorState To)
         return To == EEditorState::Paused || To == EEditorState::Stopped;
 
     case EEditorState::Paused:
-        return To == EEditorState::Resuming || To == EEditorState::Stopped;
+        return To == EEditorState::Resuming || To == EEditorState::Stopped || To == EEditorState::Playing|| To == EEditorState::Paused;
 
     case EEditorState::Resuming:
         return To == EEditorState::Playing || To == EEditorState::Stopped;

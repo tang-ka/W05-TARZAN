@@ -132,3 +132,9 @@ void UStaticMeshComponent::DuplicateSubObjects(const UObject* Source)
 }
 
 void UStaticMeshComponent::PostDuplicate() {}
+
+void UStaticMeshComponent::TickComponent(float DeltaTime)
+{
+    Timer += DeltaTime * 0.005f;
+    SetLocation(GetWorldLocation()+ (FVector(1.0f,1.0f, 1.0f) * sin(Timer)));
+}

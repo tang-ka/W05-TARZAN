@@ -5,6 +5,7 @@
 #include "UnrealEd/EditorViewportClient.h"
 #include "UnrealEd/UnrealEd.h"
 #include "UnrealClient.h"
+#include "Actors/Player.h"
 #include "GameFramework/Actor.h"
 #include "slate/Widgets/Layout/SSplitter.h"
 #include "LevelEditor/SLevelEditor.h"
@@ -86,22 +87,23 @@ void UEditorEngine::Render()
 
 void UEditorEngine::Tick(float deltaSeconds)
 {
-    for (FWorldContext& WorldContext : worldContexts)
-    {
-        std::shared_ptr<UWorld> EditorWorld = WorldContext.World();
-        // GWorld = EditorWorld;
-        // GWorld->Tick(levelType, deltaSeconds);
-        if (EditorWorld && WorldContext.WorldType == EWorldType::Editor)
-        {
-            // GWorld = EditorWorld;
-            GWorld->Tick(LEVELTICK_ViewportsOnly, deltaSeconds);
-        }
-        else if (EditorWorld && WorldContext.WorldType == EWorldType::PIE)
-        {
-            // GWorld = EditorWorld;
-            GWorld->Tick(levelType, deltaSeconds);
-        }
-    }
+    // for (FWorldContext& WorldContext : worldContexts)
+    // {
+    //     std::shared_ptr<UWorld> EditorWorld = WorldContext.World();
+    //     // GWorld = EditorWorld;
+    //     // GWorld->Tick(levelType, deltaSeconds);
+    //     if (EditorWorld && WorldContext.WorldType == EWorldType::Editor)
+    //     {
+    //         // GWorld = EditorWorld;
+    //         GWorld->Tick(LEVELTICK_ViewportsOnly, deltaSeconds);
+    //     }
+    //     else if (EditorWorld && WorldContext.WorldType == EWorldType::PIE)
+    //     {
+    //         // GWorld = EditorWorld;
+    //         GWorld->Tick(LEVELTICK_All, deltaSeconds);
+    //     }
+    // }
+    GWorld->Tick(levelType, deltaSeconds);
     Input();
     // GWorld->Tick(LEVELTICK_All, deltaSeconds);
     LevelEditor->Tick(deltaSeconds);
@@ -154,26 +156,27 @@ void UEditorEngine::PreparePIE()
 {
     // 1. World 복제
     worldContexts[1].thisCurrentWorld = std::shared_ptr<UWorld>(Cast<UWorld>(GWorld->Duplicate()));
-    
     GWorld = worldContexts[1].thisCurrentWorld;
     GWorld->WorldType = EWorldType::PIE;
-    UE_LOG(LogLevel::Display, "%d",  GEngine->GetWorld()->WorldType);
     levelType = LEVELTICK_All;
-
-    // 2. 복제한 World Type PIE로 변경
-    //PIEWorld->SetType(EWorldType::PIE);
+    
 }
 
 void UEditorEngine::StartPIE()
 {
     // 1. BeingPlay() 호출
     GWorld->BeginPlay();
+    levelType = LEVELTICK_All;
+    UE_LOG(LogLevel::Error, "Start PIE");
 }
 
 void UEditorEngine::PausedPIE()
 {
-    GWorld->WorldType = EWorldType::PIE;
-    levelType = LEVELTICK_PauseTick;
+    if (levelType == LEVELTICK_All)
+        levelType = LEVELTICK_PauseTick;
+    else if (levelType == LEVELTICK_PauseTick)
+        levelType = LEVELTICK_All;
+    UE_LOG(LogLevel::Error, "Puase PIE");
 }
 
 void UEditorEngine::ResumingPIE()
@@ -185,7 +188,17 @@ void UEditorEngine::StopPIE()
 {
     // 1. World Clear
     GWorld = worldContexts[0].thisCurrentWorld;
+
+    for (auto iter : worldContexts[1].World()->GetActors())
+    {
+        iter->Destroy();
+        GUObjectArray.MarkRemoveObject(iter);
+    }
+    GUObjectArray.MarkRemoveObject(worldContexts[1].World()->GetLevel());
+    worldContexts[1].World()->GetEditorPlayer()->Destroy();
+    GUObjectArray.MarkRemoveObject( worldContexts[1].World()->GetWorld());
     worldContexts[1].thisCurrentWorld.reset();
+    
     // GWorld->WorldType = EWorldType::Editor;
     levelType = LEVELTICK_ViewportsOnly;
     // if (GWorld && GWorld->IsPIEWorld())

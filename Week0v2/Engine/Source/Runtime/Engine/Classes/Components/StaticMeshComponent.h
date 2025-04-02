@@ -13,7 +13,7 @@ public:
     virtual UObject* Duplicate() const override;
     virtual void DuplicateSubObjects(const UObject* Source) override;
     virtual void PostDuplicate() override;
-
+    virtual void TickComponent(float DeltaTime) override;
 
     PROPERTY(int, selectedSubMeshIndex);
 
@@ -36,4 +36,6 @@ public:
 protected:
     UStaticMesh* staticMesh = nullptr;
     int selectedSubMeshIndex = -1;
+private:
+    float Timer = 0.0f;
 };

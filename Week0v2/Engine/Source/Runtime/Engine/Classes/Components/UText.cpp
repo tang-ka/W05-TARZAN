@@ -19,6 +19,11 @@ UText::~UText()
 	}
 }
 
+UText::UText(const UText& other) :UBillboardComponent(other), vertexTextBuffer(other.vertexTextBuffer), vertexTextureArr(other.vertexTextureArr)
+,numTextVertices(other.numTextVertices), text(other.text), quad(other.quad)
+{
+}
+
 void UText::InitializeComponent()
 {
     Super::InitializeComponent();
@@ -27,17 +32,7 @@ void UText::InitializeComponent()
 void UText::TickComponent(float DeltaTime)
 {
 	Super::TickComponent(DeltaTime);
-
-    //FVector newCamera = GetWorld()->GetCamera()->GetForwardVector();
-    //newCamera.z = 0;
-    //newCamera = newCamera.Normalize();
-    //float tmp = FVector(1.0f, 0.0f, 0.0f).Dot(newCamera);
-    //float rad = acosf(tmp);
-    //float degree = JungleMath::RadToDeg(rad);
-    //FVector vtmp = FVector(1.0f, 0.0f, 0.0f).Cross(GetWorld()->GetCamera()->GetForwardVector());
-    //if (vtmp.z < 0)
-    //	degree *= -1;
-    //RelativeRotation.z = degree + 90;
+    
 }
 
 void UText::ClearText()
@@ -62,6 +57,24 @@ int UText::CheckRayIntersection(FVector& rayOrigin, FVector& rayDirection, float
 	}
 
 	return CheckPickingOnNDC(quad,pfNearHitDistance);
+}
+
+UObject* UText::Duplicate() const
+{
+    UText* ClonedActor = FObjectFactory::ConstructObjectFrom<UText>(this);
+    ClonedActor->DuplicateSubObjects(this);
+    ClonedActor->PostDuplicate();
+    return ClonedActor;
+}
+
+void UText::DuplicateSubObjects(const UObject* Source)
+{
+    UBillboardComponent::DuplicateSubObjects(Source);
+}
+
+void UText::PostDuplicate()
+{
+    UBillboardComponent::PostDuplicate();
 }
 
 

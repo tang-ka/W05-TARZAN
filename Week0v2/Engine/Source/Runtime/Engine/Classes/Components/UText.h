@@ -8,7 +8,7 @@ class UText : public UBillboardComponent
 public:
     UText();
     virtual ~UText() override;
-
+    UText(const UText& other);
     virtual void InitializeComponent() override;
     virtual void TickComponent(float DeltaTime) override;
     void ClearText();
@@ -16,7 +16,10 @@ public:
     FWString GetText() { return text; }
     void SetRowColumnCount(int _cellsPerRow, int _cellsPerColumn);
     virtual int CheckRayIntersection(FVector& rayOrigin, FVector& rayDirection, float& pfNearHitDistance) override;
-
+    virtual UObject* Duplicate() const override;
+    virtual void DuplicateSubObjects(const UObject* Source) override;
+    virtual void PostDuplicate() override;
+    
     ID3D11Buffer* vertexTextBuffer;
     TArray<FVertexTexture> vertexTextureArr;
     UINT numTextVertices;
