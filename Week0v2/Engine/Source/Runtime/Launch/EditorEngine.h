@@ -5,6 +5,7 @@
 #include "Renderer/Renderer.h"
 #include "Engine/ResourceMgr.h"
 
+
 class FSceneMgr;
 class UnrealEd;
 class UImGuiManager;
@@ -14,12 +15,13 @@ class SSplitterV;
 class SSplitterH;
 class SLevelEditor;
 
+extern UWorld* GWorld;
+
 class UEditorEngine : public UEngine
 {
     DECLARE_CLASS(UEditorEngine, UEngine)
     
 public:
-    
     UEditorEngine();
     int32 Init(HWND hwnd);
     void Render();
@@ -37,7 +39,7 @@ public:
     HWND hWnd;
 private:
     UImGuiManager* UIMgr;
-    UWorld* GWorld;
+    // UWorld* GWorld;
     SLevelEditor* LevelEditor;
     UnrealEd* UnrealEditor;
     FSceneMgr* SceneMgr;
@@ -45,7 +47,7 @@ private:
     bool bTestInput = false;
 
 public:
-    UWorld* GetWorld() const { return GWorld; }
+     UWorld* GetWorld() const { return GWorld; }
     SLevelEditor* GetLevelEditor() const { return LevelEditor; }
     UnrealEd* GetUnrealEditor() const { return UnrealEditor; }
     FSceneMgr* GetSceneManager() const { return SceneMgr; }

@@ -1,5 +1,6 @@
 #pragma once
 #include "Define.h"
+#include "Level.h"
 #include "Container/Set.h"
 #include "UObject/ObjectFactory.h"
 #include "UObject/ObjectMacros.h"
@@ -42,7 +43,7 @@ public:
 
 private:
     const FString defaultMapName = "Default";
-
+    ULevel* Level;
     /** World에서 관리되는 모든 Actor의 목록 */
     TSet<AActor*> ActorsArray;
 
@@ -52,16 +53,11 @@ private:
     AActor* SelectedActor = nullptr;
 
     USceneComponent* pickingGizmo = nullptr;
-    UCameraComponent* camera = nullptr;
     AEditorPlayer* EditorPlayer = nullptr;
-
 public:
-    UObject* worldGizmo = nullptr;
-
     const TSet<AActor*>& GetActors() const { return ActorsArray; }
-
+    ULevel* GetLevel() const { return Level; }
     UTransformGizmo* LocalGizmo = nullptr;
-    UCameraComponent* GetCamera() const { return camera; }
     AEditorPlayer* GetEditorPlayer() const { return EditorPlayer; }
 
 
@@ -72,11 +68,10 @@ public:
         SelectedActor = InActor;
     }
 
-    UObject* GetWorldGizmo() const { return worldGizmo; }
     USceneComponent* GetPickingGizmo() const { return pickingGizmo; }
     void SetPickingGizmo(UObject* Object);
 };
-
+UWorld* GWorld = nullptr;
 
 template <typename T>
     requires std::derived_from<T, AActor>

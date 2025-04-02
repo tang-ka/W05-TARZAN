@@ -10,6 +10,8 @@
 #include "UnrealEd/SceneMgr.h"
 
 
+class ULevel;
+
 FGraphicsDevice UEditorEngine::graphicDevice;
 FRenderer UEditorEngine::renderer;
 FResourceMgr UEditorEngine::resourceMgr;
@@ -28,22 +30,31 @@ int32 UEditorEngine::Init(HWND hwnd)
 {
     /* must be initialized before window. */
     hWnd = hwnd;
-    UnrealEditor = new UnrealEd();
-    UnrealEditor->Initialize();
-
     graphicDevice.Initialize(hWnd);
     renderer.Initialize(&graphicDevice);
-
     UIMgr = new UImGuiManager;
     UIMgr->Initialize(hWnd, graphicDevice.Device, graphicDevice.DeviceContext);
-
     resourceMgr.Initialize(&renderer, &graphicDevice);
+
+    
+    FWorldContext EditorContext;
+    EditorContext.WorldType = EWorldType::Editor;
+    std::shared_ptr<UWorld> EditWorld = EditorContext.World();
+    EditWorld = FObjectFactory<UWorld>();
+    EditWorld->Initialize();
+    GWorld = EditWorld.get();
+    worldContexts.Add(EditorContext);
+    
+    FWorldContext PIEContext;
+    EditorContext.WorldType = EWorldType::PIE;
+    worldContexts.Add(PIEContext);
+    
+    UnrealEditor = new UnrealEd();
+    UnrealEditor->Initialize();
+    
     LevelEditor = new SLevelEditor();
     LevelEditor->Initialize();
-
-    GWorld = new UWorld;
-    GWorld->Initialize();
-
+    
     SceneMgr = new FSceneMgr();
 
     return 0;
@@ -73,23 +84,53 @@ void UEditorEngine::Render()
 
 void UEditorEngine::Tick(float deltaSeconds)
 {
-        Input();
-        GWorld->Tick(deltaSeconds);
-        LevelEditor->Tick(deltaSeconds);
-        Render();
-        UIMgr->BeginFrame();
-        UnrealEditor->Render();
+    for (FWorldContext& WorldContext : worldContexts)
+    {
+        std::shared_ptr<UWorld> EditorWorld = WorldContext.World();
+        if (EditorWorld && WorldContext.WorldType == EWorldType::Editor)
+        {
+            ULevel* Level = EditorWorld->GetLevel();
+            {
+                for (AActor* Actor : Level->GetActors())
+                {
+                    // if (Actor && Actor->bTickInEditor)
+                    // {
+                    //     Actor->Tick(deltaSeconds);
+                    // }
+                }
+            }
+        }
+        else if (EditorWorld && WorldContext.WorldType == EWorldType::PIE)
+        {
+            ULevel* Level = EditorWorld->GetLevel();
+            {
+                for (AActor* Actor : Level->GetActors())
+                {
+                    if (Actor)
+                    {
+                        Actor->Tick(deltaSeconds);
+                    }
+                }
+            }
+        }
+    }
+    Input();
+    GWorld->Tick(deltaSeconds);
+    LevelEditor->Tick(deltaSeconds);
+    Render();
+    UIMgr->BeginFrame();
+    UnrealEditor->Render();
 
-        Console::GetInstance().Draw();
+    Console::GetInstance().Draw();
 
-        UIMgr->EndFrame();
+    UIMgr->EndFrame();
 
-        // Pending 처리된 오브젝트 제거
+    // Pending 처리된 오브젝트 제거
 
-        // TODO : 이거 잘 안되는 것 이유 파악 
-        // GUObjectArray.ProcessPendingDestroyObjects();
+    // TODO : 이거 잘 안되는 것 이유 파악 
+    // GUObjectArray.ProcessPendingDestroyObjects();
 
-        graphicDevice.SwapBuffer();
+    graphicDevice.SwapBuffer();
 }
 
 float UEditorEngine::GetAspectRatio(IDXGISwapChain* swapChain) const

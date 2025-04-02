@@ -4,7 +4,9 @@
 
 class ULevel : UObject
 {
+private:
+    TSet<AActor*> Actors;
+
 public:
-    TArray<AActor*> Actors;
-        
+    const TSet<AActor*>& GetActors() const { return Actors; }
 };
