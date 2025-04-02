@@ -2,7 +2,7 @@
 #include "EditorEngine.h"
 #include "LaunchEngineLoop.h"
 
-UEditorEngine GEngine;
+
 FEngineLoop GEngineLoop; 
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
@@ -12,9 +12,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     UNREFERENCED_PARAMETER(lpCmdLine);
     UNREFERENCED_PARAMETER(nShowCmd);
 
-    GEngine.Init(hInstance);
-    GEngine.Tick();
-    GEngine.Exit();
+    GEngineLoop.Init(hInstance);
+    GEngineLoop.Tick();
+    GEngineLoop.Exit();
 
     return 0;
 }
