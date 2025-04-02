@@ -5,6 +5,7 @@
 #include "UnrealEd/EditorViewportClient.h"
 #include "UnrealEd/UnrealEd.h"
 #include "UnrealClient.h"
+#include "Actors/Player.h"
 #include "GameFramework/Actor.h"
 #include "slate/Widgets/Layout/SSplitter.h"
 #include "LevelEditor/SLevelEditor.h"
@@ -86,23 +87,23 @@ void UEditorEngine::Render()
 
 void UEditorEngine::Tick(float deltaSeconds)
 {
-    for (FWorldContext& WorldContext : worldContexts)
-    {
-        std::shared_ptr<UWorld> EditorWorld = WorldContext.World();
-        // GWorld = EditorWorld;
-        // GWorld->Tick(levelType, deltaSeconds);
-        if (EditorWorld && WorldContext.WorldType == EWorldType::Editor)
-        {
-            // GWorld = EditorWorld;
-            GWorld->Tick(LEVELTICK_ViewportsOnly, deltaSeconds);
-        }
-        else if (EditorWorld && WorldContext.WorldType == EWorldType::PIE)
-        {
-            // GWorld = EditorWorld;
-            GWorld->Tick(LEVELTICK_All, deltaSeconds);
-        }
-    }
-    // GWorld->Tick(levelType, deltaSeconds);
+    // for (FWorldContext& WorldContext : worldContexts)
+    // {
+    //     std::shared_ptr<UWorld> EditorWorld = WorldContext.World();
+    //     // GWorld = EditorWorld;
+    //     // GWorld->Tick(levelType, deltaSeconds);
+    //     if (EditorWorld && WorldContext.WorldType == EWorldType::Editor)
+    //     {
+    //         // GWorld = EditorWorld;
+    //         GWorld->Tick(LEVELTICK_ViewportsOnly, deltaSeconds);
+    //     }
+    //     else if (EditorWorld && WorldContext.WorldType == EWorldType::PIE)
+    //     {
+    //         // GWorld = EditorWorld;
+    //         GWorld->Tick(LEVELTICK_All, deltaSeconds);
+    //     }
+    // }
+    GWorld->Tick(levelType, deltaSeconds);
     Input();
     // GWorld->Tick(LEVELTICK_All, deltaSeconds);
     LevelEditor->Tick(deltaSeconds);
@@ -189,8 +190,10 @@ void UEditorEngine::StopPIE()
         GUObjectArray.MarkRemoveObject(iter);
     }
     GUObjectArray.MarkRemoveObject(worldContexts[1].World()->GetLevel());
+    worldContexts[1].World()->GetEditorPlayer()->Destroy();
     GUObjectArray.MarkRemoveObject( worldContexts[1].World()->GetWorld());
     worldContexts[1].thisCurrentWorld.reset();
+    
     // GWorld->WorldType = EWorldType::Editor;
     levelType = LEVELTICK_ViewportsOnly;
     // if (GWorld && GWorld->IsPIEWorld())

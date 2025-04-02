@@ -975,7 +975,7 @@ void FRenderer::PrepareRender()
     {
         for (const auto iter : TObjectRange<USceneComponent>())
         {
-                UE_LOG(LogLevel::Display, "%d", GUObjectArray.GetObjectItemArrayUnsafe().Num() );
+                UE_LOG(LogLevel::Display, "%d", GUObjectArray.GetObjectItemArrayUnsafe().Num());
                 if (UStaticMeshComponent* pStaticMeshComp = Cast<UStaticMeshComponent>(iter))
                 {
                     if (!Cast<UGizmoBaseComponent>(iter))
@@ -1007,10 +1007,6 @@ void FRenderer::PrepareRender()
                 {
                     if (!Cast<UGizmoBaseComponent>(iter2))
                         StaticMeshObjs.Add(pStaticMeshComp);
-                }
-                if (UGizmoBaseComponent* pGizmoComp = Cast<UGizmoBaseComponent>(iter2))
-                {
-                    GizmoObjs.Add(pGizmoComp);
                 }
                 if (UBillboardComponent* pBillboardComp = Cast<UBillboardComponent>(iter2))
                 {
