@@ -16,7 +16,7 @@ class AActor : public UObject
 
 public:
     AActor() = default;
-
+    AActor(const AActor& Other);
     /** Actor가 게임에 배치되거나 스폰될 때 호출됩니다. */
     virtual void BeginPlay();
 
@@ -53,6 +53,7 @@ public:
         requires std::derived_from<T, UActorComponent>
     T* AddComponent();
 
+    void AddComponent(UActorComponent* Component);
     /** Actor가 가지고 있는 Component를 제거합니다. */
     void RemoveOwnedComponent(UActorComponent* Component);
 
@@ -85,7 +86,14 @@ public:
     bool SetActorLocation(const FVector& NewLocation);
     bool SetActorRotation(const FVector& NewRotation);
     bool SetActorScale(const FVector& NewScale);
+    
+    virtual UObject* Duplicate() const override;
+    virtual void DuplicateSubObjects() override;
+    virtual void PostDuplicate() override;
 
+public:
+    bool ShouldTickInEditor() const { return bTickInEditor; }
+    void SetTickInEditor(bool bEnable) { bTickInEditor = bEnable; }
 protected:
     USceneComponent* RootComponent = nullptr;
 
@@ -93,6 +101,9 @@ private:
     /** 이 Actor를 소유하고 있는 다른 Actor의 정보 */
     AActor* Owner = nullptr;
 
+    /** 에디터 모드에서도 Tick이 작동하게 할 것인지 여부 */
+    bool bTickInEditor = false;
+    
     /** 본인이 소유하고 있는 컴포넌트들의 정보 */
     TSet<UActorComponent*> OwnedComponents;
 
@@ -143,6 +154,7 @@ T* AActor::AddComponent()
 
     return Component;
 }
+
 
 template <typename T> requires std::derived_from<T, UActorComponent>
 T* AActor::GetComponentByClass()

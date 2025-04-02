@@ -9,6 +9,7 @@ class USceneComponent : public UActorComponent
 
 public:
     USceneComponent();
+    USceneComponent(const USceneComponent& Other);
     virtual ~USceneComponent() override;
 
     virtual void InitializeComponent() override;
@@ -45,6 +46,14 @@ public:
     void SetRotation(FQuat _newRot) { QuatRotation = _newRot; }
     void SetScale(FVector _newScale) { RelativeScale3D = _newScale; }
     void SetupAttachment(USceneComponent* InParent);
+public:
+
+    USceneComponent* GetAttachParent() const;
+    void SetAttachParent(USceneComponent* InParent);
+    virtual UObject* Duplicate() const override;
+    virtual void DuplicateSubObjects() override;
+    virtual void PostDuplicate();
+
 
 private:
     class UTextUUID* uuidText = nullptr;

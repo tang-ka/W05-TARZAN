@@ -7,6 +7,7 @@ class UMeshComponent : public UPrimitiveComponent
     DECLARE_CLASS(UMeshComponent, UPrimitiveComponent)
 public:
     UMeshComponent() = default;
+    UMeshComponent(const UMeshComponent& Other);
 
 #pragma region Material
     virtual uint32 GetNumMaterials() const { return 0; }
@@ -22,5 +23,8 @@ protected:
     TArray<UMaterial*> OverrideMaterials;
 public:
     TArray<UMaterial*>& GetOverrideMaterials() { return OverrideMaterials; }
+    virtual UObject* Duplicate() const override;
+    virtual void DuplicateSubObjects() override;
+    virtual void PostDuplicate() override;
 };
 

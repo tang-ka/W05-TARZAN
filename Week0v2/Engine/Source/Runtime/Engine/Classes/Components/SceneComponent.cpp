@@ -6,7 +6,15 @@
 USceneComponent::USceneComponent() :RelativeLocation(FVector(0.f, 0.f, 0.f)), RelativeRotation(FVector(0.f, 0.f, 0.f)), RelativeScale3D(FVector(1.f, 1.f, 1.f))
 {
 }
-
+USceneComponent::USceneComponent(const USceneComponent& Other)
+    : UActorComponent(Other),
+      AttachParent(nullptr), // 복제 시 복원
+      RelativeLocation(Other.RelativeLocation),
+      RelativeRotation(Other.RelativeRotation),
+      QuatRotation(Other.QuatRotation),
+      RelativeScale3D(Other.RelativeScale3D)
+{
+}
 USceneComponent::~USceneComponent()
 {
 	if (uuidText) delete uuidText;
@@ -121,7 +129,34 @@ void USceneComponent::SetupAttachment(USceneComponent* InParent)
             || !AttachParent->AttachChildren.Contains(this)  // 이미 AttachParent의 자식이 아닌 경우
         ) 
     ) {
-        AttachParent = InParent;
+        SetAttachParent(InParent);
         InParent->AttachChildren.AddUnique(this);
     }
 }
+
+
+USceneComponent* USceneComponent::GetAttachParent() const
+{
+    return AttachParent;
+}
+
+void USceneComponent::SetAttachParent(USceneComponent* InParent)
+{
+    AttachParent = InParent;
+}
+
+UObject* USceneComponent::Duplicate() const
+{
+    USceneComponent* NewComp = FObjectFactory::ConstructObjectFrom<USceneComponent>(this);
+    NewComp->DuplicateSubObjects();
+    NewComp->PostDuplicate();
+    return NewComp;
+}
+
+void USceneComponent::DuplicateSubObjects()
+{
+    UActorComponent::DuplicateSubObjects();
+    // AttachParent는 AActor::DuplicateSubObjects에서 복원
+}
+
+void USceneComponent::PostDuplicate() {}

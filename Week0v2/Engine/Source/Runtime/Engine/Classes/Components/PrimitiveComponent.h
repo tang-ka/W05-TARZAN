@@ -7,6 +7,7 @@ class UPrimitiveComponent : public USceneComponent
 
 public:
     UPrimitiveComponent();
+    UPrimitiveComponent(const UPrimitiveComponent& Other);
     virtual ~UPrimitiveComponent() override;
 
     virtual void InitializeComponent() override;
@@ -17,7 +18,9 @@ public:
         const FVector& v0, const FVector& v1, const FVector& v2, float& hitDistance
     );
     FBoundingBox AABB;
-
+    virtual UObject* Duplicate() const override;
+    virtual void DuplicateSubObjects() override;
+    virtual void PostDuplicate() override;
 private:
     FString m_Type;
 
