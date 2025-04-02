@@ -268,10 +268,10 @@ void UText::TextMVPRendering()
     FMatrix NormalMatrix = FMatrix::Transpose(FMatrix::Inverse(Model));
     FVector4 UUIDColor = EncodeUUID() / 255.0f;
     if (this == GetWorld()->GetPickingGizmo()) {
-        FEngineLoop::renderer.UpdateConstant(MVP, NormalMatrix, UUIDColor, true);
+        FEngineLoop::renderer.GetConstantBufferUpdater().UpdateConstant(FEngineLoop::renderer.ConstantBuffer, MVP, NormalMatrix, UUIDColor, true);
     }
     else
-        FEngineLoop::renderer.UpdateConstant(MVP, NormalMatrix, UUIDColor, false);
+        FEngineLoop::renderer.GetConstantBufferUpdater().UpdateConstant(FEngineLoop::renderer.ConstantBuffer, MVP, NormalMatrix, UUIDColor, false);
 
     if (ShowFlags::GetInstance().currentFlags & static_cast<uint64>(EEngineShowFlags::SF_BillboardText)) {
         FEngineLoop::renderer.RenderTextPrimitive(vertexTextBuffer, numTextVertices,

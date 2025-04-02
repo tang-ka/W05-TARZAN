@@ -10,6 +10,7 @@
 #include "Container/Set.h"
 #include "RenderResourceManager.h"
 #include "ShaderManager.h"
+#include "ConstantBufferUpdater.h"
 
 class ULightComponentBase;
 class UWorld;
@@ -58,34 +59,18 @@ public:
     //Release
     void Release();
     void ReleaseShader();
-    //void ReleaseBuffer(ID3D11Buffer*& Buffer) const;
     void ReleaseConstantBuffer();
 
-    void ResetVertexShader() const;
-    void ResetPixelShader() const;
     void CreateShader();
-
-    void SetVertexShader(const FWString& filename, const FString& funcname, const FString& version);
-    void SetPixelShader(const FWString& filename, const FString& funcname, const FString& version);
     
     void ChangeViewMode(EViewModeIndex evi) const;
     
     // CreateBuffer
     void CreateConstantBuffer();
-    //void CreateLightingBuffer();
-    //void CreateLitUnlitBuffer();
-    //ID3D11Buffer* CreateVertexBuffer(FVertexSimple* vertices, UINT byteWidth) const;
-    //ID3D11Buffer* CreateVertexBuffer(const TArray<FVertexSimple>& vertices, UINT byteWidth) const;
-    //ID3D11Buffer* CreateIndexBuffer(uint32* indices, UINT byteWidth) const;
-    //ID3D11Buffer* CreateIndexBuffer(const TArray<uint32>& indices, UINT byteWidth) const;
 
     // update
-    void UpdateLightBuffer() const;
-    void UpdateConstant(const FMatrix& MVP, const FMatrix& NormalMatrix, FVector4 UUIDColor, bool IsSelected) const;
     void UpdateMaterial(const FObjMaterialInfo& MaterialInfo) const;
-    void UpdateLitUnlitConstant(int isLit) const;
-    void UpdateSubMeshConstant(bool isSelected) const;
-    void UpdateTextureConstant(float UOffset, float VOffset);
+
 
 public://텍스쳐용 기능 추가
     ID3D11VertexShader* VertexTextureShader = nullptr;
@@ -101,11 +86,8 @@ public://텍스쳐용 기능 추가
     ID3D11Buffer* SubUVConstantBuffer = nullptr;
 
 public:
-    void CreateTextureShader();
-    void ReleaseTextureShader();
     void PrepareTextureShader() const;
-    //ID3D11Buffer* CreateVertexTextureBuffer(FVertexTexture* vertices, UINT byteWidth) const;
-    //ID3D11Buffer* CreateIndexTextureBuffer(uint32* indices, UINT byteWidth) const;
+
     void RenderTexturePrimitive(ID3D11Buffer* pVertexBuffer, UINT numVertices,
         ID3D11Buffer* pIndexBuffer, UINT numIndices,
         ID3D11ShaderResourceView* _TextureSRV,
@@ -113,23 +95,16 @@ public:
     void RenderTextPrimitive(ID3D11Buffer* pVertexBuffer, UINT numVertices,
         ID3D11ShaderResourceView* _TextureSRV,
         ID3D11SamplerState* _SamplerState) const;
-    //ID3D11Buffer* CreateVertexBuffer(FVertexTexture* vertices, UINT byteWidth) const;
 
-    void UpdateSubUVConstant(float _indexU, float _indexV) const;
     void PrepareSubUVConstant() const;
 
 
 public: // line shader
     void PrepareLineShader() const;
-    void CreateLineShader();
-    void ReleaseLineShader() const;
     void RenderBatch(const FGridParameters& gridParam, ID3D11Buffer* pVertexBuffer, int boundingBoxCount, int coneCount, int coneSegmentCount, int obbCount) const;
     void UpdateGridConstantBuffer(const FGridParameters& gridParams) const;
     void UpdateLinePrimitveCountBuffer(int numBoundingBoxes, int numCones) const;
-    //ID3D11Buffer* CreateStaticVerticesBuffer() const;
-    //ID3D11Buffer* CreateBoundingBoxBuffer(UINT numBoundingBoxes) const;
-    //ID3D11Buffer* CreateOBBBuffer(UINT numBoundingBoxes) const;
-    //ID3D11Buffer* CreateConeBuffer(UINT numCones) const;
+
     ID3D11ShaderResourceView* CreateBoundingBoxSRV(ID3D11Buffer* pBoundingBoxBuffer, UINT numBoundingBoxes);
     ID3D11ShaderResourceView* CreateOBBSRV(ID3D11Buffer* pBoundingBoxBuffer, UINT numBoundingBoxes);
     ID3D11ShaderResourceView* CreateConeSRV(ID3D11Buffer* pConeBuffer, UINT numCones);
@@ -164,9 +139,12 @@ public:
 
 public:
     FRenderResourceManager& GetResourceManager() { return RenderResourceManager; }
+    FShaderManager& GetShaderManager() { return ShaderManager; }
+    FConstantBufferUpdater& GetConstantBufferUpdater() { return ConstantBufferUpdater; }
 
 private:
     FRenderResourceManager RenderResourceManager;
     FShaderManager ShaderManager;
+    FConstantBufferUpdater ConstantBufferUpdater;
 };
 
