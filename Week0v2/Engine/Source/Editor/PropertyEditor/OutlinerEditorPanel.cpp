@@ -1,6 +1,4 @@
 #include "OutlinerEditorPanel.h"
-#include "EngineLoop.h"
-#include "World.h"
 #include "EditorEngine.h"
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
