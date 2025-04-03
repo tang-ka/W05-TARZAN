@@ -23,7 +23,7 @@ UParticleSubUVComp::~UParticleSubUVComp()
 void UParticleSubUVComp::InitializeComponent()
 {
 	Super::InitializeComponent();
-	UEditorEngine::renderer.GetConstantBufferUpdater().UpdateSubUVConstant(FEngineLoop::renderer.SubUVConstantBuffer, 0, 0);
+	UEditorEngine::renderer.GetConstantBufferUpdater().UpdateSubUVConstant(UEditorEngine::renderer.SubUVConstantBuffer, 0, 0);
 	UEditorEngine::renderer.PrepareSubUVConstant();
 }
 

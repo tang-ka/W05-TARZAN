@@ -1,6 +1,5 @@
 #include "ConstantBufferUpdater.h"
 #include <Engine/Texture.h>
-#include <EngineLoop.h>
 
 void FConstantBufferUpdater::Initialize(ID3D11DeviceContext* InDeviceContext)
 {
