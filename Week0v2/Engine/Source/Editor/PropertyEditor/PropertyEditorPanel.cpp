@@ -1,6 +1,6 @@
 #include "PropertyEditorPanel.h"
 
-#include "World.h"
+#include "Engine/World.h"
 #include "Actors/Player.h"
 #include "Components/LightComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -10,6 +10,8 @@
 #include "UnrealEd/ImGuiWidget.h"
 #include "UObject/Casts.h"
 #include "UObject/ObjectFactory.h"
+#include <Components/CubeComp.h>
+#include <Components/UParticleSubUVComp.h>
 
 void PropertyEditorPanel::Render()
 {
@@ -38,32 +40,118 @@ void PropertyEditorPanel::Render()
     /* Render Start */
     ImGui::Begin("Detail", nullptr, PanelFlags);
     
-    AEditorPlayer* player = GEngineLoop.GetWorld()->GetEditorPlayer();
-    AActor* PickedActor = GEngineLoop.GetWorld()->GetSelectedActor();
+    AEditorPlayer* player = GEngine->GetWorld()->GetEditorPlayer();
+    AActor* PickedActor = GEngine->GetWorld()->GetSelectedActor();
+
+    // TODO: 추후에 RTTI를 이용해서 프로퍼티 출력하기
     if (PickedActor)
     {
+        if (ImGui::TreeNodeEx("Components", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_OpenOnArrow))
+        {
+            const TSet<UActorComponent*>& AllComponents = PickedActor->GetComponents();
+            for (UActorComponent* Component : AllComponents)
+            {
+                if (USceneComponent* SceneComp = Cast<USceneComponent>(Component))
+                {
+                    if (SceneComp->GetAttachParent() == nullptr)
+                    {
+                        DrawSceneComponentTree(SceneComp, PickedComponent);
+                    }
+                }
+            }
+
+            if (ImGui::Button("+", ImVec2(ImGui::GetWindowContentRegionMax().x * 0.9f, 32)))
+            {
+                ImGui::OpenPopup("AddComponentPopup");
+            }
+
+            // 팝업 메뉴
+            if (ImGui::BeginPopup("AddComponentPopup"))
+            {
+                if (ImGui::Selectable("TextComponent"))
+                {
+                    UText* TextComponent = PickedActor->AddComponent<UText>();
+                    PickedComponent = TextComponent;
+                    TextComponent->SetTexture(L"Assets/Texture/font.png");
+                    TextComponent->SetRowColumnCount(106, 106);
+                    TextComponent->SetText(L"안녕하세요 Jungle");
+                }
+                if (ImGui::Selectable("BillboardComponent"))    
+                {
+                    UBillboardComponent* BillboardComponent = PickedActor->AddComponent<UBillboardComponent>();
+                    PickedComponent = BillboardComponent;
+                    BillboardComponent->SetTexture(L"Assets/Texture/Pawn_64x.png");
+                    BillboardComponent->SetLocation(FVector(0.0f, 0.0f, 3.0f));
+                }
+                if (ImGui::Selectable("LightComponent"))
+                {
+                    ULightComponentBase* LightComponent = PickedActor->AddComponent<ULightComponentBase>();
+                    PickedComponent = LightComponent;
+                }
+                if (ImGui::Selectable("ParticleComponent"))
+                {
+                    UParticleSubUVComp* ParticleComponent = PickedActor->AddComponent<UParticleSubUVComp>();
+                    PickedComponent = ParticleComponent;
+                    ParticleComponent->SetTexture(L"Assets/Texture/T_Explosion_SubUV.png");
+                    ParticleComponent->SetRowColumnCount(6, 6);
+                    ParticleComponent->SetScale(FVector(10.0f, 10.0f, 1.0f));
+                    ParticleComponent->Activate();
+                }
+                if (ImGui::Selectable("StaticMeshComponent"))
+                {
+                    UStaticMeshComponent* StaticMeshComponent = PickedActor->AddComponent<UStaticMeshComponent>();
+                    PickedComponent = StaticMeshComponent;
+                    FManagerOBJ::CreateStaticMesh("Assets/Cube.obj");
+                    StaticMeshComponent->SetStaticMesh(FManagerOBJ::GetStaticMesh(L"Cube.obj"));
+                }
+                if (ImGui::Selectable("CubeComponent"))
+                {
+                    UCubeComp* CubeComponent = PickedActor->AddComponent<UCubeComp>();
+                    PickedComponent = CubeComponent;
+                }
+
+                ImGui::EndPopup();
+            }
+            ImGui::TreePop();
+        }
+    }
+
+    // TODO: 추후에 RTTI를 이용해서 프로퍼티 출력하기
+    if (PickedActor && PickedComponent && PickedComponent->IsA<USceneComponent>())
+    {
+        USceneComponent* SceneComp = Cast<USceneComponent>(PickedComponent);
         ImGui::SetItemDefaultFocus();
         // TreeNode 배경색을 변경 (기본 상태)
         ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.1f, 0.1f, 0.1f, 1.0f));
         if (ImGui::TreeNodeEx("Transform", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen)) // 트리 노드 생성
         {
-            Location = PickedActor->GetActorLocation();
-            Rotation = PickedActor->GetActorRotation();
-            Scale = PickedActor->GetActorScale();
-            
-            FImGuiWidget::DrawVec3Control("Location", Location, 0, 85);
+            if (PickedComponent != LastComponent)
+            {
+                LastComponent = PickedComponent;
+                bFirstFrame = true;
+                Location = SceneComp->GetWorldLocation();
+                Rotation = SceneComp->GetWorldRotation();
+                Scale = SceneComp->GetWorldScale();
+            }
+
+            bool bChanged = false;
+
+            bChanged |= FImGuiWidget::DrawVec3Control("Location", Location, 0, 85);
             ImGui::Spacing();
 
-            FImGuiWidget::DrawVec3Control("Rotation", Rotation, 0, 85);
+            bChanged |= FImGuiWidget::DrawVec3Control("Rotation", Rotation, 0, 85);
             ImGui::Spacing();
 
-            FImGuiWidget::DrawVec3Control("Scale", Scale, 0, 85);
+            bChanged |= FImGuiWidget::DrawVec3Control("Scale", Scale, 0, 85);
             ImGui::Spacing();
 
-            PickedActor->SetActorLocation(Location);
-            PickedActor->SetActorRotation(Rotation);
-            PickedActor->SetActorScale(Scale);
-            
+            if (bChanged && !bFirstFrame)
+            {
+                SceneComp->SetLocation(Location);
+                SceneComp->SetRotation(Rotation);
+                SceneComp->SetScale(Scale);
+            }
+
             std::string coordiButtonLabel;
             if (player->GetCoordiMode() == CoordiMode::CDM_WORLD)
                 coordiButtonLabel = "World";
@@ -77,12 +165,12 @@ void PropertyEditorPanel::Render()
             ImGui::TreePop(); // 트리 닫기
         }
         ImGui::PopStyleColor();
+        bFirstFrame = false;
     }
 
-    // TODO: 추후에 RTTI를 이용해서 프로퍼티 출력하기
-    if (PickedActor)
-    if (ULightComponentBase* lightObj = Cast<ULightComponentBase>(PickedActor->GetRootComponent()))
+    if (PickedActor && PickedComponent && PickedComponent->IsA<ULightComponentBase>())
     {
+        ULightComponentBase* lightObj = Cast<ULightComponentBase>(PickedComponent);
         ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.1f, 0.1f, 0.1f, 1.0f));
         if (ImGui::TreeNodeEx("SpotLight Component", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen)) // 트리 노드 생성
         {
@@ -158,9 +246,9 @@ void PropertyEditorPanel::Render()
     }
 
     // TODO: 추후에 RTTI를 이용해서 프로퍼티 출력하기
-    if (PickedActor)
-    if (UText* textOBj = Cast<UText>(PickedActor->GetRootComponent()))
+    if (PickedActor && PickedComponent && PickedComponent->IsA<UText>())
     {
+        UText* textOBj = Cast<UText>(PickedComponent);
         ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.1f, 0.1f, 0.1f, 1.0f));
         if (ImGui::TreeNodeEx("Text Component", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen)) // 트리 노드 생성
         {
@@ -195,12 +283,75 @@ void PropertyEditorPanel::Render()
 
     // TODO: 추후에 RTTI를 이용해서 프로퍼티 출력하기
     if (PickedActor)
-    if (UStaticMeshComponent* StaticMeshComponent = Cast<UStaticMeshComponent>(PickedActor->GetRootComponent()))
+    if (UStaticMeshComponent* StaticMeshComponent = PickedActor->GetComponentByClass<UStaticMeshComponent>())
     {
         RenderForStaticMesh(StaticMeshComponent);
         RenderForMaterial(StaticMeshComponent);
     }
+
+    if (PickedActor && PickedComponent && PickedComponent->IsA<UBillboardComponent>())
+    {
+        static const char* CurrentBillboardName = "Pawn";
+        if (ImGui::TreeNodeEx("BillBoard", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen))
+        {
+            if (ImGui::BeginCombo("##", CurrentBillboardName, ImGuiComboFlags_None))
+            {
+                if (ImGui::Selectable("Pawn", strcmp(CurrentBillboardName, "Pawn") == 0))
+                {
+                    CurrentBillboardName = "Pawn";
+                    Cast<UBillboardComponent>(PickedComponent)->SetTexture(L"Assets/Texture/Pawn_64x.png");
+                }
+                if (ImGui::Selectable("PointLight", strcmp(CurrentBillboardName, "PointLight") == 0))
+                {
+                    CurrentBillboardName = "PointLight";
+                    Cast<UBillboardComponent>(PickedComponent)->SetTexture(L"Assets/Texture/PointLight_64x.png");
+                }
+                if (ImGui::Selectable("SpotLight", strcmp(CurrentBillboardName, "SpotLight") == 0))
+                {
+                    CurrentBillboardName = "SpotLight";
+                    Cast<UBillboardComponent>(PickedComponent)->SetTexture(L"Assets/Texture/SpotLight_64x.png");
+                }
+
+                ImGui::EndCombo();
+            }
+            ImGui::TreePop();
+        }
+
+    }
     ImGui::End();
+
+
+}
+
+void PropertyEditorPanel::DrawSceneComponentTree(USceneComponent* Component, UActorComponent*& PickedComponent)
+{
+    if (!Component) return;
+
+   FString Label = *Component->GetName();
+   bool bSelected = (PickedComponent == Component);
+
+   ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_OpenOnArrow;
+   if (bSelected)
+       nodeFlags |= ImGuiTreeNodeFlags_Selected;
+
+   // 노드를 클릭 가능한 셀렉션으로 표시
+   bool bOpened = ImGui::TreeNodeEx(*Label, nodeFlags);
+
+   // 클릭되었을 때 선택 갱신
+   if (ImGui::IsItemClicked())
+   {
+       PickedComponent = Component;
+   }
+
+   // 자식 재귀 호출
+   if (bOpened)
+   {
+       for (USceneComponent* Child : Component->GetAttachChildren())
+       {
+           DrawSceneComponentTree(Child, PickedComponent);
+       }
+       ImGui::TreePop();
+   }
 }
 
 void PropertyEditorPanel::RGBToHSV(float r, float g, float b, float& h, float& s, float& v) const

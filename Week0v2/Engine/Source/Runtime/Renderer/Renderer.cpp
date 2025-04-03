@@ -1,7 +1,7 @@
 #include "Renderer.h"
 #include <d3dcompiler.h>
 
-#include "World.h"
+#include "Engine/World.h"
 #include "Actors/Player.h"
 #include "BaseGizmos/GizmoBaseComponent.h"
 #include "Components/LightComponent.h"
@@ -11,7 +11,7 @@
 #include "Components/UText.h"
 #include "Components/Material/Material.h"
 #include "D3D11RHI/GraphicDevice.h"
-#include "Launch/EngineLoop.h"
+#include "Launch/EditorEngine.h"
 #include "Math/JungleMath.h"
 #include "UnrealEd/EditorViewportClient.h"
 #include "UnrealEd/PrimitiveBatch.h"
@@ -150,6 +150,7 @@ void FRenderer::PrepareLineShader() const
 }
 #pragma endregion Shader
 
+
 #pragma region ConstantBuffer
 // ConstantBuffer
 void FRenderer::CreateConstantBuffer()
@@ -180,29 +181,6 @@ void FRenderer::ReleaseConstantBuffer()
 #pragma endregion ConstantBuffer
 
 #pragma region
-void FRenderer::PrepareRender()
-{
-    for (const auto iter : TObjectRange<USceneComponent>())
-    {
-        if (UStaticMeshComponent* pStaticMeshComp = Cast<UStaticMeshComponent>(iter))
-        {
-            if (!Cast<UGizmoBaseComponent>(iter))
-                StaticMeshObjs.Add(pStaticMeshComp);
-        }
-        if (UGizmoBaseComponent* pGizmoComp = Cast<UGizmoBaseComponent>(iter))
-        {
-            GizmoObjs.Add(pGizmoComp);
-        }
-        if (UBillboardComponent* pBillboardComp = Cast<UBillboardComponent>(iter))
-        {
-            BillboardObjs.Add(pBillboardComp);
-        }
-        if (ULightComponentBase* pLightComp = Cast<ULightComponentBase>(iter))
-        {
-            LightObjs.Add(pLightComp);
-        }
-    }
-}
 
 void FRenderer::ClearRenderArr()
 {
@@ -210,6 +188,58 @@ void FRenderer::ClearRenderArr()
     GizmoObjs.Empty();
     BillboardObjs.Empty();
     LightObjs.Empty();
+}
+
+void FRenderer::PrepareRender()
+{
+    if (GEngine->GetWorld()->WorldType == EWorldType::Editor)
+    {
+        for (const auto iter : TObjectRange<USceneComponent>())
+        {
+                UE_LOG(LogLevel::Display, "%d", GUObjectArray.GetObjectItemArrayUnsafe().Num());
+                if (UStaticMeshComponent* pStaticMeshComp = Cast<UStaticMeshComponent>(iter))
+                {
+                    if (!Cast<UGizmoBaseComponent>(iter))
+                        StaticMeshObjs.Add(pStaticMeshComp);
+                }
+                if (UGizmoBaseComponent* pGizmoComp = Cast<UGizmoBaseComponent>(iter))
+                {
+                    GizmoObjs.Add(pGizmoComp);
+                }
+                if (UBillboardComponent* pBillboardComp = Cast<UBillboardComponent>(iter))
+                {
+                    BillboardObjs.Add(pBillboardComp);
+                }
+                if (ULightComponentBase* pLightComp = Cast<ULightComponentBase>(iter))
+                {
+                    LightObjs.Add(pLightComp);
+                }
+        }
+    }
+    else if (GEngine->GetWorld()->WorldType == EWorldType::PIE)
+    {
+        // UE_LOG(LogLevel::Display, "%d", GEngine->GetWorld()->GetActors().Num() );
+        for (const auto iter : GEngine->GetWorld()->GetActors())
+        {
+            
+            for (const auto iter2 : iter->GetComponents())
+            {
+                if (UStaticMeshComponent* pStaticMeshComp = Cast<UStaticMeshComponent>(iter2))
+                {
+                    if (!Cast<UGizmoBaseComponent>(iter2))
+                        StaticMeshObjs.Add(pStaticMeshComp);
+                }
+                if (UBillboardComponent* pBillboardComp = Cast<UBillboardComponent>(iter2))
+                {
+                    BillboardObjs.Add(pBillboardComp);
+                }
+                if (ULightComponentBase* pLightComp = Cast<ULightComponentBase>(iter2))
+                {
+                    LightObjs.Add(pLightComp);
+                }
+            }
+        }
+    }
 }
 
 void FRenderer::Render(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport)
@@ -498,6 +528,7 @@ void FRenderer::RenderBillboards(UWorld* World, std::shared_ptr<FEditorViewportC
     PrepareShader();
 }
 
+
 void FRenderer::RenderLight(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport)
 {
     for (auto Light : LightObjs)
@@ -544,7 +575,7 @@ void FRenderer::UpdateMaterial(const FObjMaterialInfo& MaterialInfo) const
 
     if (MaterialInfo.bHasTexture == true)
     {
-        std::shared_ptr<FTexture> texture = FEngineLoop::resourceMgr.GetTexture(MaterialInfo.DiffuseTexturePath);
+        std::shared_ptr<FTexture> texture = UEditorEngine::resourceMgr.GetTexture(MaterialInfo.DiffuseTexturePath);
         Graphics->DeviceContext->PSSetShaderResources(0, 1, &texture->TextureSRV);
         Graphics->DeviceContext->PSSetSamplers(0, 1, &texture->SamplerState);
     }
@@ -660,6 +691,3 @@ void FRenderer::UpdateLinePrimitveCountBuffer(int numBoundingBoxes, int numCones
     pData->ConeCount = numCones;
     Graphics->DeviceContext->Unmap(LinePrimitiveBuffer, 0);
 }
-
-
-

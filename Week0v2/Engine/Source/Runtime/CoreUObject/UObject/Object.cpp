@@ -1,5 +1,6 @@
-#include "Engine/Source/Runtime/CoreUObject/UObject/Object.h"
+#include "Object.h"
 
+#include "EditorEngine.h"
 #include "UClass.h"
 #include "UObjectHash.h"
 
@@ -18,8 +19,15 @@ UObject::UObject()
 {
 }
 
+UWorld* UObject::GetWorld()
+{
+    return GEngine->GetWorld().get();
+}
+
 bool UObject::IsA(const UClass* SomeBase) const
 {
     const UClass* ThisClass = GetClass();
     return ThisClass->IsChildOf(SomeBase);
 }
+
+

@@ -18,6 +18,7 @@
 
 #include "UserInterface/Console.h"
 
+
 struct FVertexSimple
 {
     float x, y, z;    // Position

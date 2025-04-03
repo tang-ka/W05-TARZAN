@@ -1,8 +1,13 @@
 #pragma once
-#include "EngineLoop.h"
-#include "NameTypes.h"
 
-extern FEngineLoop GEngineLoop;
+#include "Define.h"
+#include "NameTypes.h"
+#include "Container/Map.h"
+#include "Container/String.h"
+
+
+class UEditorEngine;
+extern UEditorEngine* GEngine;
 
 class UClass;
 class UWorld;
@@ -11,7 +16,8 @@ class UWorld;
 class UObject
 {
 private:
-    UObject(const UObject&) = delete;
+
+
     UObject& operator=(const UObject&) = delete;
     UObject(UObject&&) = delete;
     UObject& operator=(UObject&&) = delete;
@@ -19,9 +25,24 @@ private:
 public:
     using Super = UObject;
     using ThisClass = UObject;
-
+    UObject(const UObject& Other)
+        : ClassPrivate(Other.ClassPrivate)
+        , NamePrivate(Other.NamePrivate)
+        , UUID(Other.UUID)
+        , InternalIndex(Other.InternalIndex)
+    {
+    }
     static UClass* StaticClass();
 
+    virtual UObject* Duplicate() const
+    {
+        UObject* NewObject = new UObject();
+        NewObject->DuplicateSubObjects(this);       // 깊은 복사 수행
+        return NewObject;
+    }
+
+    virtual void DuplicateSubObjects(const UObject* Source){}; // 하위 클래스에서 override
+    virtual void PostDuplicate(){};
 private:
     friend class FObjectFactory;
     friend class FSceneMgr;
@@ -37,14 +58,12 @@ public:
     UObject();
     virtual ~UObject() = default;
 
-    UWorld* GetWorld()
-    {
-        return GEngineLoop.GetWorld();
-    }
+    UWorld* GetWorld();
+    ;
 
-    FEngineLoop& GetEngine()
+    UEditorEngine* GetEngine()
     {
-        return GEngineLoop;
+        return GEngine;
     }
 
     FName GetFName() const { return NamePrivate; }

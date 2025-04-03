@@ -4,7 +4,7 @@
 #include "GizmoCircleComponent.h"
 #include "Actors/Player.h"
 #include "GizmoRectangleComponent.h"
-#include "World.h"
+#include "Engine/World.h"
 #include "Engine/FLoaderOBJ.h"
 
 UTransformGizmo::UTransformGizmo()

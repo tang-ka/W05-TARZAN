@@ -422,6 +422,7 @@
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Engine\StaticMeshActor.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\GameFramework\Actor.cpp" />
     <ClInclude Include="RenderResourceManager.h" />
+    <ClInclude Include="UEditorStateManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\Source\ThirdParty\DirectXTK\Include\DDSTextureLoader.h" />
@@ -512,5 +513,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RenderResourceManager.cpp" />
+    <ClCompile Include="UEditorStateManager.cpp" />
   </ItemGroup>
 </Project>

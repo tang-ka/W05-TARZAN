@@ -1,6 +1,6 @@
 #include "UText.h"
 
-#include "World.h"
+#include "Engine/World.h"
 #include "Engine/Source/Editor/PropertyEditor/ShowFlags.h"
 #include "UnrealEd/EditorViewportClient.h"
 #include "LevelEditor/SLevelEditor.h"
@@ -19,6 +19,11 @@ UText::~UText()
 	}
 }
 
+UText::UText(const UText& other) :UBillboardComponent(other), vertexTextBuffer(other.vertexTextBuffer), vertexTextureArr(other.vertexTextureArr)
+,numTextVertices(other.numTextVertices), text(other.text), quad(other.quad)
+{
+}
+
 void UText::InitializeComponent()
 {
     Super::InitializeComponent();
@@ -27,17 +32,7 @@ void UText::InitializeComponent()
 void UText::TickComponent(float DeltaTime)
 {
 	Super::TickComponent(DeltaTime);
-
-    //FVector newCamera = GetWorld()->GetCamera()->GetForwardVector();
-    //newCamera.z = 0;
-    //newCamera = newCamera.Normalize();
-    //float tmp = FVector(1.0f, 0.0f, 0.0f).Dot(newCamera);
-    //float rad = acosf(tmp);
-    //float degree = JungleMath::RadToDeg(rad);
-    //FVector vtmp = FVector(1.0f, 0.0f, 0.0f).Cross(GetWorld()->GetCamera()->GetForwardVector());
-    //if (vtmp.z < 0)
-    //	degree *= -1;
-    //RelativeRotation.z = degree + 90;
+    
 }
 
 void UText::ClearText()
@@ -62,6 +57,24 @@ int UText::CheckRayIntersection(FVector& rayOrigin, FVector& rayDirection, float
 	}
 
 	return CheckPickingOnNDC(quad,pfNearHitDistance);
+}
+
+UObject* UText::Duplicate() const
+{
+    UText* ClonedActor = FObjectFactory::ConstructObjectFrom<UText>(this);
+    ClonedActor->DuplicateSubObjects(this);
+    ClonedActor->PostDuplicate();
+    return ClonedActor;
+}
+
+void UText::DuplicateSubObjects(const UObject* Source)
+{
+    UBillboardComponent::DuplicateSubObjects(Source);
+}
+
+void UText::PostDuplicate()
+{
+    UBillboardComponent::PostDuplicate();
 }
 
 
@@ -244,7 +257,7 @@ void UText::CreateTextTextureVertexBuffer(const TArray<FVertexTexture>& _vertex,
 
 	ID3D11Buffer* vertexBuffer;
 	
-	HRESULT hr = FEngineLoop::graphicDevice.Device->CreateBuffer(&vertexbufferdesc, &vertexbufferSRD, &vertexBuffer);
+	HRESULT hr = UEditorEngine::graphicDevice.Device->CreateBuffer(&vertexbufferdesc, &vertexbufferSRD, &vertexBuffer);
 	if (FAILED(hr))
 	{
 		UE_LOG(LogLevel::Warning, "VertexBuffer Creation faild");
@@ -259,12 +272,12 @@ void UText::CreateTextTextureVertexBuffer(const TArray<FVertexTexture>& _vertex,
 
 void UText::TextMVPRendering()
 {
-    FEngineLoop::renderer.PrepareTextureShader();
+    UEditorEngine::renderer.PrepareTextureShader();
     //FEngineLoop::renderer.UpdateSubUVConstant(0, 0);
     //FEngineLoop::renderer.PrepareSubUVConstant();
     FMatrix Model = CreateBillboardMatrix();
 
-    FMatrix MVP = Model * GetEngine().GetLevelEditor()->GetActiveViewportClient()->GetViewMatrix() * GetEngine().GetLevelEditor()->GetActiveViewportClient()->GetProjectionMatrix();
+    FMatrix MVP = Model * GetEngine()->GetLevelEditor()->GetActiveViewportClient()->GetViewMatrix() * GetEngine()->GetLevelEditor()->GetActiveViewportClient()->GetProjectionMatrix();
     FMatrix NormalMatrix = FMatrix::Transpose(FMatrix::Inverse(Model));
     FVector4 UUIDColor = EncodeUUID() / 255.0f;
     if (this == GetWorld()->GetPickingGizmo()) {
@@ -274,10 +287,10 @@ void UText::TextMVPRendering()
         FEngineLoop::renderer.GetConstantBufferUpdater().UpdateConstant(FEngineLoop::renderer.ConstantBuffer, MVP, NormalMatrix, UUIDColor, false);
 
     if (ShowFlags::GetInstance().currentFlags & static_cast<uint64>(EEngineShowFlags::SF_BillboardText)) {
-        FEngineLoop::renderer.RenderTextPrimitive(vertexTextBuffer, numTextVertices,
+        UEditorEngine::renderer.RenderTextPrimitive(vertexTextBuffer, numTextVertices,
             Texture->TextureSRV, Texture->SamplerState);
     }
     //Super::Render();
 
-    FEngineLoop::renderer.PrepareShader();
+    UEditorEngine::renderer.PrepareShader();
 }

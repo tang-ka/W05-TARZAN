@@ -1,6 +1,6 @@
 #include "SphereComp.h"
 #include "Engine/Source/Runtime/Core/Math/JungleMath.h"
-#include "Engine/Source/Runtime/Engine/World.h"
+#include "Engine/World.h"
 #include "Engine/Source/Editor/PropertyEditor/ShowFlags.h"
 #include "UnrealEd/EditorViewportClient.h"
 #include "LevelEditor/SLevelEditor.h"

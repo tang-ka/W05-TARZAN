@@ -1,12 +1,14 @@
-﻿#pragma once
+#pragma once
 #include <string>
 #include <Math/Vector.h>
 #include "ImGUI/imgui_internal.h"
 
 struct FImGuiWidget
 {
-    static void DrawVec3Control(const std::string& label, FVector& values, float resetValue = 0.0f, float columnWidth = 100.0f)
+    static bool DrawVec3Control(const std::string& label, FVector& values, float resetValue = 0.0f, float columnWidth = 100.0f)
     {
+        bool bValueChanged = false;
+
         ImGuiIO& io = ImGui::GetIO();
         auto boldFont = io.Fonts->Fonts[0];
 
@@ -49,7 +51,7 @@ struct FImGuiWidget
         ImGui::PopStyleColor(3);
 
         ImGui::SameLine();
-        ImGui::DragFloat("##X", &values.x, 0.1f, 0.0f, 0.0f, "%.2f");
+        bValueChanged |= ImGui::DragFloat("##X", &values.x, 0.1f, 0.0f, 0.0f, "%.2f");
         ImGui::PopItemWidth();
         ImGui::SameLine(0, 5);
 
@@ -64,7 +66,7 @@ struct FImGuiWidget
         ImGui::PopStyleColor(3);
 
         ImGui::SameLine();
-        ImGui::DragFloat("##Y", &values.y, 0.1f, 0.0f, 0.0f, "%.2f");
+        bValueChanged |= ImGui::DragFloat("##Y", &values.y, 0.1f, 0.0f, 0.0f, "%.2f");
         ImGui::PopItemWidth();
         ImGui::SameLine(0, 5);
 
@@ -79,11 +81,13 @@ struct FImGuiWidget
         ImGui::PopStyleColor(3);
 
         ImGui::SameLine();
-        ImGui::DragFloat("##Z", &values.z, 0.1f, 0.0f, 0.0f, "%.2f");
+        bValueChanged |= ImGui::DragFloat("##Z", &values.z, 0.1f, 0.0f, 0.0f, "%.2f");
         ImGui::PopItemWidth();
 
         ImGui::PopStyleVar(2);
         ImGui::Columns(1);
         ImGui::PopID();
+
+        return bValueChanged;
     }
 };

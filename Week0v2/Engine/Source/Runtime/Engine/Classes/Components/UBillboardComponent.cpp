@@ -4,7 +4,7 @@
 #include "Define.h"
 #include <DirectXMath.h>
 
-#include "World.h"
+#include "Engine/World.h"
 #include "Math/MathUtility.h"
 #include "UnrealEd/EditorViewportClient.h"
 #include "LevelEditor/SLevelEditor.h"
@@ -28,6 +28,12 @@ UBillboardComponent::~UBillboardComponent()
 		indexTextureBuffer->Release();
 		indexTextureBuffer = nullptr;
 	}
+}
+
+UBillboardComponent::UBillboardComponent(const UBillboardComponent& other) : UPrimitiveComponent(other),
+vertexTextureBuffer(other.vertexTextureBuffer),indexTextureBuffer(other.indexTextureBuffer), numIndices(other.numIndices),
+numVertices(other.numVertices), finalIndexU(other.finalIndexU), finalIndexV(other.finalIndexV),Texture(other.Texture)
+{
 }
 
 void UBillboardComponent::InitializeComponent()
@@ -58,7 +64,7 @@ int UBillboardComponent::CheckRayIntersection(FVector& rayOrigin, FVector& rayDi
 
 void UBillboardComponent::SetTexture(FWString _fileName)
 {
-	Texture = FEngineLoop::resourceMgr.GetTexture(_fileName);
+	Texture = UEditorEngine::resourceMgr.GetTexture(_fileName);
 }
 
 void UBillboardComponent::SetUUIDParent(USceneComponent* _parent)
@@ -69,7 +75,7 @@ void UBillboardComponent::SetUUIDParent(USceneComponent* _parent)
 
 FMatrix UBillboardComponent::CreateBillboardMatrix()
 {
-	FMatrix CameraView = GetEngine().GetLevelEditor()->GetActiveViewportClient()->GetViewMatrix();
+	FMatrix CameraView = GetEngine()->GetLevelEditor()->GetActiveViewportClient()->GetViewMatrix();
 
 	CameraView.M[0][3] = 0.0f;
 	CameraView.M[1][3] = 0.0f;
@@ -87,8 +93,7 @@ FMatrix UBillboardComponent::CreateBillboardMatrix()
 	CameraView.M[2][2] = -CameraView.M[2][2];
 	FMatrix LookAtCamera = FMatrix::Transpose(CameraView);
 	
-	FVector worldLocation = RelativeLocation;
-	if (m_parent) worldLocation = RelativeLocation + m_parent->GetWorldLocation();
+	FVector worldLocation = GetWorldLocation();
 	FVector worldScale = RelativeScale3D;
 	FMatrix S = FMatrix::CreateScale(worldScale.x, worldScale.y, worldScale.z);
 	FMatrix R = LookAtCamera;
@@ -98,12 +103,30 @@ FMatrix UBillboardComponent::CreateBillboardMatrix()
 	return M;
 }
 
+UObject* UBillboardComponent::Duplicate() const
+{
+    UBillboardComponent* ClonedActor = FObjectFactory::ConstructObjectFrom<UBillboardComponent>(this);
+    ClonedActor->DuplicateSubObjects(this);
+    ClonedActor->PostDuplicate();
+    return ClonedActor;
+}
+
+void UBillboardComponent::DuplicateSubObjects(const UObject* Source)
+{
+    UPrimitiveComponent::DuplicateSubObjects(Source);
+}
+
+void UBillboardComponent::PostDuplicate()
+{
+    UPrimitiveComponent::PostDuplicate();
+}
+
 void UBillboardComponent::CreateQuadTextureVertexBuffer()
 {
 	numVertices = sizeof(quadTextureVertices) / sizeof(FVertexTexture);
 	numIndices = sizeof(quadTextureInices) / sizeof(uint32);
-    vertexTextureBuffer = FEngineLoop::renderer.GetResourceManager().CreateVertexBuffer(quadTextureVertices, sizeof(quadTextureVertices));
-	indexTextureBuffer = FEngineLoop::renderer.GetResourceManager().CreateIndexBuffer(quadTextureInices, sizeof(quadTextureInices));
+    vertexTextureBuffer = UEditorEngine::renderer.GetResourceManager().CreateVertexBuffer(quadTextureVertices, sizeof(quadTextureVertices));
+	indexTextureBuffer = UEditorEngine::renderer.GetResourceManager().CreateIndexBuffer(quadTextureInices, sizeof(quadTextureInices));
 
 	if (!vertexTextureBuffer) {
 		Console::GetInstance().AddLog(LogLevel::Warning, "Buffer Error");
@@ -118,24 +141,24 @@ bool UBillboardComponent::CheckPickingOnNDC(const TArray<FVector>& checkQuad, fl
 	bool result = false;
 	POINT mousePos;
 	GetCursorPos(&mousePos);
-	ScreenToClient(GEngineLoop.hWnd, &mousePos);
+	ScreenToClient(GEngine->hWnd, &mousePos);
 
 	D3D11_VIEWPORT viewport;
 	UINT numViewports = 1;
-	FEngineLoop::graphicDevice.DeviceContext->RSGetViewports(&numViewports, &viewport);
+	UEditorEngine::graphicDevice.DeviceContext->RSGetViewports(&numViewports, &viewport);
 	float screenWidth = viewport.Width;
 	float screenHeight = viewport.Height;
 
 	FVector pickPosition;
 	int screenX = mousePos.x;
 	int screenY = mousePos.y;
-    FMatrix projectionMatrix = GetEngine().GetLevelEditor()->GetActiveViewportClient()->GetProjectionMatrix();
+    FMatrix projectionMatrix = GetEngine()->GetLevelEditor()->GetActiveViewportClient()->GetProjectionMatrix();
 	pickPosition.x = ((2.0f * screenX / viewport.Width) - 1);
 	pickPosition.y = -((2.0f * screenY / viewport.Height) - 1);
 	pickPosition.z = 1.0f; // Near Plane
 
 	FMatrix M = CreateBillboardMatrix();
-    FMatrix V = GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->GetViewMatrix();;
+    FMatrix V = GEngine->GetLevelEditor()->GetActiveViewportClient()->GetViewMatrix();;
 	FMatrix P = projectionMatrix;
 	FMatrix MVP = M * V * P;
 

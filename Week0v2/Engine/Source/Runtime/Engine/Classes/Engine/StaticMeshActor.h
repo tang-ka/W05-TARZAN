@@ -2,6 +2,8 @@
 #include "GameFramework/Actor.h"
 
 
+class UStaticMeshComponent;
+
 class AStaticMeshActor : public AActor
 {
     DECLARE_CLASS(AStaticMeshActor, AActor)

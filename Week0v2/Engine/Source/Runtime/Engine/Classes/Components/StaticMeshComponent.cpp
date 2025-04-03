@@ -1,11 +1,17 @@
 #include "Components/StaticMeshComponent.h"
 
-#include "World.h"
-#include "Launch/EngineLoop.h"
+#include "Engine/World.h"
+#include "Launch/EditorEngine.h"
 #include "UObject/ObjectFactory.h"
 #include "UnrealEd/PrimitiveBatch.h"
 
 
+UStaticMeshComponent::UStaticMeshComponent(const UStaticMeshComponent& Other)
+    : UMeshComponent(Other),
+      staticMesh(Other.staticMesh),
+      selectedSubMeshIndex(Other.selectedSubMeshIndex)
+{
+}
 uint32 UStaticMeshComponent::GetNumMaterials() const
 {
     if (staticMesh == nullptr) return 0;
@@ -110,4 +116,25 @@ int UStaticMeshComponent::CheckRayIntersection(FVector& rayOrigin, FVector& rayD
 
     }
     return nIntersections;
+}
+UObject* UStaticMeshComponent::Duplicate() const
+{
+    UStaticMeshComponent* NewComp = FObjectFactory::ConstructObjectFrom<UStaticMeshComponent>(this);
+    NewComp->DuplicateSubObjects(this);
+    NewComp->PostDuplicate();
+    return NewComp;
+}
+
+void UStaticMeshComponent::DuplicateSubObjects(const UObject* Source)
+{
+    UMeshComponent::DuplicateSubObjects(Source);
+    // staticMesh는 복사 생성자에서 복제됨
+}
+
+void UStaticMeshComponent::PostDuplicate() {}
+
+void UStaticMeshComponent::TickComponent(float DeltaTime)
+{
+    Timer += DeltaTime * 0.005f;
+    SetLocation(GetWorldLocation()+ (FVector(1.0f,1.0f, 1.0f) * sin(Timer)));
 }
