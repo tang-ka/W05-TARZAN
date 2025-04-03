@@ -317,3 +317,9 @@ struct FTextureConstants {
     float pad0;
     float pad1;
 };
+
+struct FSubUVConstant
+{
+    float indexU;
+    float indexV;
+};

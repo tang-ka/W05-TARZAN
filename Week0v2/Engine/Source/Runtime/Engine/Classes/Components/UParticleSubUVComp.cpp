@@ -23,7 +23,7 @@ UParticleSubUVComp::~UParticleSubUVComp()
 void UParticleSubUVComp::InitializeComponent()
 {
 	Super::InitializeComponent();
-	UEditorEngine::renderer.UpdateSubUVConstant(0, 0);
+	UEditorEngine::renderer.GetConstantBufferUpdater().UpdateSubUVConstant(UEditorEngine::renderer.SubUVConstantBuffer, 0, 0);
 	UEditorEngine::renderer.PrepareSubUVConstant();
 }
 
@@ -111,6 +111,6 @@ void UParticleSubUVComp::CreateSubUVVertexBuffer()
 	vertices[3].u = normalWidthOffset;
 	vertices[3].v = normalHeightOffset;
 
-	vertexSubUVBuffer = UEditorEngine::renderer.CreateVertexBuffer(vertices.GetData(), static_cast<UINT>(vertices.Num() * sizeof(FVertexTexture)));
+	vertexSubUVBuffer = UEditorEngine::renderer.GetResourceManager().CreateVertexBuffer(vertices);
 	numTextVertices = static_cast<UINT>(vertices.Num());
 }

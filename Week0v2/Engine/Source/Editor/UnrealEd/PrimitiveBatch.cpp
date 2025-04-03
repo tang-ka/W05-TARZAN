@@ -33,7 +33,7 @@ void UPrimitiveBatch::GenerateGrid(float spacing, int gridCount)
     GridParam.gridOrigin = { 0,0,0 };
 }
 
-void UPrimitiveBatch::RenderBatch(const FMatrix& View, const FMatrix& Projection)
+void UPrimitiveBatch::RenderBatch(ID3D11Buffer* ConstantBuffer, const FMatrix& View, const FMatrix& Projection)
 {
     UEditorEngine::renderer.PrepareLineShader();
 
@@ -42,7 +42,7 @@ void UPrimitiveBatch::RenderBatch(const FMatrix& View, const FMatrix& Projection
     FMatrix Model = FMatrix::Identity;
     FMatrix MVP = Model * View * Projection;
     FMatrix NormalMatrix = FMatrix::Transpose(FMatrix::Inverse(Model));
-    UEditorEngine::renderer.UpdateConstant(MVP, NormalMatrix, FVector4(0,0,0,0), false);
+    UEditorEngine::renderer.GetConstantBufferUpdater().UpdateConstant(ConstantBuffer, MVP, NormalMatrix, FVector4(0, 0, 0, 0), false);
     UEditorEngine::renderer.UpdateGridConstantBuffer(GridParam);
 
     UpdateBoundingBoxResources();
@@ -60,8 +60,10 @@ void UPrimitiveBatch::RenderBatch(const FMatrix& View, const FMatrix& Projection
 }
 void UPrimitiveBatch::InitializeVertexBuffer()
 {
+    FSimpleVertex vertices[2]{ {0}, {0} };
+
     if (!pVertexBuffer)
-        pVertexBuffer = UEditorEngine::renderer.CreateStaticVerticesBuffer();
+        pVertexBuffer = UEditorEngine::renderer.GetResourceManager().CreateVertexBuffer(vertices, 2);
 }
 
 void UPrimitiveBatch::UpdateBoundingBoxResources()
@@ -71,7 +73,7 @@ void UPrimitiveBatch::UpdateBoundingBoxResources()
 
         ReleaseBoundingBoxResources();
 
-        pBoundingBoxBuffer = UEditorEngine::renderer.CreateBoundingBoxBuffer(static_cast<UINT>(allocatedBoundingBoxCapacity));
+        pBoundingBoxBuffer = UEditorEngine::renderer.GetResourceManager().CreateStructuredBuffer<FBoundingBox>(static_cast<UINT>(allocatedBoundingBoxCapacity));
         pBoundingBoxSRV = UEditorEngine::renderer.CreateBoundingBoxSRV(pBoundingBoxBuffer, static_cast<UINT>(allocatedBoundingBoxCapacity));
     }
 
@@ -94,7 +96,7 @@ void UPrimitiveBatch::UpdateConeResources()
 
         ReleaseConeResources();
 
-        pConesBuffer = UEditorEngine::renderer.CreateConeBuffer(static_cast<UINT>(allocatedConeCapacity));
+        pConesBuffer = UEditorEngine::renderer.GetResourceManager().CreateStructuredBuffer<FCone>(static_cast<UINT>(allocatedConeCapacity));
         pConesSRV = UEditorEngine::renderer.CreateConeSRV(pConesBuffer, static_cast<UINT>(allocatedConeCapacity));
     }
 
@@ -117,7 +119,7 @@ void UPrimitiveBatch::UpdateOBBResources()
 
         ReleaseOBBResources();
 
-        pOBBBuffer = UEditorEngine::renderer.CreateOBBBuffer(static_cast<UINT>(allocatedOBBCapacity));
+        pOBBBuffer = UEditorEngine::renderer.GetResourceManager().CreateStructuredBuffer<FOBB>(static_cast<UINT>(allocatedOBBCapacity));
         pOBBSRV = UEditorEngine::renderer.CreateOBBSRV(pOBBBuffer, static_cast<UINT>(allocatedOBBCapacity));
     }
 

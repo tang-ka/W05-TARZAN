@@ -1,5 +1,6 @@
 #pragma once
 #include "UBillboardComponent.h"
+#include <d3d11.h>
 
 class UText : public UBillboardComponent
 {
