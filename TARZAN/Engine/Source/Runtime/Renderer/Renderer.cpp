@@ -505,9 +505,11 @@ void FRenderer::RenderBillboards(UWorld* World, std::shared_ptr<FEditorViewportC
 
         if (UParticleSubUVComp* SubUVParticle = Cast<UParticleSubUVComp>(BillboardComp))
         {
+            
+            const FQuadRenderData& QuadRenderData = UEditorEngine::resourceMgr.GetQuadRenderData();
             RenderTexturePrimitive(
                 SubUVParticle->vertexSubUVBuffer, SubUVParticle->numTextVertices,
-                SubUVParticle->indexTextureBuffer, SubUVParticle->numIndices, SubUVParticle->Texture->TextureSRV, SubUVParticle->Texture->SamplerState
+                QuadRenderData.IndexTextureBuffer, QuadRenderData.numIndices, SubUVParticle->Texture->TextureSRV, SubUVParticle->Texture->SamplerState
             );
         }
         else if (UText* Text = Cast<UText>(BillboardComp))
@@ -519,9 +521,11 @@ void FRenderer::RenderBillboards(UWorld* World, std::shared_ptr<FEditorViewportC
         }
         else
         {
+            const FQuadRenderData& QuadRenderData = UEditorEngine::resourceMgr.GetQuadRenderData();
+            
             RenderTexturePrimitive(
-                BillboardComp->vertexTextureBuffer, BillboardComp->numVertices,
-                BillboardComp->indexTextureBuffer, BillboardComp->numIndices, BillboardComp->Texture->TextureSRV, BillboardComp->Texture->SamplerState
+                QuadRenderData.VertexTextureBuffer, QuadRenderData.numVertices,
+                QuadRenderData.IndexTextureBuffer, QuadRenderData.numIndices, BillboardComp->Texture->TextureSRV, BillboardComp->Texture->SamplerState
             );
         }
     }
