@@ -167,7 +167,7 @@ void FRenderer::CreateConstantBuffer()
     TextureConstantBufer = RenderResourceManager.CreateConstantBuffer(sizeof(FTextureConstants));
     LightingBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FLighting));
     FlagBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FLitUnlitConstants));
-    FireballConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FFireballInfo));
+    FireballConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FFireballConstant));
 }
 
 void FRenderer::ReleaseConstantBuffer()
