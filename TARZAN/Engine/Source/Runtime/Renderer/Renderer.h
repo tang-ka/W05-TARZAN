@@ -13,6 +13,7 @@
 #include "ConstantBufferUpdater.h"
 
 class ULightComponentBase;
+class UFireballComponent;
 class UWorld;
 class FGraphicsDevice;
 class UMaterial;
@@ -39,6 +40,7 @@ public:
     ID3D11Buffer* MaterialConstantBuffer = nullptr;
     ID3D11Buffer* SubMeshConstantBuffer = nullptr;
     ID3D11Buffer* TextureConstantBufer = nullptr;
+    ID3D11Buffer* FireballConstantBuffer = nullptr;
 
     FLighting lightingData;
 
@@ -126,6 +128,7 @@ private:
     TArray<UGizmoBaseComponent*> GizmoObjs;
     TArray<UBillboardComponent*> BillboardObjs;
     TArray<ULightComponentBase*> LightObjs;
+    TArray<UFireballComponent*> FireballObjs;
 
 public:
     ID3D11VertexShader* VertexLineShader = nullptr;
