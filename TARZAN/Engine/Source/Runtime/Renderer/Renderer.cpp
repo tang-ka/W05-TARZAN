@@ -107,7 +107,7 @@ void FRenderer::PrepareShader() const
         Graphics->DeviceContext->PSSetConstantBuffers(2, 1, &LightingBuffer);
         Graphics->DeviceContext->PSSetConstantBuffers(3, 1, &FlagBuffer);
         Graphics->DeviceContext->PSSetConstantBuffers(4, 1, &SubMeshConstantBuffer);
-        Graphics->DeviceContext->PSSetConstantBuffers(5, 1, &TextureConstantBufer);
+        Graphics->DeviceContext->PSSetConstantBuffers(5, 1, &TextureConstantBuffer);
     }
 }
 
@@ -161,7 +161,7 @@ void FRenderer::CreateConstantBuffer()
     LinePrimitiveBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FPrimitiveCounts));
     MaterialConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FMaterialConstants));
     SubMeshConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FSubMeshConstants));
-    TextureConstantBufer = RenderResourceManager.CreateConstantBuffer(sizeof(FTextureConstants));
+    TextureConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FTextureConstants));
     LightingBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FLighting));
     FlagBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FLitUnlitConstants));
 }
@@ -174,7 +174,7 @@ void FRenderer::ReleaseConstantBuffer()
     RenderResourceManager.ReleaseBuffer(LinePrimitiveBuffer);
     RenderResourceManager.ReleaseBuffer(MaterialConstantBuffer);
     RenderResourceManager.ReleaseBuffer(SubMeshConstantBuffer);
-    RenderResourceManager.ReleaseBuffer(TextureConstantBufer);
+    RenderResourceManager.ReleaseBuffer(TextureConstantBuffer);
     RenderResourceManager.ReleaseBuffer(LightingBuffer);
     RenderResourceManager.ReleaseBuffer(FlagBuffer);
 }
@@ -395,11 +395,11 @@ void FRenderer::RenderStaticMeshes(UWorld* World, std::shared_ptr<FEditorViewpor
 
         if (USkySphereComponent* skysphere = Cast<USkySphereComponent>(StaticMeshComp))
         {
-            ConstantBufferUpdater.UpdateTextureConstant(TextureConstantBufer, skysphere->UOffset, skysphere->VOffset);
+            ConstantBufferUpdater.UpdateTextureConstant(TextureConstantBuffer, skysphere->UOffset, skysphere->VOffset);
         }
         else
         {
-            ConstantBufferUpdater.UpdateTextureConstant(TextureConstantBufer, 0, 0);
+            ConstantBufferUpdater.UpdateTextureConstant(TextureConstantBuffer, 0, 0);
         }
 
         if (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_AABB))
