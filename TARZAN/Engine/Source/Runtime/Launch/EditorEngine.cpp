@@ -1,7 +1,6 @@
 #include "EditorEngine.h"
 #include "ImGuiManager.h"
 #include "Engine/World.h"
-#include "PropertyEditor/ViewportTypePanel.h"
 #include "UnrealEd/EditorViewportClient.h"
 #include "UnrealEd/UnrealEd.h"
 #include "UnrealClient.h"
@@ -15,7 +14,7 @@
 class ULevel;
 
 FGraphicsDevice UEditorEngine::graphicDevice;
-FRenderer UEditorEngine::renderer;
+FRenderer UEditorEngine::renderer(UEditorEngine::graphicDevice.DeviceContext);
 FResourceMgr UEditorEngine::resourceMgr;
 
 UEditorEngine::UEditorEngine()
@@ -89,19 +88,11 @@ void UEditorEngine::Tick(float deltaSeconds)
 
 void UEditorEngine::Render()
 {
-    RenderGBuffer();
-    
-    RenderLightPass();
-
-    RenderPostProcessPass();
-
-    RenderOverlayPass();
-
     // Pending 처리된 오브젝트 제거
-
     // TODO : 이거 잘 안되는 것 이유 파악 
      //GUObjectArray.ProcessPendingDestroyObjects();
 
+    renderer.Render();
     graphicDevice.SwapBuffer();
 }
 

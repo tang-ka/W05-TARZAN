@@ -21,6 +21,27 @@
 #include "UObject/UObjectIterator.h"
 #include "Components/SkySphereComponent.h"
 #include "FireballComp.h"
+#include "Renderer/Pass/GBufferPass.h"
+#include "Renderer/Pass/LightingPass.h"
+#include "Renderer/Pass/PostProcessPass.h"
+#include "Renderer/Pass/OverlayPass.h"
+
+
+FRenderer::FRenderer(ID3D11DeviceContext* Context) : Context(Context)
+{
+    Passes.Add(new GBufferPass());
+    Passes.Add(new LightingPass());
+    Passes.Add(new PostProcessPass());
+    Passes.Add(new OverlayPass());
+}
+
+FRenderer::~FRenderer()
+{
+    for (RenderPass* Pass : Passes)
+        delete Pass;
+
+    Passes.Empty();
+}
 
 void FRenderer::Initialize(FGraphicsDevice* graphics)
 {
@@ -33,6 +54,17 @@ void FRenderer::Initialize(FGraphicsDevice* graphics)
     CreateConstantBuffer();
     ConstantBufferUpdater.UpdateLitUnlitConstant(FlagBuffer, 1);
 }
+
+void FRenderer::Render()
+{
+    for (RenderPass* pass : Passes)
+    {
+        pass->Setup(Context);
+        pass->Execute(Context);
+        pass->Cleanup(Context);
+    }
+}
+
 
 void FRenderer::Release()
 {
@@ -153,7 +185,6 @@ void FRenderer::PrepareLineShader() const
     }
 }
 #pragma endregion Shader
-
 
 #pragma region ConstantBuffer
 // ConstantBuffer
@@ -625,8 +656,6 @@ void FRenderer::UpdateMaterial(const FObjMaterialInfo& MaterialInfo) const
         Graphics->DeviceContext->PSSetSamplers(0, 1, nullSampler);
     }
 }
-
-
 
 ID3D11ShaderResourceView* FRenderer::CreateBoundingBoxSRV(ID3D11Buffer* pBoundingBoxBuffer, UINT numBoundingBoxes)
 {

@@ -11,6 +11,7 @@
 #include "RenderResourceManager.h"
 #include "ShaderManager.h"
 #include "ConstantBufferUpdater.h"
+#include "Pass/RenderPass.h"
 
 class ULightComponentBase;
 class UFireballComponent;
@@ -24,9 +25,14 @@ class UBillboardComponent;
 class UStaticMeshComponent;
 class UGizmoBaseComponent;
 class FRenderResourceManager;
+
 class FRenderer 
 {
-
+public:
+    FRenderer(ID3D11DeviceContext* context);
+    ~FRenderer();
+    
+    void Render();
 private:
     float litFlag = 0;
 public:
@@ -41,7 +47,6 @@ public:
     ID3D11Buffer* SubMeshConstantBuffer = nullptr;
     ID3D11Buffer* TextureConstantBufer = nullptr;
     ID3D11Buffer* FireballConstantBuffer = nullptr;
-
 
     FLighting lightingData;
 
@@ -150,5 +155,9 @@ private:
     FRenderResourceManager RenderResourceManager;
     FShaderManager ShaderManager;
     FConstantBufferUpdater ConstantBufferUpdater;
+    
+private:
+    ID3D11DeviceContext* Context;
+    TArray<RenderPass*> Passes;
 };
 
