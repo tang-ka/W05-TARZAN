@@ -12,6 +12,13 @@ public:
     virtual void InitializeComponent() override;
     virtual void TickComponent(float DeltaTime) override;
 
+    void SetColor(const FLinearColor & Color) { FireballInfo.Color = Color; }
+    void SetRadius(float Radius) { FireballInfo.Radius = Radius; }
+    void SetIntensity(float Intensity) { FireballInfo.Intensity = Intensity; }
+    float GetIntensity() { return FireballInfo.Intensity; }
+    float GetRadius() { return FireballInfo.Radius; }
+    FLinearColor GetColor() { return FireballInfo.Color; }
+    
     FFireballInfo GetFireballInfo() const { return FireballInfo; }
 private:
     FFireballInfo FireballInfo;
