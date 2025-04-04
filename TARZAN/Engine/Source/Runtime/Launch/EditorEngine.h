@@ -39,13 +39,6 @@ public:
 private:
     void WindowInit(HINSTANCE hInstance);
 
-#pragma region Render Pass
-    void RenderGBuffer();
-    void RenderLightPass();
-    void RenderPostProcessPass();
-    void RenderOverlayPass();
-#pragma endregion
-
 public:
     static FGraphicsDevice graphicDevice;
     static FRenderer renderer;
@@ -62,6 +55,7 @@ private:
     
     bool bTestInput = false;
 public:
+    UImGuiManager* GetUIManager() const { return UIMgr; }
     std::shared_ptr<UWorld> GetWorld() const { return GWorld; }
     SLevelEditor* GetLevelEditor() const { return LevelEditor; }
     UnrealEd* GetUnrealEditor() const { return UnrealEditor; }

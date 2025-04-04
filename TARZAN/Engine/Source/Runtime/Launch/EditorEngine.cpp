@@ -14,7 +14,7 @@
 class ULevel;
 
 FGraphicsDevice UEditorEngine::graphicDevice;
-FRenderer UEditorEngine::renderer(UEditorEngine::graphicDevice.DeviceContext);
+FRenderer UEditorEngine::renderer;
 FResourceMgr UEditorEngine::resourceMgr;
 
 UEditorEngine::UEditorEngine()
@@ -26,7 +26,6 @@ UEditorEngine::UEditorEngine()
 {
 }
 
-
 int32 UEditorEngine::Init(HWND hwnd)
 {
     /* must be initialized before window. */
@@ -37,18 +36,17 @@ int32 UEditorEngine::Init(HWND hwnd)
     UIMgr->Initialize(hWnd, graphicDevice.Device, graphicDevice.DeviceContext);
     resourceMgr.Initialize(&renderer, &graphicDevice);
 
-    
     FWorldContext EditorContext;
     EditorContext.WorldType = EWorldType::Editor;
     EditorContext.thisCurrentWorld = std::shared_ptr<UWorld>(FObjectFactory::ConstructObject<UWorld>());
-    std::shared_ptr<UWorld> EditWorld  =EditorContext.thisCurrentWorld;
+    std::shared_ptr<UWorld> EditWorld = EditorContext.thisCurrentWorld;
     EditWorld->InitWorld();
     EditWorld->WorldType = EWorldType::Editor;
     GWorld = EditWorld;
     worldContexts.Add(EditorContext);
     
     FWorldContext PIEContext;
-    EditorContext.WorldType = EWorldType::PIE;
+    PIEContext.WorldType = EWorldType::PIE;
     worldContexts.Add(PIEContext);
     
     UnrealEditor = new UnrealEd();
@@ -132,7 +130,6 @@ void UEditorEngine::PreparePIE()
     GWorld = worldContexts[1].thisCurrentWorld;
     GWorld->WorldType = EWorldType::PIE;
     levelType = LEVELTICK_All;
-    
 }
 
 void UEditorEngine::StartPIE()
@@ -182,44 +179,44 @@ void UEditorEngine::StopPIE()
     // GWorld = GetEditorWorldContext()->World();
 }
 
-void UEditorEngine::RenderGBuffer()
-{
-    graphicDevice.Prepare();
-    if (LevelEditor->IsMultiViewport())
-    {
-        std::shared_ptr<FEditorViewportClient> viewportClient = GetLevelEditor()->GetActiveViewportClient();
-        for (int i = 0; i < 4; ++i)
-        {
-            LevelEditor->SetViewportClient(i);
-            renderer.PrepareRender();
-            renderer.Render(GWorld.get(), LevelEditor->GetActiveViewportClient());
-        }
-        GetLevelEditor()->SetViewportClient(viewportClient);
-    }
-    else
-    {
-        renderer.PrepareRender();
-        renderer.Render(GWorld.get(), LevelEditor->GetActiveViewportClient());
-    }
-}
-
-void UEditorEngine::RenderLightPass()
-{
-}
-
-void UEditorEngine::RenderPostProcessPass()
-{
-}
-
-void UEditorEngine::RenderOverlayPass()
-{
-    UIMgr->BeginFrame();
-
-    UnrealEditor->Render();
-    Console::GetInstance().Draw();
-
-    UIMgr->EndFrame();
-}
+//void UEditorEngine::RenderGBuffer()
+//{
+//    graphicDevice.Prepare();
+//    if (LevelEditor->IsMultiViewport())
+//    {
+//        std::shared_ptr<FEditorViewportClient> viewportClient = GetLevelEditor()->GetActiveViewportClient();
+//        for (int i = 0; i < 4; ++i)
+//        {
+//            LevelEditor->SetViewportClient(i);
+//            renderer.PrepareRender();
+//            renderer.Render(GWorld.get(), LevelEditor->GetActiveViewportClient());
+//        }
+//        GetLevelEditor()->SetViewportClient(viewportClient);
+//    }
+//    else
+//    {
+//        renderer.PrepareRender();
+//        renderer.Render(GWorld.get(), LevelEditor->GetActiveViewportClient());
+//    }
+//}
+//
+//void UEditorEngine::RenderLightPass()
+//{
+//}
+//
+//void UEditorEngine::RenderPostProcessPass()
+//{
+//}
+//
+//void UEditorEngine::RenderOverlayPass()
+//{
+//    UIMgr->BeginFrame();
+//
+//    UnrealEditor->Render();
+//    Console::GetInstance().Draw();
+//
+//    UIMgr->EndFrame();
+//}
 
 void UEditorEngine::Exit()
 {

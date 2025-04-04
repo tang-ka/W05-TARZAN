@@ -26,14 +26,11 @@
 #include "Renderer/Pass/PostProcessPass.h"
 #include "Renderer/Pass/OverlayPass.h"
 
+#include "Editor/LevelEditor/SLevelEditor.h"
+#include "Runtime/Launch/ImGuiManager.h"
+#include "UnrealEd/UnrealEd.h"
 
-FRenderer::FRenderer(ID3D11DeviceContext* Context) : Context(Context)
-{
-    Passes.Add(new GBufferPass());
-    Passes.Add(new LightingPass());
-    Passes.Add(new PostProcessPass());
-    Passes.Add(new OverlayPass());
-}
+extern UEditorEngine* GEngine;
 
 FRenderer::~FRenderer()
 {
@@ -53,18 +50,35 @@ void FRenderer::Initialize(FGraphicsDevice* graphics)
     CreateShader();
     CreateConstantBuffer();
     ConstantBufferUpdater.UpdateLitUnlitConstant(FlagBuffer, 1);
+
+    auto world = GEngine->GetWorld();
+
+    //UIMgr = new UImGuiManager;
+    //UIMgr->Initialize(hWnd, graphicDevice.Device, graphicDevice.DeviceContext);
+
+    Passes.Add(new GBufferPass());
+    Passes.Add(new LightingPass());
+    Passes.Add(new PostProcessPass());
+    Passes.Add(new OverlayPass());
 }
 
 void FRenderer::Render()
 {
-    for (RenderPass* pass : Passes)
-    {
-        pass->Setup(Context);
-        pass->Execute(Context);
-        pass->Cleanup(Context);
-    }
-}
+    RenderGBuffer();
 
+    RenderLightPass();
+
+    RenderPostProcessPass();
+
+    RenderOverlayPass();
+
+    //for (RenderPass* pass : Passes)
+    //{
+    //    pass->Setup(Context);
+    //    pass->Execute(Context);
+    //    pass->Cleanup(Context);
+    //}
+}
 
 void FRenderer::Release()
 {
@@ -139,7 +153,7 @@ void FRenderer::PrepareShader() const
         Graphics->DeviceContext->PSSetConstantBuffers(2, 1, &LightingBuffer);
         Graphics->DeviceContext->PSSetConstantBuffers(3, 1, &FlagBuffer);
         Graphics->DeviceContext->PSSetConstantBuffers(4, 1, &SubMeshConstantBuffer);
-        Graphics->DeviceContext->PSSetConstantBuffers(5, 1, &TextureConstantBufer);
+        Graphics->DeviceContext->PSSetConstantBuffers(5, 1, &TextureConstantBuffer);
         Graphics->DeviceContext->PSSetConstantBuffers(6, 1, &FireballConstantBuffer);
 
     }
@@ -655,6 +669,52 @@ void FRenderer::UpdateMaterial(const FObjMaterialInfo& MaterialInfo) const
         Graphics->DeviceContext->PSSetShaderResources(0, 1, nullSRV);
         Graphics->DeviceContext->PSSetSamplers(0, 1, nullSampler);
     }
+}
+
+void FRenderer::RenderGBuffer()
+{
+    FGraphicsDevice graphicDevice = GEngine->graphicDevice;
+    SLevelEditor* LevelEditor = GEngine->GetLevelEditor();
+    std::shared_ptr<UWorld> GWorld = GEngine->GetWorld();
+
+    graphicDevice.Prepare();
+    if (LevelEditor->IsMultiViewport())
+    {
+        std::shared_ptr<FEditorViewportClient> viewportClient = LevelEditor->GetActiveViewportClient();
+        for (int i = 0; i < 4; ++i)
+        {
+            LevelEditor->SetViewportClient(i);
+            PrepareRender();
+            Render(GWorld.get(), LevelEditor->GetActiveViewportClient());
+        }
+        LevelEditor->SetViewportClient(viewportClient);
+    }
+    else
+    {
+        PrepareRender();
+        Render(GWorld.get(), LevelEditor->GetActiveViewportClient());
+    }
+}
+
+void FRenderer::RenderLightPass()
+{
+}
+
+void FRenderer::RenderPostProcessPass()
+{
+}
+
+void FRenderer::RenderOverlayPass()
+{
+    UImGuiManager* UIMgr = GEngine->GetUIManager();
+    UnrealEd* UnrealEditor = GEngine->GetUnrealEditor();
+
+    UIMgr->BeginFrame();
+
+    UnrealEditor->Render();
+    Console::GetInstance().Draw();
+
+    UIMgr->EndFrame();
 }
 
 ID3D11ShaderResourceView* FRenderer::CreateBoundingBoxSRV(ID3D11Buffer* pBoundingBoxBuffer, UINT numBoundingBoxes)

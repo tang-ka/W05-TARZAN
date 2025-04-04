@@ -39,6 +39,5 @@ private:
 
     FQuadRenderData QuadRenderData;
 
-    
     TMap<FWString, std::shared_ptr<FTexture>> textureMap;
 };

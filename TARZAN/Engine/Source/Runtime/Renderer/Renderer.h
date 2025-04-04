@@ -29,7 +29,7 @@ class FRenderResourceManager;
 class FRenderer 
 {
 public:
-    FRenderer(ID3D11DeviceContext* context);
+    //FRenderer() : UIMgr(nullptr) {}
     ~FRenderer();
     
     void Render();
@@ -45,7 +45,7 @@ public:
     ID3D11Buffer* FlagBuffer = nullptr;
     ID3D11Buffer* MaterialConstantBuffer = nullptr;
     ID3D11Buffer* SubMeshConstantBuffer = nullptr;
-    ID3D11Buffer* TextureConstantBufer = nullptr;
+    ID3D11Buffer* TextureConstantBuffer = nullptr;
     ID3D11Buffer* FireballConstantBuffer = nullptr;
 
     FLighting lightingData;
@@ -79,6 +79,13 @@ public:
     // update
     void UpdateMaterial(const FObjMaterialInfo& MaterialInfo) const;
 
+private:
+#pragma region Render Pass
+    void RenderGBuffer();
+    void RenderLightPass();
+    void RenderPostProcessPass();
+    void RenderOverlayPass();
+#pragma endregion
 
 public://텍스쳐용 기능 추가
     ID3D11VertexShader* VertexTextureShader = nullptr;
@@ -145,16 +152,22 @@ public:
     ID3D11ShaderResourceView* pConeSRV = nullptr;
     ID3D11ShaderResourceView* pOBBSRV = nullptr;
 
-
 public:
     FRenderResourceManager& GetResourceManager() { return RenderResourceManager; }
     FShaderManager& GetShaderManager() { return ShaderManager; }
     FConstantBufferUpdater& GetConstantBufferUpdater() { return ConstantBufferUpdater; }
+    //UnrealEd* GetUnrealEditor() { return UnrealEditor; }
 
 private:
     FRenderResourceManager RenderResourceManager;
     FShaderManager ShaderManager;
     FConstantBufferUpdater ConstantBufferUpdater;
+
+    //UImGuiManager* UIMgr;
+    // TODO: 리펙토링 할 때 이거 EditorEngine에서 다 옮겨와야함.
+    //UnrealEd* UnrealEditor;
+    //FGraphicsDevice* graphicDevice;
+    //FResourceMgr* reourceMgr;
     
 private:
     ID3D11DeviceContext* Context;
