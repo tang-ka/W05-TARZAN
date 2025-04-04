@@ -1,4 +1,4 @@
-﻿#include "LaunchEngineLoop.h"
+#include "LaunchEngineLoop.h"
 
 #include "EditorEngine.h"
 #include "Engine/Engine.h"
@@ -144,7 +144,7 @@ void FEngineLoop::Tick()
             }
         }
         GEngine->Tick(deltaSeconds);
-        
+        GEngine->Render();
         do
         {
             Sleep(0);

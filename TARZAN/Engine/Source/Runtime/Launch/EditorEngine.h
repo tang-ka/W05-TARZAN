@@ -24,8 +24,8 @@ class UEditorEngine : public UEngine
 public:
     UEditorEngine();
     int32 Init(HWND hwnd);
-    void Render();
     void Tick(float deltaSeconds);
+    void Render();
     void Exit();
     float GetAspectRatio(IDXGISwapChain* swapChain) const;
     void Input();
@@ -38,6 +38,13 @@ public:
 
 private:
     void WindowInit(HINSTANCE hInstance);
+
+#pragma region Render Pass
+    void RenderGBuffer();
+    void RenderLightPass();
+    void RenderPostProcessPass();
+    void RenderOverlayPass();
+#pragma endregion
 
 public:
     static FGraphicsDevice graphicDevice;

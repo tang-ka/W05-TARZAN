@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "UnrealEngine.h"
 #include "HAL/PlatformType.h"
 

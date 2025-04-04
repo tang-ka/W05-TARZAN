@@ -63,28 +63,6 @@ int32 UEditorEngine::Init(HWND hwnd)
     return 0;
 }
 
-
-void UEditorEngine::Render()
-{
-    graphicDevice.Prepare();
-    if (LevelEditor->IsMultiViewport())
-    {
-        std::shared_ptr<FEditorViewportClient> viewportClient = GetLevelEditor()->GetActiveViewportClient();
-        for (int i = 0; i < 4; ++i)
-        {
-            LevelEditor->SetViewportClient(i);
-            renderer.PrepareRender();
-            renderer.Render(GWorld.get(),LevelEditor->GetActiveViewportClient());
-        }
-        GetLevelEditor()->SetViewportClient(viewportClient);
-    }
-    else
-    {
-        renderer.PrepareRender();
-        renderer.Render(GWorld.get(),LevelEditor->GetActiveViewportClient());
-    }
-}
-
 void UEditorEngine::Tick(float deltaSeconds)
 {
     // for (FWorldContext& WorldContext : worldContexts)
@@ -107,18 +85,22 @@ void UEditorEngine::Tick(float deltaSeconds)
     Input();
     // GWorld->Tick(LEVELTICK_All, deltaSeconds);
     LevelEditor->Tick(deltaSeconds);
-    Render();
-    UIMgr->BeginFrame();
-    UnrealEditor->Render();
+}
 
-    Console::GetInstance().Draw();
+void UEditorEngine::Render()
+{
+    RenderGBuffer();
+    
+    RenderLightPass();
 
-    UIMgr->EndFrame();
+    RenderPostProcessPass();
+
+    RenderOverlayPass();
 
     // Pending 처리된 오브젝트 제거
 
     // TODO : 이거 잘 안되는 것 이유 파악 
-    // GUObjectArray.ProcessPendingDestroyObjects();
+     //GUObjectArray.ProcessPendingDestroyObjects();
 
     graphicDevice.SwapBuffer();
 }
@@ -207,6 +189,45 @@ void UEditorEngine::StopPIE()
     // }
     //
     // GWorld = GetEditorWorldContext()->World();
+}
+
+void UEditorEngine::RenderGBuffer()
+{
+    graphicDevice.Prepare();
+    if (LevelEditor->IsMultiViewport())
+    {
+        std::shared_ptr<FEditorViewportClient> viewportClient = GetLevelEditor()->GetActiveViewportClient();
+        for (int i = 0; i < 4; ++i)
+        {
+            LevelEditor->SetViewportClient(i);
+            renderer.PrepareRender();
+            renderer.Render(GWorld.get(), LevelEditor->GetActiveViewportClient());
+        }
+        GetLevelEditor()->SetViewportClient(viewportClient);
+    }
+    else
+    {
+        renderer.PrepareRender();
+        renderer.Render(GWorld.get(), LevelEditor->GetActiveViewportClient());
+    }
+}
+
+void UEditorEngine::RenderLightPass()
+{
+}
+
+void UEditorEngine::RenderPostProcessPass()
+{
+}
+
+void UEditorEngine::RenderOverlayPass()
+{
+    UIMgr->BeginFrame();
+
+    UnrealEditor->Render();
+    Console::GetInstance().Draw();
+
+    UIMgr->EndFrame();
 }
 
 void UEditorEngine::Exit()
