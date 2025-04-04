@@ -42,6 +42,7 @@ public:
     ID3D11Buffer* TextureConstantBufer = nullptr;
     ID3D11Buffer* FireballConstantBuffer = nullptr;
 
+
     FLighting lightingData;
 
     uint32 Stride;

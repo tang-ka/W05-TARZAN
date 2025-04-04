@@ -1,5 +1,8 @@
 #include "GraphicDevice.h"
 #include <wchar.h>
+
+#include "Engine/ResourceMgr.h"
+
 void FGraphicsDevice::Initialize(HWND hWindow) {
     CreateDeviceAndSwapChain(hWindow);
     CreateFrameBuffer();

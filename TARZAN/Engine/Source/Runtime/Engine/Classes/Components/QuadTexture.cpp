@@ -1,3 +1,4 @@
+
 #include "QuadTexture.h"
 
 uint32 quadTextureInices[] =

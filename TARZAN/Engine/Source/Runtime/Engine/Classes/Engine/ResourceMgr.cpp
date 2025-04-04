@@ -4,6 +4,7 @@
 #include <wincodec.h>
 #include <ranges>
 #include "Define.h"
+#include "Components/QuadTexture.h"
 #include "Components/SkySphereComponent.h"
 #include "D3D11RHI/GraphicDevice.h"
 #include "DirectXTK/Include/DDSTextureLoader.h"
@@ -36,6 +37,18 @@ void FResourceMgr::Initialize(FRenderer* renderer, FGraphicsDevice* device)
     LoadTextureFromFile(device->Device, device->DeviceContext, L"Assets/Texture/Pawn_64x.png");
     LoadTextureFromFile(device->Device, device->DeviceContext, L"Assets/Texture/PointLight_64x.png");
     LoadTextureFromFile(device->Device, device->DeviceContext, L"Assets/Texture/SpotLight_64x.png");
+
+    QuadRenderData.numVertices = sizeof(quadTextureVertices) / sizeof(FVertexTexture);
+    QuadRenderData.numIndices = sizeof(quadTextureInices) / sizeof(uint32);
+    QuadRenderData.VertexTextureBuffer = UEditorEngine::renderer.GetResourceManager().CreateVertexBuffer(quadTextureVertices, sizeof(quadTextureVertices));
+    QuadRenderData.IndexTextureBuffer = UEditorEngine::renderer.GetResourceManager().CreateIndexBuffer(quadTextureInices, sizeof(quadTextureInices));
+
+    if (!QuadRenderData.VertexTextureBuffer) {
+        Console::GetInstance().AddLog(LogLevel::Warning, "Buffer Error");
+    }
+    if (!QuadRenderData.IndexTextureBuffer) {
+        Console::GetInstance().AddLog(LogLevel::Warning, "Buffer Error");
+    }
 }
 
 void FResourceMgr::Release(FRenderer* renderer) {
@@ -70,6 +83,71 @@ std::shared_ptr<FTexture> FResourceMgr::GetTexture(const FWString& name) const
 {
     auto* TempValue = textureMap.Find(name);
     return TempValue ? *TempValue : nullptr;
+}
+
+std::shared_ptr<FTexture> FResourceMgr::CreateTexture(ID3D11Device* device, ID3D11DeviceContext* context, ID3D11Texture2D* texture2D, const FWString& name)
+{
+    D3D11_TEXTURE2D_DESC textureDesc ;
+    texture2D->GetDesc(&textureDesc);
+    
+    std::shared_ptr<FTexture> Texture  = CreateTextureView(device, context, texture2D, textureDesc, name);
+    textureMap[name] = Texture;
+
+    Console::GetInstance().AddLog(LogLevel::Warning, "Texture File Create Successs");
+    
+    return Texture;
+}
+
+std::shared_ptr<FTexture> FResourceMgr::CreateTexture(ID3D11Device* device, ID3D11DeviceContext* context, D3D11_TEXTURE2D_DESC textureDesc,
+    const FWString& name)
+{
+    ID3D11Texture2D * texture2D = nullptr;
+    HRESULT hr = device->CreateTexture2D(&textureDesc, nullptr, &texture2D);
+    if (FAILED(hr))
+    {
+        Console::GetInstance().AddLog(LogLevel::Error, "Failed to create texture");
+        return nullptr;
+    }
+    
+    std::shared_ptr<FTexture> Texture = CreateTextureView(device, context, texture2D, textureDesc, name);
+    textureMap[name] = Texture;
+    Console::GetInstance().AddLog(LogLevel::Warning, "Texture File Create Successs");
+    return Texture;
+}
+
+std::shared_ptr<FTexture> FResourceMgr::CreateTextureView(ID3D11Device* device, ID3D11DeviceContext* context, ID3D11Texture2D* texture2D,
+                                                          D3D11_TEXTURE2D_DESC textureDesc, const FWString& name)
+{
+    uint32 width = static_cast<uint32>(textureDesc.Width);
+    uint32 height = static_cast<uint32>(textureDesc.Height);
+    
+    D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+    srvDesc.Format = textureDesc.Format;
+    srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+    srvDesc.Texture2D.MostDetailedMip = 0;
+    srvDesc.Texture2D.MipLevels = 1;
+    
+    ID3D11ShaderResourceView* TextureSRV = nullptr;
+    
+    device->CreateShaderResourceView(texture2D, &srvDesc, &TextureSRV);
+
+    ID3D11SamplerState* SamplerState;
+    D3D11_SAMPLER_DESC samplerDesc = {};
+    samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    samplerDesc.MinLOD = 0;
+    samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+    device->CreateSamplerState(&samplerDesc, &SamplerState);
+
+    
+
+    std::shared_ptr<FTexture> Texture = std::make_shared<FTexture>(TextureSRV, texture2D, SamplerState, width, height);
+
+    return Texture;
 }
 
 HRESULT FResourceMgr::LoadTextureFromFile(ID3D11Device* device, ID3D11DeviceContext* context, const wchar_t* filename)
