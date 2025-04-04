@@ -148,33 +148,6 @@ void FGraphicsDevice::CreateRasterizerState()
     Device->CreateRasterizerState(&rasterizerdesc, &RasterizerStateWIREFRAME);
 }
 
-
-void FGraphicsDevice::ReleaseDeviceAndSwapChain()
-{
-    if (DeviceContext)
-    {
-        DeviceContext->Flush(); // 남아있는 GPU 명령 실행
-    }
-
-    if (SwapChain)
-    {
-        SwapChain->Release();
-        SwapChain = nullptr;
-    }
-
-    if (Device)
-    {
-        Device->Release();
-        Device = nullptr;
-    }
-
-    if (DeviceContext)
-    {
-        DeviceContext->Release();
-        DeviceContext = nullptr;
-    }
-}
-
 void FGraphicsDevice::CreateFrameBuffer()
 {
     // 스왑 체인으로부터 백 버퍼 텍스처 가져오기
@@ -207,6 +180,32 @@ void FGraphicsDevice::CreateFrameBuffer()
 
     RTVs[0] = FrameBufferRTV;
     RTVs[1] = UUIDFrameBufferRTV;
+}
+
+void FGraphicsDevice::ReleaseDeviceAndSwapChain()
+{
+    if (DeviceContext)
+    {
+        DeviceContext->Flush(); // 남아있는 GPU 명령 실행
+    }
+
+    if (SwapChain)
+    {
+        SwapChain->Release();
+        SwapChain = nullptr;
+    }
+
+    if (Device)
+    {
+        Device->Release();
+        Device = nullptr;
+    }
+
+    if (DeviceContext)
+    {
+        DeviceContext->Release();
+        DeviceContext = nullptr;
+    }
 }
 
 void FGraphicsDevice::ReleaseFrameBuffer()

@@ -37,16 +37,19 @@ public:
     ID3D11DepthStencilState* DepthStateDisable = nullptr;
 
     void Initialize(HWND hWindow);
+
     void CreateDeviceAndSwapChain(HWND hWindow);
     void CreateDepthStencilBuffer(HWND hWindow);
     void CreateDepthStencilState();
     void CreateRasterizerState();
-    void ReleaseDeviceAndSwapChain();
     void CreateFrameBuffer();
+    
+    void ReleaseDeviceAndSwapChain();
     void ReleaseFrameBuffer();
     void ReleaseRasterizerState();
     void ReleaseDepthStencilResources();
     void Release();
+    
     void SwapBuffer();
     void Prepare();
     void Prepare(D3D11_VIEWPORT* viewport);
