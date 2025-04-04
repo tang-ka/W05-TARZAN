@@ -44,9 +44,8 @@ void FGraphicsDevice::CreateDeviceAndSwapChain(HWND hWindow) {
     screenHeight = SwapchainDesc.BufferDesc.Height;
 }
 
-void FGraphicsDevice::CreateDepthStencilBuffer(HWND hWindow) {
-
-
+void FGraphicsDevice::CreateDepthStencilBuffer(HWND hWindow) 
+{
     RECT clientRect;
     GetClientRect(hWindow, &clientRect);
     UINT width = clientRect.right - clientRect.left;
@@ -73,7 +72,6 @@ void FGraphicsDevice::CreateDepthStencilBuffer(HWND hWindow) {
         MessageBox(hWindow, L"Failed to create depth stencilBuffer!", L"Error", MB_ICONERROR | MB_OK);
         return;
     }
-
 
     D3D11_DEPTH_STENCIL_VIEW_DESC descDSV;
     ZeroMemory(&descDSV, sizeof(descDSV));
