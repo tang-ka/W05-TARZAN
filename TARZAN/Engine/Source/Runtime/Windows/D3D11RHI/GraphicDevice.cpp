@@ -11,6 +11,7 @@ void FGraphicsDevice::Initialize(HWND hWindow) {
     CreateRasterizerState();
     CurrentRasterizer = RasterizerStateSOLID;
 }
+
 void FGraphicsDevice::CreateDeviceAndSwapChain(HWND hWindow) {
     // 지원하는 Direct3D 기능 레벨을 정의
     D3D_FEATURE_LEVEL featurelevels[] = { D3D_FEATURE_LEVEL_11_0 };
@@ -42,8 +43,6 @@ void FGraphicsDevice::CreateDeviceAndSwapChain(HWND hWindow) {
     screenWidth = SwapchainDesc.BufferDesc.Width;
     screenHeight = SwapchainDesc.BufferDesc.Height;
 }
-
-
 
 void FGraphicsDevice::CreateDepthStencilBuffer(HWND hWindow) {
 
