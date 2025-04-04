@@ -110,6 +110,8 @@ void UText::SetText(FWString _text)
 
 	for (int i = 0; i < _text.size(); i++)
 	{
+        if (_text[i] == L'\0')
+            continue;
 		FVertexTexture leftUP = { -1.0f,1.0f,0.0f,0.0f,0.0f };
 		FVertexTexture rightUP = { 1.0f,1.0f,0.0f,1.0f,0.0f };
 		FVertexTexture leftDown = { -1.0f,-1.0f,0.0f,0.0f,1.0f };
