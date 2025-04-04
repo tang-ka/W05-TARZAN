@@ -18,28 +18,26 @@ UBillboardComponent::UBillboardComponent()
 
 UBillboardComponent::~UBillboardComponent()
 {
-	if (vertexTextureBuffer)
-	{
-		vertexTextureBuffer->Release();
-		vertexTextureBuffer = nullptr;
-	}
-	if (indexTextureBuffer)
-	{
-		indexTextureBuffer->Release();
-		indexTextureBuffer = nullptr;
-	}
+	// if (vertexTextureBuffer)
+	// {
+	// 	vertexTextureBuffer->Release();
+	// 	vertexTextureBuffer = nullptr;
+	// }
+	// if (indexTextureBuffer)
+	// {
+	// 	indexTextureBuffer->Release();
+	// 	indexTextureBuffer = nullptr;
+	// }
 }
 
-UBillboardComponent::UBillboardComponent(const UBillboardComponent& other) : UPrimitiveComponent(other),
-vertexTextureBuffer(other.vertexTextureBuffer),indexTextureBuffer(other.indexTextureBuffer), numIndices(other.numIndices),
-numVertices(other.numVertices), finalIndexU(other.finalIndexU), finalIndexV(other.finalIndexV),Texture(other.Texture)
+UBillboardComponent::UBillboardComponent(const UBillboardComponent& other) : UPrimitiveComponent(other), finalIndexU(other.finalIndexU), finalIndexV(other.finalIndexV),Texture(other.Texture)
 {
 }
 
 void UBillboardComponent::InitializeComponent()
 {
     Super::InitializeComponent();
-	CreateQuadTextureVertexBuffer();
+	//CreateQuadTextureVertexBuffer();
 }
 
 
@@ -121,21 +119,6 @@ void UBillboardComponent::PostDuplicate()
     UPrimitiveComponent::PostDuplicate();
 }
 
-void UBillboardComponent::CreateQuadTextureVertexBuffer()
-{
-	numVertices = sizeof(quadTextureVertices) / sizeof(FVertexTexture);
-	numIndices = sizeof(quadTextureInices) / sizeof(uint32);
-    vertexTextureBuffer = UEditorEngine::renderer.GetResourceManager().CreateVertexBuffer(quadTextureVertices, sizeof(quadTextureVertices));
-	indexTextureBuffer = UEditorEngine::renderer.GetResourceManager().CreateIndexBuffer(quadTextureInices, sizeof(quadTextureInices));
-
-	if (!vertexTextureBuffer) {
-		Console::GetInstance().AddLog(LogLevel::Warning, "Buffer Error");
-	}
-	if (!indexTextureBuffer) {
-		Console::GetInstance().AddLog(LogLevel::Warning, "Buffer Error");
-	}
-}
-
 bool UBillboardComponent::CheckPickingOnNDC(const TArray<FVector>& checkQuad, float& hitDistance)
 {
 	bool result = false;
@@ -153,8 +136,8 @@ bool UBillboardComponent::CheckPickingOnNDC(const TArray<FVector>& checkQuad, fl
 	int screenX = mousePos.x;
 	int screenY = mousePos.y;
     FMatrix projectionMatrix = GetEngine()->GetLevelEditor()->GetActiveViewportClient()->GetProjectionMatrix();
-	pickPosition.x = ((2.0f * screenX / viewport.Width) - 1);
-	pickPosition.y = -((2.0f * screenY / viewport.Height) - 1);
+	pickPosition.x = ((2.0f * static_cast<float>(screenX) / viewport.Width) - 1);
+	pickPosition.y = -((2.0f * static_cast<float>(screenY) / viewport.Height) - 1);
 	pickPosition.z = 1.0f; // Near Plane
 
 	FMatrix M = CreateBillboardMatrix();

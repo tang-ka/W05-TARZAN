@@ -4,6 +4,7 @@
 
 struct FTexture;
 
+
 class UBillboardComponent : public UPrimitiveComponent
 {
     DECLARE_CLASS(UBillboardComponent, UPrimitiveComponent)
@@ -26,11 +27,7 @@ public:
     virtual UObject* Duplicate() const override;
     virtual void DuplicateSubObjects(const UObject* Source) override;
     virtual void PostDuplicate() override;
-    
-    ID3D11Buffer* vertexTextureBuffer;
-    ID3D11Buffer* indexTextureBuffer;
-    UINT numVertices;
-    UINT numIndices;
+
     float finalIndexU = 0.0f;
     float finalIndexV = 0.0f;
     std::shared_ptr<FTexture> Texture;
@@ -43,5 +40,4 @@ protected:
     bool CheckPickingOnNDC(const TArray<FVector>& checkQuad, float& hitDistance);
 
 private:
-    void CreateQuadTextureVertexBuffer();
 };

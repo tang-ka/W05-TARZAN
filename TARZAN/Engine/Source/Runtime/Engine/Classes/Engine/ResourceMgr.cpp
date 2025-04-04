@@ -4,6 +4,7 @@
 #include <wincodec.h>
 #include <ranges>
 #include "Define.h"
+#include "Components/QuadTexture.h"
 #include "Components/SkySphereComponent.h"
 #include "D3D11RHI/GraphicDevice.h"
 #include "DirectXTK/Include/DDSTextureLoader.h"
@@ -36,6 +37,18 @@ void FResourceMgr::Initialize(FRenderer* renderer, FGraphicsDevice* device)
     LoadTextureFromFile(device->Device, device->DeviceContext, L"Assets/Texture/Pawn_64x.png");
     LoadTextureFromFile(device->Device, device->DeviceContext, L"Assets/Texture/PointLight_64x.png");
     LoadTextureFromFile(device->Device, device->DeviceContext, L"Assets/Texture/SpotLight_64x.png");
+
+    QuadRenderData.numVertices = sizeof(quadTextureVertices) / sizeof(FVertexTexture);
+    QuadRenderData.numIndices = sizeof(quadTextureInices) / sizeof(uint32);
+    QuadRenderData.VertexTextureBuffer = UEditorEngine::renderer.GetResourceManager().CreateVertexBuffer(quadTextureVertices, sizeof(quadTextureVertices));
+    QuadRenderData.IndexTextureBuffer = UEditorEngine::renderer.GetResourceManager().CreateIndexBuffer(quadTextureInices, sizeof(quadTextureInices));
+
+    if (!QuadRenderData.VertexTextureBuffer) {
+        Console::GetInstance().AddLog(LogLevel::Warning, "Buffer Error");
+    }
+    if (!QuadRenderData.IndexTextureBuffer) {
+        Console::GetInstance().AddLog(LogLevel::Warning, "Buffer Error");
+    }
 }
 
 void FResourceMgr::Release(FRenderer* renderer) {

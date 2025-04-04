@@ -6,7 +6,7 @@ void FConstantBufferUpdater::Initialize(ID3D11DeviceContext* InDeviceContext)
     DeviceContext = InDeviceContext;
 }
 
-void FConstantBufferUpdater::UpdateConstant(ID3D11Buffer* ConstantBuffer, const FMatrix& MVP, const FMatrix& NormalMatrix, FVector4 UUIDColor, bool IsSelected) const
+void FConstantBufferUpdater::UpdateConstant(ID3D11Buffer* ConstantBuffer, const FMatrix& MVP, const FMatrix& Model, const FMatrix& NormalMatrix, FVector4 UUIDColor, bool IsSelected) const
 {
     if (ConstantBuffer)
     {
@@ -16,6 +16,7 @@ void FConstantBufferUpdater::UpdateConstant(ID3D11Buffer* ConstantBuffer, const 
         {
             FConstants* constants = static_cast<FConstants*>(ConstantBufferMSR.pData);
             constants->MVP = MVP;
+            constants->ModelMatrix = Model;
             constants->ModelMatrixInverseTranspose = NormalMatrix;
             constants->UUIDColor = UUIDColor;
             constants->IsSelected = IsSelected;
@@ -120,5 +121,17 @@ void FConstantBufferUpdater::UpdateSubUVConstant(ID3D11Buffer* SubUVConstantBuff
             constants->indexV = _indexV;
         }
         DeviceContext->Unmap(SubUVConstantBuffer, 0);
+    }
+}
+
+void FConstantBufferUpdater::UpdateFireballConstant(ID3D11Buffer* FireballConstantBuffer, const FFireballArrayInfo FireballInfo) const
+{
+    if (FireballConstantBuffer)
+    {
+        D3D11_MAPPED_SUBRESOURCE ConstantBufferMSR;
+
+        DeviceContext->Map(FireballConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &ConstantBufferMSR); // update constant buffer every frame
+        memcpy(ConstantBufferMSR.pData, &FireballInfo, sizeof(FFireballArrayInfo));
+        DeviceContext->Unmap(FireballConstantBuffer, 0);
     }
 }

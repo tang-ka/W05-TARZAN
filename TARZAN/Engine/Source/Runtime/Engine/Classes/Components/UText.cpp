@@ -110,6 +110,8 @@ void UText::SetText(FWString _text)
 
 	for (int i = 0; i < _text.size(); i++)
 	{
+        if (_text[i] == L'\0')
+            continue;
 		FVertexTexture leftUP = { -1.0f,1.0f,0.0f,0.0f,0.0f };
 		FVertexTexture rightUP = { 1.0f,1.0f,0.0f,1.0f,0.0f };
 		FVertexTexture leftDown = { -1.0f,-1.0f,0.0f,0.0f,1.0f };
@@ -281,10 +283,10 @@ void UText::TextMVPRendering()
     FMatrix NormalMatrix = FMatrix::Transpose(FMatrix::Inverse(Model));
     FVector4 UUIDColor = EncodeUUID() / 255.0f;
     if (this == GetWorld()->GetPickingGizmo()) {
-        UEditorEngine::renderer.GetConstantBufferUpdater().UpdateConstant(UEditorEngine::renderer.ConstantBuffer, MVP, NormalMatrix, UUIDColor, true);
+        UEditorEngine::renderer.GetConstantBufferUpdater().UpdateConstant(UEditorEngine::renderer.ConstantBuffer, MVP,Model, NormalMatrix, UUIDColor, true);
     }
     else
-        UEditorEngine::renderer.GetConstantBufferUpdater().UpdateConstant(UEditorEngine::renderer.ConstantBuffer, MVP, NormalMatrix, UUIDColor, false);
+        UEditorEngine::renderer.GetConstantBufferUpdater().UpdateConstant(UEditorEngine::renderer.ConstantBuffer, MVP, Model, NormalMatrix, UUIDColor, false);
 
     if (ShowFlags::GetInstance().currentFlags & static_cast<uint64>(EEngineShowFlags::SF_BillboardText)) {
         UEditorEngine::renderer.RenderTextPrimitive(vertexTextBuffer, numTextVertices,
