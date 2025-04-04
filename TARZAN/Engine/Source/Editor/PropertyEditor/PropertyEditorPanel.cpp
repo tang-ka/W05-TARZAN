@@ -11,6 +11,7 @@
 #include "UObject/Casts.h"
 #include "UObject/ObjectFactory.h"
 #include <Components/CubeComp.h>
+#include "FireballComp.h"
 #include <Components/UParticleSubUVComp.h>
 
 void PropertyEditorPanel::Render()
@@ -108,6 +109,11 @@ void PropertyEditorPanel::Render()
                 {
                     UCubeComp* CubeComponent = PickedActor->AddComponent<UCubeComp>();
                     PickedComponent = CubeComponent;
+                }
+                if (ImGui::Selectable("FireballComponent"))
+                {
+                    UFireballComponent* FireballComponent = PickedActor->AddComponent<UFireballComponent>();
+                    PickedComponent = FireballComponent;
                 }
 
                 ImGui::EndPopup();

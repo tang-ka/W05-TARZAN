@@ -4,6 +4,7 @@
 #include "Core/Container/String.h"
 #include "Core/Container/Array.h"
 #include "UObject/NameTypes.h"
+#include "Color.h"
 
 // 수학 관련
 #include "Math/Vector.h"
@@ -14,6 +15,9 @@
 #define UE_LOG Console::GetInstance().AddLog
 
 #define _TCHAR_DEFINED
+
+#define Max_Fireball 300
+
 #include <d3d11.h>
 
 #include "UserInterface/Console.h"
@@ -296,6 +300,7 @@ struct FMaterialConstants {
 
 struct FConstants {
     FMatrix MVP;      // 모델
+    FMatrix ModelMatrix; // 모델 행렬
     FMatrix ModelMatrixInverseTranspose; // normal 변환을 위한 행렬
     FVector4 UUIDColor;
     bool IsSelected;
@@ -322,4 +327,30 @@ struct FSubUVConstant
 {
     float indexU;
     float indexV;
+};
+
+struct FFireballConstant
+{
+    FVector Position = (0,0,0);
+    float Intensity = 2;
+    float Radius = 2;
+    float RadiusFallOff = 2;
+    float pad0 = 0;
+    float pad1 = 0;
+    FLinearColor Color = FLinearColor::Red();
+};
+
+struct FFireballInfo
+{
+    float Intensity = 2;
+    float Radius = 5;
+    float RadiusFallOff = 2;
+    FLinearColor Color = FLinearColor::Red();
+};
+
+struct FFireballArrayInfo
+{
+    FFireballConstant FireballConstants[Max_Fireball];
+    int FireballCount = 0;
+    FVector padding;
 };

@@ -1,3 +1,5 @@
+#define Max_Fireball 300
+
 Texture2D Textures : register(t0);
 SamplerState Sampler : register(s0);
 
@@ -55,6 +57,53 @@ cbuffer TextureConstants : register(b5)
     float2 TexturePad0;
 }
 
+struct FireballConstants
+{
+    float3 FireballPosition;
+    float FireballIndensity;
+    float radius;
+    float RadiusFallOff;
+    float pad0;
+    float pad1;
+    float4 FireballColor;
+};
+
+cbuffer FireballBuffer : register(b6)
+{
+    FireballConstants Fireball[Max_Fireball];
+    int FierballCount;
+    float3 padding;
+}
+
+
+
+float3 ComputeFireballLighting(float4 worldPos, float3 normal)
+{
+    float3 N = normalize(normal);
+    float3 V = float3(0, 0, 1); 
+    float3 totalLighting = float3(0, 0, 0);
+
+    for (int i = 0; i < FierballCount; ++i)
+    {
+        float3 L = normalize(Fireball[i].FireballPosition - worldPos.xyz);
+        float3 H = normalize(L + V);
+
+        float dist = length(Fireball[i].FireballPosition - worldPos.xyz);
+        float attenuation = saturate(1.0 - pow(dist / Fireball[i].radius, Fireball[i].RadiusFallOff));
+        attenuation *= Fireball[i].FireballIndensity;
+
+        float diffuse = saturate(dot(N, L));
+        float specular = pow(saturate(dot(N, H)), Material.SpecularScalar * 32) * Material.SpecularScalar;
+
+        float3 diffuseColor = diffuse * Fireball[i].FireballColor.rgb * attenuation;
+        float3 specularColor = specular * Material.SpecularColor * Fireball[i].FireballColor.rgb * attenuation;
+
+        totalLighting += diffuseColor + specularColor;
+    }
+    return totalLighting;
+}
+
+
 struct PS_INPUT
 {
     float4 position : SV_POSITION; // 변환된 화면 좌표
@@ -63,6 +112,7 @@ struct PS_INPUT
     bool normalFlag : TEXCOORD0; // 노멀 유효성 플래그 (1.0: 유효, 0.0: 무효)
     float2 texcoord : TEXCOORD1;
     int materialIndex : MATERIAL_INDEX;
+    float4 Worldposition : POSITION; // 버텍스 위치
 };
 
 struct PS_OUTPUT
@@ -125,34 +175,32 @@ PS_OUTPUT mainPS(PS_INPUT input)
     
     // 발광 색상 추가
 
-    if (IsLit == 1) // 조명이 적용되는 경우
+    if (IsLit == 1)
     {
         if (input.normalFlag > 0.5)
         {
             float3 N = normalize(input.normal);
             float3 L = normalize(LightDirection);
-            
-            // 기본 디퓨즈 계산
-            float diffuse = saturate(dot(N, L));
-            
-            // 스페큘러 계산 (간단한 Blinn-Phong)
-            float3 V = float3(0, 0, 1); // 카메라가 Z 방향을 향한다고 가정
+            float3 V = float3(0, 0, 1);
             float3 H = normalize(L + V);
+
+            float diffuse = saturate(dot(N, L));
             float specular = pow(saturate(dot(N, H)), Material.SpecularScalar * 32) * Material.SpecularScalar;
-            
-            // 최종 라이팅 계산
+
             float3 ambient = Material.AmbientColor * AmbientFactor;
             float3 diffuseLight = diffuse * LightColor;
             float3 specularLight = specular * Material.SpecularColor * LightColor;
-            
+
             color = ambient + (diffuseLight * color) + specularLight;
+            
         }
-        
-        // 투명도 적용
+        float3 fireballLighting = ComputeFireballLighting(input.Worldposition, input.normal);
+        color += fireballLighting;
         color += Material.EmissiveColor;
         output.color = float4(color, Material.TransparencyScalar);
         return output;
     }
+
     else // unlit 상태일 때 PaperTexture 효과 적용
     {
         if (input.normalFlag < 0.5)
