@@ -124,21 +124,14 @@ void FConstantBufferUpdater::UpdateSubUVConstant(ID3D11Buffer* SubUVConstantBuff
     }
 }
 
-void FConstantBufferUpdater::UpdateFireballConstant(ID3D11Buffer* FireballConstantBuffer, const FFireballInfo FireballInfo, const FVector position) const
+void FConstantBufferUpdater::UpdateFireballConstant(ID3D11Buffer* FireballConstantBuffer, const FFireballArrayInfo FireballInfo) const
 {
     if (FireballConstantBuffer)
     {
         D3D11_MAPPED_SUBRESOURCE ConstantBufferMSR;
 
         DeviceContext->Map(FireballConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &ConstantBufferMSR); // update constant buffer every frame
-        {
-            FFireballConstant* constants = static_cast<FFireballConstant*>(ConstantBufferMSR.pData);
-            constants->Position = position;
-            constants->Intensity = FireballInfo.Intensity;
-            constants->Radius = FireballInfo.Radius;
-            constants->RadiusFallOff = FireballInfo.RadiusFallOff;
-            constants->Color = FireballInfo.Color;
-        }
+        memcpy(ConstantBufferMSR.pData, &FireballInfo, sizeof(FFireballArrayInfo));
         DeviceContext->Unmap(FireballConstantBuffer, 0);
     }
 }

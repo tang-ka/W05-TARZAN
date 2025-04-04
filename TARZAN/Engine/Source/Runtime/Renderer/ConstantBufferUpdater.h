@@ -16,7 +16,7 @@ public:
     void UpdateSubMeshConstant(ID3D11Buffer* SubMeshConstantBuffer, bool isSelected) const;
     void UpdateTextureConstant(ID3D11Buffer* TextureConstantBufer, float UOffset, float VOffset);
     void UpdateSubUVConstant(ID3D11Buffer* SubUVConstantBuffer, float _indexU, float _indexV) const;
-    void UpdateFireballConstant(ID3D11Buffer* FireballConstantBuffer, const FFireballInfo, const FVector Position) const;
+    void UpdateFireballConstant(ID3D11Buffer* FireballConstantBuffer, const FFireballArrayInfo) const;
 
 private:
     ID3D11DeviceContext* DeviceContext = nullptr;

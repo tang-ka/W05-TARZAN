@@ -1,3 +1,5 @@
+#define Max_Fireball 300
+
 Texture2D Textures : register(t0);
 SamplerState Sampler : register(s0);
 
@@ -55,39 +57,52 @@ cbuffer TextureConstants : register(b5)
     float2 TexturePad0;
 }
 
-cbuffer FireballConstants : register(b6)
+struct FireballConstants
 {
-    float3 FireballPosition; 
-    float FireballIndensity; 
-    float radius; 
+    float3 FireballPosition;
+    float FireballIndensity;
+    float radius;
     float RadiusFallOff;
     float pad0;
     float pad1;
     float4 FireballColor;
+};
+
+cbuffer FireballBuffer : register(b6)
+{
+    FireballConstants Fireball[Max_Fireball];
+    int FierballCount;
+    float3 padding;
 }
+
 
 
 float3 ComputeFireballLighting(float4 worldPos, float3 normal)
 {
     float3 N = normalize(normal);
-    float3 L = normalize(FireballPosition - worldPos.xyz);
     float3 V = float3(0, 0, 1); 
-    float3 H = normalize(L + V);
-    
-    // 거리 기반 감쇠 (거리 / radius)
-    float dist = length(FireballPosition - worldPos);
-    float attenuation = saturate(1.0 - pow(dist / radius, RadiusFallOff));
-    attenuation *= FireballIndensity;
+    float3 totalLighting = float3(0, 0, 0);
 
-    // 디퓨즈 및 스페큘러 조명
-    float diffuse = saturate(dot(N, L));
-    float specular = pow(saturate(dot(N, H)), Material.SpecularScalar * 32) * Material.SpecularScalar;
+    for (int i = 0; i < FierballCount; ++i)
+    {
+        float3 L = normalize(Fireball[i].FireballPosition - worldPos.xyz);
+        float3 H = normalize(L + V);
 
-    float3 diffuseColor = diffuse * FireballColor.rgb * attenuation;
-    float3 specularColor = specular * Material.SpecularColor * FireballColor.rgb * attenuation;
+        float dist = length(Fireball[i].FireballPosition - worldPos.xyz);
+        float attenuation = saturate(1.0 - pow(dist / Fireball[i].radius, Fireball[i].RadiusFallOff));
+        attenuation *= Fireball[i].FireballIndensity;
 
-    return diffuseColor + specularColor;
+        float diffuse = saturate(dot(N, L));
+        float specular = pow(saturate(dot(N, H)), Material.SpecularScalar * 32) * Material.SpecularScalar;
+
+        float3 diffuseColor = diffuse * Fireball[i].FireballColor.rgb * attenuation;
+        float3 specularColor = specular * Material.SpecularColor * Fireball[i].FireballColor.rgb * attenuation;
+
+        totalLighting += diffuseColor + specularColor;
+    }
+    return totalLighting;
 }
+
 
 struct PS_INPUT
 {

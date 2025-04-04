@@ -15,6 +15,9 @@
 #define UE_LOG Console::GetInstance().AddLog
 
 #define _TCHAR_DEFINED
+
+#define Max_Fireball 300
+
 #include <d3d11.h>
 
 #include "UserInterface/Console.h"
@@ -343,4 +346,11 @@ struct FFireballInfo
     float Radius = 5;
     float RadiusFallOff = 2;
     FLinearColor Color = FLinearColor::Red();
+};
+
+struct FFireballArrayInfo
+{
+    FFireballConstant FireballConstants[Max_Fireball];
+    int FireballCount = 0;
+    FVector padding;
 };

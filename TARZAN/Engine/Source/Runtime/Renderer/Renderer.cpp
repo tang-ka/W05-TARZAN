@@ -167,7 +167,7 @@ void FRenderer::CreateConstantBuffer()
     TextureConstantBufer = RenderResourceManager.CreateConstantBuffer(sizeof(FTextureConstants));
     LightingBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FLighting));
     FlagBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FLitUnlitConstants));
-    FireballConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FFireballConstant));
+    FireballConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FFireballArrayInfo));
 }
 
 void FRenderer::ReleaseConstantBuffer()
@@ -193,6 +193,7 @@ void FRenderer::ClearRenderArr()
     GizmoObjs.Empty();
     BillboardObjs.Empty();
     LightObjs.Empty();
+    FireballObjs.Empty();
 }
 
 void FRenderer::PrepareRender()
@@ -262,7 +263,22 @@ void FRenderer::Render(UWorld* World, std::shared_ptr<FEditorViewportClient> Act
     ChangeViewMode(ActiveViewport->GetViewMode());
     ConstantBufferUpdater.UpdateLightConstant(LightingBuffer);
     if (FireballObjs.Num() > 0) {
-        ConstantBufferUpdater.UpdateFireballConstant(FireballConstantBuffer, FireballObjs[0]->GetFireballInfo(), FireballObjs[0]->GetWorldLocation());
+        FFireballArrayInfo fireballArrayInfo;
+        fireballArrayInfo.FireballCount = 0;
+        for (int i = 0; i < FireballObjs.Num(); i++)
+        {
+            if (FireballObjs[i] != nullptr)
+            {
+                FFireballInfo fireballInfo = FireballObjs[i]->GetFireballInfo();
+                fireballArrayInfo.FireballConstants[i].Intensity = fireballInfo.Intensity;
+                fireballArrayInfo.FireballConstants[i].Radius = fireballInfo.Radius;
+                fireballArrayInfo.FireballConstants[i].Color = fireballInfo.Color;
+                fireballArrayInfo.FireballConstants[i].RadiusFallOff = fireballInfo.RadiusFallOff;
+                fireballArrayInfo.FireballConstants[i].Position = FireballObjs[i]->GetWorldLocation();
+                fireballArrayInfo.FireballCount++;
+            }
+        }
+        ConstantBufferUpdater.UpdateFireballConstant(FireballConstantBuffer, fireballArrayInfo);
     }
     UPrimitiveBatch::GetInstance().RenderBatch(ConstantBuffer, ActiveViewport->GetViewMatrix(), ActiveViewport->GetProjectionMatrix());
 
