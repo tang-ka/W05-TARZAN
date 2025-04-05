@@ -13,6 +13,9 @@
 #include <Components/CubeComp.h>
 #include <Components/UParticleSubUVComp.h>
 
+#include "Components/Movement/ProjectileMovementComponent.h"
+#include "Components/Movement/RotatingMovementComponent.h"
+
 void PropertyEditorPanel::Render()
 {
     /* Pre Setup */
@@ -109,7 +112,16 @@ void PropertyEditorPanel::Render()
                     UCubeComp* CubeComponent = PickedActor->AddComponent<UCubeComp>();
                     PickedComponent = CubeComponent;
                 }
-
+                if (ImGui::Selectable("ProjectileMovementComponent"))
+                {
+                    UProjectileMovementComponent* ProjectileComponent = PickedActor->AddComponent<UProjectileMovementComponent>();
+                    PickedComponent = ProjectileComponent;
+                }
+                if (ImGui::Selectable("RotatingMovementComponent"))
+                {
+                    URotatingMovementComponent* RotatingComponent = PickedActor->AddComponent<URotatingMovementComponent>();
+                    PickedComponent = RotatingComponent;
+                }
                 ImGui::EndPopup();
             }
             ImGui::TreePop();

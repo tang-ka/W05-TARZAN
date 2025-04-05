@@ -86,6 +86,10 @@ public:
     bool SetActorLocation(const FVector& NewLocation);
     bool SetActorRotation(const FVector& NewRotation);
     bool SetActorScale(const FVector& NewScale);
+
+    bool AddActorLocalOffset(const FVector& DeltaLocation);
+    bool AddActorLocalRotation(const FVector& DeltaRotation);
+    bool AddActorLocalScale(const FVector& DeltaScale);
     
     virtual UObject* Duplicate() const override;
     virtual void DuplicateSubObjects(const UObject* Source) override;
@@ -128,6 +132,36 @@ private:
 #endif
 };
 
+
+inline bool AActor::AddActorLocalRotation(const FVector& DeltaRotation)
+{
+    if (RootComponent)
+    {
+        RootComponent->AddRotation(DeltaRotation);
+        return true;
+    }
+    return false;
+}
+
+inline bool AActor::AddActorLocalScale(const FVector& DeltaScale)
+{
+    if (RootComponent)
+    {
+        RootComponent->AddScale(DeltaScale);
+        return true;
+    }
+    return false;
+}
+
+inline bool AActor::AddActorLocalOffset(const FVector& DeltaLocation)
+{
+    if (RootComponent)
+    {
+        RootComponent->AddLocation(DeltaLocation);
+        return true;
+    }
+    return false;
+}
 
 template <typename T> requires std::derived_from<T, UActorComponent>
 T* AActor::AddComponent()

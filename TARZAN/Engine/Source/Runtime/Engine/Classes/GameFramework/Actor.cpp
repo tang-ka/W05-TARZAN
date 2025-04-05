@@ -1,4 +1,4 @@
-﻿#include "Actor.h"
+#include "Actor.h"
 
 #include "Engine/World.h"
 
@@ -123,7 +123,13 @@ bool AActor::SetRootComponent(USceneComponent* NewRootComponent)
             USceneComponent* OldRootComponent = RootComponent;
             RootComponent = NewRootComponent;
 
-            OldRootComponent->SetupAttachment(RootComponent);
+
+            if (OldRootComponent != nullptr) // OldRootComponent가 유효한 경우에만 처리
+            {
+                // SetupAttachment는 보통 내부적으로 필요시 Detach를 처리함.
+                OldRootComponent->SetupAttachment(RootComponent);
+            }
+
         }
         return true;
     }
