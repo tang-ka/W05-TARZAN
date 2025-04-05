@@ -17,7 +17,7 @@ public:
     void UpdateTextureConstant(ID3D11Buffer* TextureConstantBufer, float UOffset, float VOffset);
     void UpdateSubUVConstant(ID3D11Buffer* SubUVConstantBuffer, float _indexU, float _indexV) const;
     void UpdateFireballConstant(ID3D11Buffer* FireballConstantBuffer, const FFireballArrayInfo) const;
-
+    void UpdateFogConstant(ID3D11Buffer* FogConstantBuffer, const FMatrix& InvViewProj, float StartHeight, float EndHeight, float Density) const;
 private:
     ID3D11DeviceContext* DeviceContext = nullptr;
 };

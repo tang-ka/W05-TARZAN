@@ -354,3 +354,12 @@ struct FFireballArrayInfo
     int FireballCount = 0;
     FVector padding;
 };
+
+struct FFogParams
+{
+    FMatrix InvViewProj;
+    float FogStartHeight;
+    float FogEndHeight;
+    float FogDensity;
+    float Padding;
+};
