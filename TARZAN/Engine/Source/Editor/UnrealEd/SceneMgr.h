@@ -46,6 +46,7 @@ class FSceneMgr
 public:
     static bool ParseSceneData(const json& jsonStr , FSceneData& OutSceneData);
     static void LoadSceneFromFile(const FString& filename, UWorld& world);
+    static bool LoadSceneFromData(const FSceneData& sceneData, UWorld* targetWorld);
     static std::string SerializeSceneData(const FSceneData& sceneData);
     static bool SaveSceneToFile(const FString& filename, const UWorld& world);
     static FSceneData CreateSceneData(const UWorld& world);

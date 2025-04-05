@@ -197,6 +197,171 @@ void FSceneMgr::LoadSceneFromFile(const FString& filename, UWorld& world)
     return ;
 }
 
+bool FSceneMgr::LoadSceneFromData(const FSceneData& sceneData, UWorld* targetWorld)
+{
+    if (targetWorld == nullptr)
+    {
+        UE_LOG(LogLevel::Error, TEXT("LoadSceneFromData: Target World is null!"));
+        return false;
+    }
+
+    // 임시 맵: 저장된 ID와 새로 생성된 객체 포인터를 매핑
+    TMap<FString, AActor*> SpawnedActorsMap;
+    TMap<FString, UActorComponent*> SpawnedComponentsMap;
+
+    // --- 1단계: 액터 및 컴포넌트 생성 ---
+    UE_LOG(LogLevel::Display, TEXT("Loading Scene Data: Phase 1 - Spawning Actors and Components..."));
+    for (const FActorSaveData& actorData : sceneData.Actors)
+    {
+        // 1.1. 액터 클래스 찾기
+        AActor* SpawnedActor = nullptr;
+
+        if (actorData.ActorClass == AActor::StaticClass()->GetName())
+        {
+            SpawnedActor = targetWorld->SpawnActor<AActor>();
+        }
+        else if (actorData.ActorClass == AStaticMeshActor::StaticClass()->GetName())
+        {
+            SpawnedActor = targetWorld->SpawnActor<AStaticMeshActor>();
+        }
+        // 또는 특정 경로에서 클래스 로드: UClass* ActorClass = LoadClass<AActor>(nullptr, *actorData.ActorClass);
+        if (SpawnedActor == nullptr)
+        {
+            UE_LOG(LogLevel::Error, TEXT("LoadSceneFromData: Could not find Actor Class '%s'. Skipping Actor '%s'."),
+                   *actorData.ActorClass, *actorData.ActorID);
+            continue;
+        }
+
+        
+        // 액터 클래스가 AActor의 자식인지 확인
+
+        // 1.2. 액터 스폰 (기본 위치/회전 사용, 나중에 루트 컴포넌트가 설정)
+        //FActorSpawnParameters SpawnParams;
+        //SpawnParams.Name = FName(*actorData.ActorID); // 저장된 ID를 이름으로 사용 시도 (Unique해야 함)
+        //SpawnParams.NameMode = FActorSpawnParameters::ESpawnActorNameMode::Requested; // 이름 충돌 시 엔진이 처리하도록 할 수도 있음
+        //AActor* SpawnedActor = targetWorld->SpawnActor<AActor>(ActorClass, FVector::ZeroVector);
+
+        if (SpawnedActor == nullptr)
+        {
+            UE_LOG(LogLevel::Error, TEXT("LoadSceneFromData: Failed to spawn Actor '%s' of class '%s'."),
+                   *actorData.ActorID, *actorData.ActorClass);
+            continue;
+        }
+
+        SpawnedActor->SetActorLabel(actorData.ActorLabel); // 액터 레이블 설정
+        SpawnedActorsMap.Add(actorData.ActorID, SpawnedActor); // 맵에 추가
+
+        // 1.3. 컴포넌트 생성 및 속성 설정 (아직 부착 안 함)
+        for (const FComponentSaveData& componentData : actorData.Components)
+        {
+            UClass* ComponentClass = FindObject<UClass>(ANY_PACKAGE, *componentData.ComponentClass);
+            // 또는 LoadClass<UActorComponent>(...)
+             if (ComponentClass == nullptr)
+            {
+                UE_LOG(LogTemp, Error, TEXT("LoadSceneFromData: Could not find Component Class '%s' for Actor '%s'. Skipping Component '%s'."),
+                       *componentData.ComponentClass, *actorData.ActorID, *componentData.ComponentID);
+                continue;
+            }
+
+            // 컴포넌트 생성 (액터를 Outer로 지정, 저장된 ID를 이름으로)
+            UActorComponent* NewComponent = NewObject<UActorComponent>(SpawnedActor, ComponentClass, FName(*componentData.ComponentID));
+            if (NewComponent == nullptr)
+            {
+                 UE_LOG(LogTemp, Error, TEXT("LoadSceneFromData: Failed to create Component '%s' of class '%s' for Actor '%s'."),
+                       *componentData.ComponentID, *componentData.ComponentClass, *actorData.ActorID);
+                continue;
+            }
+
+            // !!! 중요: 컴포넌트 등록 !!!
+            NewComponent->RegisterComponent();
+
+            SpawnedComponentsMap.Add(componentData.ComponentID, NewComponent); // 맵에 추가
+
+            // 1.4. 컴포넌트 속성 설정 (Properties 맵 파싱)
+            //    (이 부분은 길어질 수 있으므로 별도 함수로 분리하는 것이 좋음)
+            ApplyComponentProperties(NewComponent, componentData.Properties);
+        }
+    }
+    UE_LOG(LogTemp, Log, TEXT("Loading Scene Data: Phase 1 Complete. Spawned %d actors."), SpawnedActorsMap.Num());
+
+    // --- 2단계: 루트 컴포넌트 설정 및 부착 ---
+    UE_LOG(LogTemp, Log, TEXT("Loading Scene Data: Phase 2 - Setting Root Components and Attachments..."));
+    for (const FActorSaveData& actorData : sceneData.Actors)
+    {
+        AActor** FoundActorPtr = SpawnedActorsMap.Find(actorData.ActorID);
+        if (FoundActorPtr == nullptr || *FoundActorPtr == nullptr) continue; // 1단계에서 스폰 실패한 경우
+
+        AActor* CurrentActor = *FoundActorPtr;
+
+        // 2.1. 루트 컴포넌트 설정
+        if (!actorData.RootComponentID.IsEmpty())
+        {
+            UActorComponent** FoundCompPtr = SpawnedComponentsMap.Find(actorData.RootComponentID);
+            if (FoundCompPtr && *FoundCompPtr)
+            {
+                USceneComponent* RootSceneComp = Cast<USceneComponent>(*FoundCompPtr);
+                if (RootSceneComp) {
+                    CurrentActor->SetRootComponent(RootSceneComp);
+                     UE_LOG(LogTemp, Verbose, TEXT("Set RootComponent '%s' for Actor '%s'"), *actorData.RootComponentID, *actorData.ActorID);
+                } else {
+                    UE_LOG(LogTemp, Warning, TEXT("Component '%s' designated as root for Actor '%s' is not a SceneComponent."),
+                           *actorData.RootComponentID, *actorData.ActorID);
+                }
+            } else {
+                 UE_LOG(LogTemp, Warning, TEXT("Could not find component '%s' designated as root for Actor '%s'."),
+                           *actorData.RootComponentID, *actorData.ActorID);
+            }
+        }
+
+        // 2.2. 컴포넌트 부착 및 상대 트랜스폼 설정
+        for (const FComponentSaveData& componentData : actorData.Components)
+        {
+            UActorComponent** FoundCompPtr = SpawnedComponentsMap.Find(componentData.ComponentID);
+            if (FoundCompPtr == nullptr || *FoundCompPtr == nullptr) continue; // 1단계에서 생성 실패한 경우
+
+            USceneComponent* CurrentSceneComp = Cast<USceneComponent>(*FoundCompPtr);
+            if (CurrentSceneComp == nullptr) continue; // SceneComponent만 부착 가능
+
+            // 부착 정보 찾기
+            const FString* ParentIDPtr = componentData.Properties.Find(TEXT("AttachParentID"));
+            if (ParentIDPtr && !ParentIDPtr->IsEmpty() && *ParentIDPtr != TEXT("nullptr")) // "nullptr" 문자열 체크 추가
+            {
+                UActorComponent** FoundParentCompPtr = SpawnedComponentsMap.Find(*ParentIDPtr);
+                if (FoundParentCompPtr && *FoundParentCompPtr)
+                {
+                    USceneComponent* ParentSceneComp = Cast<USceneComponent>(*FoundParentCompPtr);
+                    if (ParentSceneComp) {
+                        // !!! 부착 실행 !!!
+                        CurrentSceneComp->AttachToComponent(ParentSceneComp, FAttachmentTransformRules::KeepRelativeTransform);
+                         UE_LOG(LogTemp, Verbose, TEXT("Attached Component '%s' to Parent '%s'"), *componentData.ComponentID, *(*ParentIDPtr));
+                    } else {
+                         UE_LOG(LogTemp, Warning, TEXT("Parent component '%s' for '%s' is not a SceneComponent."), *(*ParentIDPtr), *componentData.ComponentID);
+                    }
+                } else {
+                     UE_LOG(LogTemp, Warning, TEXT("Could not find Parent component '%s' for '%s'."), *(*ParentIDPtr), *componentData.ComponentID);
+                }
+            }
+
+            // 상대 트랜스폼 설정 (부착 후 설정)
+            FTransform RelativeTransform = FTransform::Identity; // 기본값
+            // Properties에서 RelativeLocation, RelativeRotation, RelativeScale 파싱 (ApplyComponentProperties에서 분리하거나 여기서 처리)
+            ParseRelativeTransform(componentData.Properties, RelativeTransform); // 이 함수 구현 필요
+            CurrentSceneComp->SetRelativeTransform(RelativeTransform, false, nullptr, ETeleportType::TeleportPhysics); // 물리가 튀지 않도록 Teleport
+        }
+    }
+    UE_LOG(LogTemp, Log, TEXT("Loading Scene Data: Phase 2 Complete."));
+
+    // 임시 맵 정리 (선택적)
+    SpawnedActorsMap.Empty();
+    SpawnedComponentsMap.Empty();
+
+    // 필요하다면 추가적인 월드 초기화 로직 (예: 네비게이션 재빌드 요청)
+    // ...
+
+    UE_LOG(LogTemp, Log, TEXT("Scene loading complete."));
+    return true;
+}
+
 std::string FSceneMgr::SerializeSceneData(const FSceneData& sceneData)
 {
     json j; // 최종 JSON 객체
