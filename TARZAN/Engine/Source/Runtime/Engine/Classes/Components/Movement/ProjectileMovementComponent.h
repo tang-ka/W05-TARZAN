@@ -23,7 +23,5 @@ public:
 
 
 private:
-    //float Speed = 1.f;
-    FVector Velocity = FVector(1.f, 0.f, 0.f); // 초기 속도 설정
     
 };

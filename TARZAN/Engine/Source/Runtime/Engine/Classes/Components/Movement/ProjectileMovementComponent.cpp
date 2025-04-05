@@ -5,13 +5,11 @@
 
 UProjectileMovementComponent::UProjectileMovementComponent()
 {
-    //Speed = 1.f;
-    Velocity = FVector(1.f, 0.f, 0.f); // 초기 속도 설정
+
 }
 
 UProjectileMovementComponent::UProjectileMovementComponent(const UProjectileMovementComponent& Other)
-    : UMovementComponent(Other),
-      Velocity(Other.Velocity) // 복사 생성자에서 Velocity 복사
+    : UMovementComponent(Other)
 {
 }
 

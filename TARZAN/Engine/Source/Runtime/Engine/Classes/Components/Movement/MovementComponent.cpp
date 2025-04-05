@@ -2,6 +2,20 @@
 
 #include "UObject/ObjectFactory.h"
 
+
+UMovementComponent::UMovementComponent()
+{
+    Speed = 1.f;
+    Velocity = FVector(1.f, 0.f, 0.f); // 초기 속도 설정
+}
+
+UMovementComponent::UMovementComponent(const UMovementComponent& Other)
+    : UActorComponent(Other),
+      Speed(Other.Speed),
+      Velocity(Other.Velocity)
+{
+}
+
 UMovementComponent* UMovementComponent::Duplicate() const
 {
     UMovementComponent* NewComp = FObjectFactory::ConstructObjectFrom<UMovementComponent>(this);
@@ -21,11 +35,3 @@ void UMovementComponent::PostDuplicate()
     //UActorComponent::PostDuplicate();
 }
 
-UMovementComponent::UMovementComponent()
-{
-}
-
-UMovementComponent::UMovementComponent(const UMovementComponent& Other)
-    : UActorComponent(Other)
-{
-}
