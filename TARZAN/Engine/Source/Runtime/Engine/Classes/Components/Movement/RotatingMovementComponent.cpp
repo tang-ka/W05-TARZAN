@@ -5,7 +5,7 @@
 
 URotatingMovementComponent::URotatingMovementComponent()
 {
-    FVector RotationRate = FVector(0.f, 0.f, 1.f); // 회전 속도 설정
+    FVector RotationRate = FVector(0.1f, 0.1f, 0.f); // 회전 속도 설정
     float RotationSpeed = 1.f; // 회전 속도 설정
 }
 
