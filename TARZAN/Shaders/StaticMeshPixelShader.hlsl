@@ -85,7 +85,7 @@ cbuffer FogConstants : register(b7)
     float3 FogPad0;
     float4 FogColor;
     float3 CameraPosition; 
-    float FogPad1;
+    float FogHeight;
 };
 
 
@@ -124,7 +124,7 @@ float ComputeFogFactor(float3 worldPos)
     float disFactor = saturate((dist - FogStartDistance) / fogRange); // 0~1  50일떄 0
 
     // 높이 기반 (지수 감쇠)
-    float heightDiff = worldPos.z - 10; //10은 안개적용 최대 높이
+    float heightDiff = worldPos.z - FogHeight; 
     heightDiff = max(heightDiff, 0.0); 
     float heightFactor = saturate(exp(-heightDiff * FogHeightFalloff)); // 0~1
     

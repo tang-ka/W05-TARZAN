@@ -365,5 +365,5 @@ struct FFogConstants
     FVector padding;
     FLinearColor FogInscatteringColor = FLinearColor(1.0f, 1.0f, 1.0f, 1.0f);
     FVector CameraPosition;
-    float padding1;
+    float FogHeight;
 };
