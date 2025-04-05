@@ -46,6 +46,9 @@ public:
     void SetRotation(FQuat _newRot) { QuatRotation = _newRot; }
     void SetScale(FVector _newScale) { RelativeScale3D = _newScale; }
     void SetupAttachment(USceneComponent* InParent);
+
+
+    
 public:
 
     USceneComponent* GetAttachParent() const;
