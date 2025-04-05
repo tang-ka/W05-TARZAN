@@ -14,12 +14,12 @@ ULightComponentBase::~ULightComponentBase()
 {
     delete texture2D;
 }
-void ULightComponentBase::SetColor(FVector4 newColor)
+void ULightComponentBase::SetColor(FLinearColor newColor)
 {
     color = newColor;
 }
 
-FVector4 ULightComponentBase::GetColor() const
+FLinearColor ULightComponentBase::GetColor() const
 {
     return color;
 }

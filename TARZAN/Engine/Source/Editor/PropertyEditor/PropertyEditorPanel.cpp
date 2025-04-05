@@ -12,6 +12,7 @@
 #include "UObject/ObjectFactory.h"
 #include <Components/CubeComp.h>
 #include "FireballComp.h"
+#include "UHeightFogComponent.h"
 #include <Components/UParticleSubUVComp.h>
 
 void PropertyEditorPanel::Render()
@@ -115,6 +116,11 @@ void PropertyEditorPanel::Render()
                     UFireballComponent* FireballComponent = PickedActor->AddComponent<UFireballComponent>();
                     PickedComponent = FireballComponent;
                 }
+                if (ImGui::Selectable("HeightFogComponent"))
+                {
+                    UHeightFogComponent* HeightFogComponent = PickedActor->AddComponent<UHeightFogComponent>();
+                    PickedComponent = HeightFogComponent;
+                }
 
                 ImGui::EndPopup();
             }
@@ -174,18 +180,24 @@ void PropertyEditorPanel::Render()
         bFirstFrame = false;
     }
 
-    if (PickedActor && PickedComponent && PickedComponent->IsA<ULightComponentBase>())
+    if (PickedActor && PickedComponent && (PickedComponent->IsA<ULightComponentBase>()||PickedComponent->IsA<UFireballComponent>()))
     {
         ULightComponentBase* lightObj = Cast<ULightComponentBase>(PickedComponent);
+        UFireballComponent* fireballObj = Cast<UFireballComponent>(PickedComponent);
         ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.1f, 0.1f, 0.1f, 1.0f));
         if (ImGui::TreeNodeEx("SpotLight Component", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen)) // 트리 노드 생성
         {
-            FVector4 currColor = lightObj->GetColor();
+            FLinearColor currColor;
+            if(lightObj)
+                currColor = lightObj->GetColor();
+            else if (fireballObj)
+               currColor = fireballObj->GetColor();
 
-            float r = currColor.x;
-            float g = currColor.y;
-            float b = currColor.z;
-            float a = currColor.a;
+
+            float r = currColor.R;
+            float g = currColor.G;
+            float b = currColor.B;
+            float a = currColor.A;
             float h, s, v;
             float lightColor[4] = { r, g, b, a };
 
@@ -197,12 +209,19 @@ void PropertyEditorPanel::Render()
                 ImGuiColorEditFlags_Float))
 
             {
-
                 r = lightColor[0];
                 g = lightColor[1];
                 b = lightColor[2];
                 a = lightColor[3];
-                lightObj->SetColor(FVector4(r, g, b, a));
+                if (fireballObj)
+                {
+                    fireballObj->SetColor(FLinearColor(r, g, b, a));
+                }
+                else if (lightObj)
+                {
+                    lightObj->SetColor(FLinearColor(r, g, b, a));
+                }
+               
             }
             RGBToHSV(r, g, b, h, s, v);
             // RGB/HSV
@@ -231,20 +250,61 @@ void PropertyEditorPanel::Render()
             {
                 // RGB -> HSV
                 RGBToHSV(r, g, b, h, s, v);
-                lightObj->SetColor(FVector4(r, g, b, a));
+                if (fireballObj)
+                {
+                    fireballObj->SetColor(FLinearColor(r, g, b, a));
+                }
+                else if (lightObj)
+                {
+                    lightObj->SetColor(FLinearColor(r, g, b, a));
+                }
             }
             else if (changedHSV && !changedRGB)
             {
                 // HSV -> RGB
                 HSVToRGB(h, s, v, r, g, b);
-                lightObj->SetColor(FVector4(r, g, b, a));
+                if (fireballObj)
+                {
+                    fireballObj->SetColor(FLinearColor(r, g, b, a));
+                }
+                else if (lightObj)
+                {
+                    lightObj->SetColor(FLinearColor(r, g, b, a));
+                }
             }
 
             // Light Radius
-            float radiusVal = lightObj->GetRadius();
+            float radiusVal;
+            if (lightObj)
+            {
+                radiusVal = lightObj->GetRadius();
+            }
+            else if (fireballObj)
+            {
+                radiusVal = fireballObj->GetRadius();
+            }
             if (ImGui::SliderFloat("Radius", &radiusVal, 1.0f, 100.0f))
             {
-                lightObj->SetRadius(radiusVal);
+                if (lightObj)
+                {
+                    lightObj->SetRadius(radiusVal);
+                }
+                if (fireballObj)
+                {
+                    fireballObj->SetRadius(radiusVal);
+                }
+            }
+
+            if (fireballObj)
+            {
+                float IntensityVal = fireballObj->GetIntensity();
+                if (ImGui::SliderFloat("Intensity", &IntensityVal, 1.0f, 100.0f))
+                {
+                    if (fireballObj)
+                    {
+                        fireballObj->SetIntensity(IntensityVal);
+                    }
+                }
             }
             ImGui::TreePop();
         }

@@ -136,19 +136,13 @@ void FConstantBufferUpdater::UpdateFireballConstant(ID3D11Buffer* FireballConsta
     }
 }
 
-void FConstantBufferUpdater::UpdateFogConstant(ID3D11Buffer* FogConstantBuffer, const FMatrix& InvViewProj, float StartHeight, float EndHeight, float Density) const
+void FConstantBufferUpdater::UpdateFogConstant(ID3D11Buffer* FogConstantBuffer, const FFogConstants& FogConstants) const
 {
     if (FogConstantBuffer)
     {
-        D3D11_MAPPED_SUBRESOURCE mappedResource;
-        DeviceContext->Map(FogConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-        {
-            FFogParams* constants = reinterpret_cast<FFogParams*>(mappedResource.pData);
-            constants->InvViewProj = InvViewProj;
-            constants->FogStartHeight = StartHeight;
-            constants->FogEndHeight = EndHeight;
-            constants->FogDensity = Density;
-        }
+        D3D11_MAPPED_SUBRESOURCE ConstantBufferMSR;
+        DeviceContext->Map(FogConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &ConstantBufferMSR); // update constant buffer every frame
+        memcpy(ConstantBufferMSR.pData, &FogConstants, sizeof(FFogConstants));
         DeviceContext->Unmap(FogConstantBuffer, 0);
     }
 }
