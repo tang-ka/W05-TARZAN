@@ -126,3 +126,12 @@ void UPrimitiveComponent::PostDuplicate()
 {
     USceneComponent::PostDuplicate();
 }
+
+void UPrimitiveComponent::GetProperties(TMap<FString, FString>& OutProperties) const
+{
+    Super::GetProperties(OutProperties);
+    OutProperties.Add(TEXT("m_Type"), m_Type);
+    OutProperties.Add(TEXT("AABB_min"), AABB.min.ToString());
+    OutProperties.Add(TEXT("AABB_max"), AABB.max.ToString());
+    
+}

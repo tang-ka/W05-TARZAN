@@ -31,6 +31,9 @@ public:
     /** Component가 제거되었을 때 호출됩니다. */
     virtual void OnComponentDestroyed();
 
+public:
+
+
     /**
      * Ends gameplay for this component.
      * Called from AActor::EndPlay only
@@ -71,6 +74,12 @@ public:
     virtual UObject* Duplicate() const override;
     virtual void DuplicateSubObjects(const UObject* Source) override;
     virtual void PostDuplicate() override;
+
+    /**
+ * 이 컴포넌트의 직렬화 가능한 속성들을 문자열 맵으로 반환합니다.
+ * 하위 클래스는 이 함수를 재정의하여 자신만의 속성을 추가해야 합니다.
+ */
+    virtual void GetProperties(TMap<FString, FString>& OutProperties) const;
 
 protected:
     /**월드에 등록되었을 때 호출되는 함수*/

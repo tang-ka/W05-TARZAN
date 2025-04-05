@@ -30,6 +30,8 @@ public:
     void Tick(ELevelTick tickType, float deltaSeconds);
     void Release();
     void ReloadScene(const FString& FileName);
+    void SaveScene(const FString& FileName);
+    
     void ClearScene();
     virtual UObject* Duplicate() const override;
     virtual void DuplicateSubObjects(const UObject* SourceObj) override;

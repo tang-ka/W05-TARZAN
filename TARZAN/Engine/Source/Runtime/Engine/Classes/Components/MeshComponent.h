@@ -20,11 +20,16 @@ public:
     virtual void GetUsedMaterials(TArray<UMaterial*>& Out) const;
 #pragma endregion
 protected:
+    // Todo 저장만들기
     TArray<UMaterial*> OverrideMaterials;
 public:
-    TArray<UMaterial*>& GetOverrideMaterials() { return OverrideMaterials; }
+    
+    TArray<UMaterial*>& GetOverrideMaterials() { return OverrideMaterials; } 
     virtual UObject* Duplicate() const override;
     virtual void DuplicateSubObjects(const UObject* Source) override;
     virtual void PostDuplicate() override;
+
+    
+    void GetProperties(TMap<FString, FString>& OutProperties) const override;
 };
 

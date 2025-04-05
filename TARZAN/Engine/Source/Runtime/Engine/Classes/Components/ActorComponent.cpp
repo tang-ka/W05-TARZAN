@@ -44,6 +44,30 @@ void UActorComponent::OnComponentDestroyed()
 {
 }
 
+void UActorComponent::GetProperties(TMap<FString, FString>& OutProperties) const
+{
+    TMap<FString, FString>& Properties = OutProperties;
+
+    Properties.Add(TEXT("ComponentName"), *GetName());
+    Properties.Add(TEXT("ComponentClass"), *GetClass()->GetName());
+    //Properties.Add(TEXT("ComponentUUID"), std::to_string(GetUUID()));
+    //Properties.Add(TEXT("ComponentOwnerUUID"), FString::Printf(TEXT("%u"), GetOwner()->GetUUID()))
+    Properties.Add(TEXT("ComponentOwner"), *GetOwner()->GetName());
+    Properties.Add(TEXT("ComponentOwnerClass"), *GetOwner()->GetClass()->GetName());
+
+    
+    Properties.Add(TEXT("bCanEverTick"), bCanEverTick ? TEXT("true") : TEXT("false"));
+    //Properties.Add(TEXT("bRegistered"), bRegistered ? TEXT("true") : TEXT("false"));
+    Properties.Add(TEXT("bWantsInitializeComponent"), bWantsInitializeComponent ? TEXT("true") : TEXT("false"));
+    Properties.Add(TEXT("bIsActive"), bIsActive ? TEXT("true") : TEXT("false"));
+    Properties.Add(TEXT("bTickEnabled"), bTickEnabled ? TEXT("true") : TEXT("false"));
+    Properties.Add(TEXT("bAutoActive"), bAutoActive ? TEXT("true") : TEXT("false"));
+    
+
+    
+    return; // 기본적으로는 비어있거나 최소한의 정보만 포함
+}
+
 void UActorComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
     assert(bHasBegunPlay);

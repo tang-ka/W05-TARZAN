@@ -136,14 +136,25 @@ void UWorld::PostDuplicate()
 
 void UWorld::ReloadScene(const FString& FileName)
 {
-    FString NewFile = GEngine->GetSceneManager()->LoadSceneFromFile(FileName);
+
+    ClearScene(); // 기존 오브젝트 제거
+    CreateBaseObject();
+    
+    GEngine->GetSceneManager()->LoadSceneFromFile(FileName, *this);
 
     // if (SceneOctree && SceneOctree->GetRoot())
     //     SceneOctree->GetRoot()->TickBuffers(GCurrentFrame, 0);
 
-    ClearScene(); // 기존 오브젝트 제거
-    CreateBaseObject();
-    GEngine->GetSceneManager()->ParseSceneData(NewFile);
+
+    //GEngine->GetSceneManager()->ParseSceneData(NewFile);
+}
+
+void UWorld::SaveScene(const FString& FileName)
+{
+    //FSceneData SceneData = GEngine->GetSceneManager()->CreateSceneData(*this);
+
+    GEngine->GetSceneManager()->SaveSceneToFile(FileName, *this);
+    int a= 0;
 }
 
 bool UWorld::DestroyActor(AActor* ThisActor)

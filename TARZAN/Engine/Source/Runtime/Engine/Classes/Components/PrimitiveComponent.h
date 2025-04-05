@@ -21,6 +21,8 @@ public:
     virtual UObject* Duplicate() const override;
     virtual void DuplicateSubObjects(const UObject* Source) override;
     virtual void PostDuplicate() override;
+    
+    void GetProperties(TMap<FString, FString>& OutProperties) const override;
 private:
     FString m_Type;
 

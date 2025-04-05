@@ -75,3 +75,11 @@ void UMeshComponent::DuplicateSubObjects(const UObject* Source)
 }
 
 void UMeshComponent::PostDuplicate() {}
+
+void UMeshComponent::GetProperties(TMap<FString, FString>& OutProperties) const
+{
+    
+    UPrimitiveComponent::GetProperties(OutProperties);
+
+    
+}

@@ -108,4 +108,19 @@ struct FQuat
 
 		return RotationMatrix;
 	}
+
+    // *** 추가된 ToString 함수 ***
+    /**
+     * @brief 벡터를 문자열로 변환합니다. (예: "X=1.2 Y=3.4 Z=5.6")
+     * @return FString 형태의 벡터 표현 문자열.
+     */
+    FString ToString() const
+	{
+	    // FString::Printf를 사용하여 포맷팅된 문자열 생성
+	    // TEXT() 매크로는 리터럴 문자열을 TCHAR 타입으로 만들어줍니다.
+	    return FString::Printf(TEXT("X=%f Y=%f Z=%f"), x, y, z);
+
+	    // 필요에 따라 소수점 정밀도 지정 가능: 예) "X=%.2f Y=%.2f Z=%.2f"
+	    // return FString::Printf(TEXT("X=%.2f Y=%.2f Z=%.2f"), x, y, z);
+	}
 };

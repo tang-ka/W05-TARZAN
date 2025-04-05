@@ -14,6 +14,10 @@
 #include "FireballComp.h"
 #include <Components/UParticleSubUVComp.h>
 
+#include "Components/Movement/ProjectileMovementComponent.h"
+#include "Components/Movement/RotatingMovementComponent.h"
+
+
 void PropertyEditorPanel::Render()
 {
     /* Pre Setup */
@@ -139,6 +143,16 @@ void PropertyEditorPanel::Render()
                 {
                     UFireballComponent* FireballComponent = PickedActor->AddComponent<UFireballComponent>();
                     PickedComponent = FireballComponent;
+                }
+                if (ImGui::Selectable("ProjectileMovementComponent"))
+                {
+                    UProjectileMovementComponent* ProjectileComponent = PickedActor->AddComponent<UProjectileMovementComponent>();
+                    PickedComponent = ProjectileComponent;
+                }
+                if (ImGui::Selectable("RotatingMovementComponent"))
+                {
+                    URotatingMovementComponent* RotatingComponent = PickedActor->AddComponent<URotatingMovementComponent>();
+                    PickedComponent = RotatingComponent;
                 }
 
                 ImGui::EndPopup();

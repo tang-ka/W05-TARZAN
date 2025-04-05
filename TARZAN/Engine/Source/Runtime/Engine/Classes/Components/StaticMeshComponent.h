@@ -13,6 +13,9 @@ public:
     virtual UObject* Duplicate() const override;
     virtual void DuplicateSubObjects(const UObject* Source) override;
     virtual void PostDuplicate() override;
+    
+    void GetProperties(TMap<FString, FString>& OutProperties) const override;
+    
     virtual void TickComponent(float DeltaTime) override;
 
     PROPERTY(int, selectedSubMeshIndex);
@@ -32,6 +35,7 @@ public:
         OverrideMaterials.SetNum(value->GetMaterials().Num());
         AABB = FBoundingBox(staticMesh->GetRenderData()->BoundingBoxMin, staticMesh->GetRenderData()->BoundingBoxMax);
     }
+    
 
 protected:
     UStaticMesh* staticMesh = nullptr;

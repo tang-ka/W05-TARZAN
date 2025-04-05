@@ -59,8 +59,10 @@ public:
     virtual void PostDuplicate();
 
 
+    void GetProperties(TMap<FString, FString>& OutProperties) const override;
+
 private:
-    class UTextUUID* uuidText = nullptr;
+    
 
 public:
 };

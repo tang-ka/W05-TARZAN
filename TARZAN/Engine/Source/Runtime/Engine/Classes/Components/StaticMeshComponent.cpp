@@ -133,6 +133,29 @@ void UStaticMeshComponent::DuplicateSubObjects(const UObject* Source)
 
 void UStaticMeshComponent::PostDuplicate() {}
 
+void UStaticMeshComponent::GetProperties(TMap<FString, FString>& OutProperties) const
+{
+    Super::GetProperties(OutProperties);
+    
+    //StaticMesh 경로 저장
+    UStaticMesh* CurrentMesh = GetStaticMesh(); // 예시 함수, 실제 함수 이름 사용
+    if (CurrentMesh != nullptr) {
+
+        // 1. std::wstring 경로 얻기
+        std::wstring PathWString = CurrentMesh->GetPathOjbectName(); // 이 함수가 std::wstring 반환 가정
+
+        // 2. std::wstring을 FString으로 변환
+        FString PathFString(PathWString.c_str()); // c_str()로 const wchar_t* 얻어서 FString 생성
+        
+        OutProperties.Add(TEXT("StaticMeshPath"), PathFString);
+    } else {
+        OutProperties.Add(TEXT("StaticMeshPath"), TEXT("None")); // 메시 없음 명시
+        
+    }
+    
+    
+}
+
 void UStaticMeshComponent::TickComponent(float DeltaTime)
 {
     //Timer += DeltaTime * 0.005f;
