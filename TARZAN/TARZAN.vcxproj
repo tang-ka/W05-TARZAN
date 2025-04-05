@@ -335,6 +335,7 @@
     <ClCompile Include="Engine\Source\Runtime\Renderer\ShaderManager.cpp" />
     <ClCompile Include="FireballComp.cpp" />
     <ClCompile Include="UEditorStateManager.cpp" />
+    <ClCompile Include="UHeightFogComponent.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Color.h" />
@@ -453,6 +454,7 @@
     <ClInclude Include="Engine\Source\Runtime\Engine\World.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\RenderResourceManager.h" />
     <ClInclude Include="UEditorStateManager.h" />
+    <ClInclude Include="UHeightFogComponent.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\StaticMeshPixelShader.hlsl">

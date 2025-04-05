@@ -354,3 +354,16 @@ struct FFireballArrayInfo
     int FireballCount = 0;
     FVector padding;
 };
+
+struct FFogConstants    
+{
+    float FogDensity = 0.5f;
+    float FogHeightFalloff = 0.5f;
+    float StartDistance = 0.0f;
+    float FogCutoffDistance = 1000.0f;
+    float FogMaxOpacity = 1.0f;
+    FVector padding;
+    FLinearColor FogInscatteringColor = FLinearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    FVector CameraPosition;
+    float padding1;
+};

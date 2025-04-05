@@ -12,6 +12,7 @@
 #include "UObject/ObjectFactory.h"
 #include <Components/CubeComp.h>
 #include "FireballComp.h"
+#include "UHeightFogComponent.h"
 #include <Components/UParticleSubUVComp.h>
 
 void PropertyEditorPanel::Render()
@@ -114,6 +115,11 @@ void PropertyEditorPanel::Render()
                 {
                     UFireballComponent* FireballComponent = PickedActor->AddComponent<UFireballComponent>();
                     PickedComponent = FireballComponent;
+                }
+                if (ImGui::Selectable("HeightFogComponent"))
+                {
+                    UHeightFogComponent* HeightFogComponent = PickedActor->AddComponent<UHeightFogComponent>();
+                    PickedComponent = HeightFogComponent;
                 }
 
                 ImGui::EndPopup();
@@ -244,13 +250,27 @@ void PropertyEditorPanel::Render()
             {
                 // RGB -> HSV
                 RGBToHSV(r, g, b, h, s, v);
-                lightObj->SetColor(FLinearColor(r, g, b, a));
+                if (fireballObj)
+                {
+                    fireballObj->SetColor(FLinearColor(r, g, b, a));
+                }
+                else if (lightObj)
+                {
+                    lightObj->SetColor(FLinearColor(r, g, b, a));
+                }
             }
             else if (changedHSV && !changedRGB)
             {
                 // HSV -> RGB
                 HSVToRGB(h, s, v, r, g, b);
-                lightObj->SetColor(FLinearColor(r, g, b, a));
+                if (fireballObj)
+                {
+                    fireballObj->SetColor(FLinearColor(r, g, b, a));
+                }
+                else if (lightObj)
+                {
+                    lightObj->SetColor(FLinearColor(r, g, b, a));
+                }
             }
 
             // Light Radius

@@ -41,9 +41,11 @@ public:
     ID3D11Buffer* SubMeshConstantBuffer = nullptr;
     ID3D11Buffer* TextureConstantBuffer = nullptr;
     ID3D11Buffer* FireballConstantBuffer = nullptr;
+    ID3D11Buffer* FogConstantBuffer = nullptr;
 
 
     FLighting lightingData;
+    FFogConstants fogData;
 
     uint32 Stride;
     uint32 Stride2;

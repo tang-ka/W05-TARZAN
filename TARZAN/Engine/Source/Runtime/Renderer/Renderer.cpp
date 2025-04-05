@@ -21,6 +21,8 @@
 #include "UObject/UObjectIterator.h"
 #include "Components/SkySphereComponent.h"
 #include "FireballComp.h"
+#include "UHeightFogComponent.h"
+#include "LevelEditor/SLevelEditor.h"
 
 void FRenderer::Initialize(FGraphicsDevice* graphics)
 {
@@ -109,7 +111,7 @@ void FRenderer::PrepareShader() const
         Graphics->DeviceContext->PSSetConstantBuffers(4, 1, &SubMeshConstantBuffer);
         Graphics->DeviceContext->PSSetConstantBuffers(5, 1, &TextureConstantBuffer);
         Graphics->DeviceContext->PSSetConstantBuffers(6, 1, &FireballConstantBuffer);
-
+        Graphics->DeviceContext->PSSetConstantBuffers(7, 1, &FogConstantBuffer);
     }
 }
 
@@ -169,6 +171,7 @@ void FRenderer::CreateConstantBuffer()
     LightingBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FLighting));
     FlagBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FLitUnlitConstants));
     FireballConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FFireballArrayInfo));
+    FogConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FFogConstants));
 }
 
 void FRenderer::ReleaseConstantBuffer()
@@ -183,6 +186,7 @@ void FRenderer::ReleaseConstantBuffer()
     RenderResourceManager.ReleaseBuffer(LightingBuffer);
     RenderResourceManager.ReleaseBuffer(FlagBuffer);
     RenderResourceManager.ReleaseBuffer(FireballConstantBuffer);
+    RenderResourceManager.ReleaseBuffer(FogConstantBuffer);
 }
 #pragma endregion ConstantBuffer
 
@@ -225,6 +229,17 @@ void FRenderer::PrepareRender()
                 {
                     FireballObjs.Add(pFireComp);
                 }
+                if (UHeightFogComponent* HeightFog = Cast<UHeightFogComponent>(iter))
+                {
+                    fogData.FogDensity = HeightFog->GetFogDensity();
+                    fogData.FogHeightFalloff = HeightFog->GetFogHeightFalloff();
+                    fogData.StartDistance = HeightFog->GetStartDistance();
+                    fogData.FogCutoffDistance = HeightFog->GetFogCutoffDistance();
+                    fogData.FogMaxOpacity = HeightFog->GetFogMaxOpacity();
+                    fogData.FogInscatteringColor = HeightFog->GetFogInscatteringColor();
+                    fogData.CameraPosition = GEngine->GetLevelEditor()->GetActiveViewportClient()->GetCameraLocation();
+                    ConstantBufferUpdater.UpdateFogConstant(FogConstantBuffer, fogData);
+                } 
         }
     }
     else if (GEngine->GetWorld()->WorldType == EWorldType::PIE)

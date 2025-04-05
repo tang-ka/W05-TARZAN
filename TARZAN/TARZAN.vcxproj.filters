@@ -431,6 +431,9 @@
     <ClInclude Include="FireballComp.h">
       <Filter>Engine\Source\Runtime\Engine\Classes\Components</Filter>
     </ClInclude>
+    <ClInclude Include="UHeightFogComponent.h">
+      <Filter>Engine\Source\Runtime\Engine\Classes\Components</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\Source\ThirdParty\DirectXTK\Include\DDSTextureLoader.h" />
@@ -530,6 +533,10 @@
     <ClCompile Include="Engine\Source\Runtime\Renderer\RenderResourceManager.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\ShaderManager.cpp" />
     <ClCompile Include="FireballComp.cpp">
+      <Filter>Engine\Source\Runtime\Engine\Classes\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Engine\Texture.cpp" />
+    <ClCompile Include="UHeightFogComponent.cpp">
       <Filter>Engine\Source\Runtime\Engine\Classes\Components</Filter>
     </ClCompile>
   </ItemGroup>
