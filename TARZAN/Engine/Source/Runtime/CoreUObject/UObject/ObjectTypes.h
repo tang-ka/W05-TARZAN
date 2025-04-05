@@ -11,6 +11,8 @@ enum OBJECTS
 	OBJ_TRIANGLE,
 	OBJ_CAMERA,
 	OBJ_PLAYER,
+    OBJ_Fireball,
+    OBJ_Fog,
 	OBJ_END
 };
 enum ARROW_DIR

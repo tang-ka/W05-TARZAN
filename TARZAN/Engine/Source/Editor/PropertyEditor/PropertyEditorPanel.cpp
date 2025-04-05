@@ -311,6 +311,112 @@ void PropertyEditorPanel::Render()
         ImGui::PopStyleColor();
     }
 
+    if (PickedActor && PickedComponent && (PickedComponent->IsA<UHeightFogComponent>()))
+    {
+        UHeightFogComponent* FogObj = Cast<UHeightFogComponent>(PickedComponent);
+        ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.1f, 0.1f, 0.1f, 1.0f));
+        if (ImGui::TreeNodeEx("HeightFog Component", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen)) // 트리 노드 생성
+        {
+            FLinearColor currColor;
+            if (FogObj)
+                currColor = FogObj->GetColor();
+           
+            float r = currColor.R;
+            float g = currColor.G;
+            float b = currColor.B;
+            float a = currColor.A;
+            float h, s, v;
+            float lightColor[4] = { r, g, b, a };
+
+            // SpotLight Color
+            if (ImGui::ColorPicker4("##SpotLight Color", lightColor,
+                ImGuiColorEditFlags_DisplayRGB |
+                ImGuiColorEditFlags_NoSidePreview |
+                ImGuiColorEditFlags_NoInputs |
+                ImGuiColorEditFlags_Float))
+
+            {
+                r = lightColor[0];
+                g = lightColor[1];
+                b = lightColor[2];
+                a = lightColor[3];
+               
+                
+                FogObj->SetColor(FLinearColor(r, g, b, a));
+               
+
+            }
+            RGBToHSV(r, g, b, h, s, v);
+            // RGB/HSV
+            bool changedRGB = false;
+            bool changedHSV = false;
+
+            // RGB
+            ImGui::PushItemWidth(50.0f);
+            if (ImGui::DragFloat("R##R", &r, 0.001f, 0.f, 1.f)) changedRGB = true;
+            ImGui::SameLine();
+            if (ImGui::DragFloat("G##G", &g, 0.001f, 0.f, 1.f)) changedRGB = true;
+            ImGui::SameLine();
+            if (ImGui::DragFloat("B##B", &b, 0.001f, 0.f, 1.f)) changedRGB = true;
+            ImGui::Spacing();
+
+            // HSV
+            if (ImGui::DragFloat("H##H", &h, 0.1f, 0.f, 360)) changedHSV = true;
+            ImGui::SameLine();
+            if (ImGui::DragFloat("S##S", &s, 0.001f, 0.f, 1)) changedHSV = true;
+            ImGui::SameLine();
+            if (ImGui::DragFloat("V##V", &v, 0.001f, 0.f, 1)) changedHSV = true;
+            ImGui::PopItemWidth();
+            ImGui::Spacing();
+
+            if (changedRGB && !changedHSV)
+            {
+                // RGB -> HSV
+                RGBToHSV(r, g, b, h, s, v);
+                FogObj->SetColor(FLinearColor(r, g, b, a));
+            }
+            else if (changedHSV && !changedRGB)
+            {
+                // HSV -> RGB
+                HSVToRGB(h, s, v, r, g, b);
+                FogObj->SetColor(FLinearColor(r, g, b, a));
+            }
+
+            // Light Radius
+            float FogDensity;
+            FogDensity = FogObj->GetFogDensity();
+            if (ImGui::SliderFloat("Density", &FogDensity, 0.0f, 1.0f))
+            {
+                FogObj->SetFogDensity(FogDensity);
+            }
+            float FogHeightFalloff;
+            FogHeightFalloff = FogObj->GetFogHeightFalloff();
+            if (ImGui::SliderFloat("HeightFalloff", &FogHeightFalloff, 0.0f, 1.0f))
+            {
+                FogObj->SetFogHeightFalloff(FogHeightFalloff);
+            }
+            float StartDistance;
+            StartDistance = FogObj->GetStartDistance();
+            if (ImGui::SliderFloat("StartDistance", &StartDistance, 0.0f, 1000.0f))
+            {
+                FogObj->SetStartDistance(StartDistance);
+            }
+            float FogCutoffDistance;
+            FogCutoffDistance = FogObj->GetFogCutoffDistance();
+            if (ImGui::SliderFloat("FogCutoffDistance", &FogCutoffDistance, 0.0f, 1000.0f))
+            {
+                FogObj->SetFogCutoffDistance(FogCutoffDistance);
+            }
+            float GetMaxOpacity;
+            GetMaxOpacity = FogObj->GetFogMaxOpacity();
+            if (ImGui::SliderFloat("MaxOpacity", &GetMaxOpacity, 0.0f, 1.0f))
+            {
+                FogObj->SetFogMaxOpacity(GetMaxOpacity);
+            }
+            ImGui::TreePop();
+        }
+        ImGui::PopStyleColor();
+    }
     // TODO: 추후에 RTTI를 이용해서 프로퍼티 출력하기
     if (PickedActor && PickedComponent && PickedComponent->IsA<UText>())
     {
