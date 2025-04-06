@@ -65,6 +65,7 @@ void FRenderer::Initialize(FGraphicsDevice* graphics)
 
     // test
     CreateDummyPostProcessResources();
+    SceneDepthSRV = Graphics->DepthStencilSRV;
 }
 
 void FRenderer::Render()
@@ -76,7 +77,9 @@ void FRenderer::Render()
     RenderPostProcessPass();
 
     RenderOverlayPass();
-
+    
+    GEngine->graphicDevice.SwapBuffer();
+    
     //for (RenderPass* pass : Passes)
     //{
     //    pass->Setup(Context);
@@ -102,28 +105,21 @@ void FRenderer::CreateShader()
         {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 40, D3D11_INPUT_PER_VERTEX_DATA, 0},
         {"MATERIAL_INDEX", 0, DXGI_FORMAT_R32_UINT, 0, 48, D3D11_INPUT_PER_VERTEX_DATA, 0}
     };
-
     ShaderManager.CreateVertexShader(
         L"Shaders/StaticMeshVertexShader.hlsl", "mainVS",
         VertexShader, layout, ARRAYSIZE(layout), &InputLayout, &Stride, sizeof(FVertexSimple));
-
     ShaderManager.CreatePixelShader(
         L"Shaders/StaticMeshPixelShader.hlsl", "mainPS",
         PixelShader);
-
-    ShaderManager.CreatePixelShader(
-        L"Shaders/PostProcessPixelShader.hlsl", "mainPS", PostProcessPixelShader);
-
+    
     // 텍스쳐 셰이더 설정
     D3D11_INPUT_ELEMENT_DESC textureLayout[] = {
         {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
         {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0}
     };
-
     ShaderManager.CreateVertexShader(
         L"Shaders/VertexTextureShader.hlsl", "main",
         VertexTextureShader, textureLayout, ARRAYSIZE(textureLayout), &TextureInputLayout, &TextureStride, sizeof(FVertexTexture));
-
     ShaderManager.CreatePixelShader(
         L"Shaders/PixelTextureShader.hlsl", "main",
         PixelTextureShader);
@@ -132,10 +128,13 @@ void FRenderer::CreateShader()
     ShaderManager.CreateVertexShader(
         L"Shaders/ShaderLine.hlsl", "mainVS",
         VertexLineShader, nullptr, 0); // 라인 셰이더는 Layout 안 쓰면 nullptr 전달
-
     ShaderManager.CreatePixelShader(
         L"Shaders/ShaderLine.hlsl", "mainPS",
         PixelLineShader);
+
+    // fog 셰이더 설정
+    ShaderManager.CreatePixelShader(
+        L"Shaders/PostProcessPixelShader.hlsl", "mainPS", PostProcessPixelShader);
 }
 
 void FRenderer::ReleaseShader()
@@ -163,7 +162,7 @@ void FRenderer::PrepareShader() const
         Graphics->DeviceContext->PSSetConstantBuffers(4, 1, &SubMeshConstantBuffer);
         Graphics->DeviceContext->PSSetConstantBuffers(5, 1, &TextureConstantBuffer);
         Graphics->DeviceContext->PSSetConstantBuffers(6, 1, &FireballConstantBuffer);
-        Graphics->DeviceContext->PSSetConstantBuffers(7, 1, &FogConstantBuffer);
+        //Graphics->DeviceContext->PSSetConstantBuffers(7, 1, &FogConstantBuffer);
     }
 }
 
@@ -723,48 +722,37 @@ void FRenderer::RenderLightPass()
 
 void FRenderer::RenderPostProcessPass()
 {
-    // Temp
-    const auto& ActiveViewport = GEngine->GetLevelEditor()->GetActiveViewportClient();
-    FMatrix View = ActiveViewport->GetViewMatrix();
-    FMatrix Proj = ActiveViewport->GetProjectionMatrix();
-    FMatrix ViewProj = View * Proj;
-    FMatrix InvViewProj = FMatrix::Inverse(ViewProj); 
-    ConstantBufferUpdater.UpdateFogConstant(
-            FogConstantBuffer,
-            InvViewProj,
-            10.0f,    // 시작 높이
-            -10.0f,   // 끝 높이
-            1.0f      // 밀도
-    );
-    
     if (!PostProcessColorSRV || !SceneDepthSRV || !PostProcessSampler || !DepthSampler || !FogConstantBuffer)
         return; 
 
+    // 1. Topology 설정
     Graphics->DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 
-    // 1. 셰이더 바인딩
+    // 2. 셰이더 바인딩 (VS, PS)
     Graphics->DeviceContext->VSSetShader(VertexTextureShader, nullptr, 0);
     Graphics->DeviceContext->PSSetShader(PostProcessPixelShader, nullptr, 0);
+
+    // 3. Input Layout 설정
     Graphics->DeviceContext->IASetInputLayout(TextureInputLayout);
 
-    // 2. 풀스크린 Quad 바인딩
+    // 4. 정점/인덱스 버퍼 설정 (풀스크린 Quad)
     const FQuadRenderData& QuadData = UEditorEngine::resourceMgr.GetQuadRenderData();
     UINT offset = 0;
     Graphics->DeviceContext->IASetVertexBuffers(0, 1, &QuadData.VertexTextureBuffer, &TextureStride, &offset);
     Graphics->DeviceContext->IASetIndexBuffer(QuadData.IndexTextureBuffer, DXGI_FORMAT_R32_UINT, 0);
 
-    // 3. ShaderResourceView 바인딩 (t0: color, t1: depth)
+    // 5. ShaderResourceView 바인딩 (t0: color, t1: depth)
     ID3D11ShaderResourceView* SRVs[2] = { PostProcessColorSRV, SceneDepthSRV };
     Graphics->DeviceContext->PSSetShaderResources(0, 2, SRVs);
 
-    // 4. SamplerState 바인딩 (s0: color, s1: depth)
+    // 6. SamplerState 바인딩 (s0: color, s1: depth)
     ID3D11SamplerState* Samplers[2] = { PostProcessSampler, DepthSampler };
     Graphics->DeviceContext->PSSetSamplers(0, 2, Samplers);
 
-    // 5. Fog 상수 버퍼 바인딩 (b0)
+    // 7. Fog 상수 버퍼 바인딩 (b0)
     Graphics->DeviceContext->PSSetConstantBuffers(0, 1, &FogConstantBuffer);
 
-    // 6. 풀스크린 Quad 드로우
+    // 8. 풀스크린 Quad 드로우
     Graphics->DeviceContext->DrawIndexed(QuadData.numIndices, 0, 0);
 }
 
@@ -891,7 +879,7 @@ void FRenderer::CreateDummyPostProcessResources()
     const int height = 512;
 
     // ----------- COLOR 텍스처 생성 (연보라색) -----------
-    UINT colorData[width * height];
+    std::vector<UINT> colorData(width * height, 0xFF6060FF);
     for (int i = 0; i < width * height; ++i)
         colorData[i] = 0xFF6060FF;
 
@@ -906,34 +894,12 @@ void FRenderer::CreateDummyPostProcessResources()
     colorDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
 
     D3D11_SUBRESOURCE_DATA colorInitData = {};
-    colorInitData.pSysMem = colorData;
+    colorInitData.pSysMem = colorData.data();
     colorInitData.SysMemPitch = width * 4;
 
     Graphics->Device->CreateTexture2D(&colorDesc, &colorInitData, &DummyColorTexture);
     Graphics->Device->CreateShaderResourceView(DummyColorTexture, nullptr, &DummyColorSRV);
-
-
-    // ----------- DEPTH 텍스처 생성 (위는 얕고 아래는 깊은 gradient) -----------
-    float depthData[width * height];
-    for (int y = 0; y < height; ++y)
-    {
-        float depth = (float)y / height; // 아래로 갈수록 깊어짐
-        for (int x = 0; x < width; ++x)
-            depthData[y * width + x] = depth;
-    }
-
-    D3D11_TEXTURE2D_DESC depthDesc = colorDesc;
-    depthDesc.Format = DXGI_FORMAT_R32_FLOAT;
-
-    D3D11_SUBRESOURCE_DATA depthInitData = {};
-    depthInitData.pSysMem = depthData;
-    depthInitData.SysMemPitch = width * sizeof(float);
-
-    Graphics->Device->CreateTexture2D(&depthDesc, &depthInitData, &DummyDepthTexture);
-    Graphics->Device->CreateShaderResourceView(DummyDepthTexture, nullptr, &DummyDepthSRV);
-
-
+    
     // ----------- SRV 연결 (PostProcessPass에서 사용할 것들) -----------
     PostProcessColorSRV = DummyColorSRV;
-    SceneDepthSRV = DummyDepthSRV;
 }

@@ -91,7 +91,6 @@ void UEditorEngine::Render()
      //GUObjectArray.ProcessPendingDestroyObjects();
 
     renderer.Render();
-    graphicDevice.SwapBuffer();
 }
 
 float UEditorEngine::GetAspectRatio(IDXGISwapChain* swapChain) const

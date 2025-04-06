@@ -175,12 +175,11 @@ private:
 private:
     ID3D11DeviceContext* Context;
     TArray<RenderPass*> Passes;
-    
-    // PostProcess용 Dummy (Todo : 추후 LightPass와 연결)
+
+private:
+    // PostProcess용 Dummy Data (Todo : 추후 LightPass와 연결)
     ID3D11Texture2D* DummyColorTexture = nullptr;
     ID3D11ShaderResourceView* DummyColorSRV = nullptr;
-    ID3D11Texture2D* DummyDepthTexture = nullptr;
-    ID3D11ShaderResourceView* DummyDepthSRV = nullptr;
     void CreateDummyPostProcessResources();
     
     ID3D11ShaderResourceView* PostProcessColorSRV = nullptr; // t0
@@ -188,7 +187,5 @@ private:
 
     ID3D11SamplerState* PostProcessSampler = nullptr; // s0
     ID3D11SamplerState* DepthSampler = nullptr;       // s1
-
-    ID3D11Buffer* FogConstantBuffer = nullptr; // b0
 };
 
