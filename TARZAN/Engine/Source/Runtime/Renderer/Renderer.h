@@ -125,6 +125,7 @@ public://텍스쳐용 기능 추가
     ID3D11Buffer* SubUVConstantBuffer = nullptr;
 
 public:
+    void PrepareLightShader() const;
     void PrepareTextureShader() const;
 
     void RenderTexturePrimitive(ID3D11Buffer* pVertexBuffer, UINT numVertices,

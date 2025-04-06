@@ -61,11 +61,10 @@ void FRenderer::Render()
 {
     //DeprecatedRender();
 
-    FGraphicsDevice graphicDevice = GEngine->graphicDevice;
     SLevelEditor* LevelEditor = GEngine->GetLevelEditor();
     std::shared_ptr<UWorld> GWorld = GEngine->GetWorld();
 
-    graphicDevice.Prepare();
+    Graphics->Prepare();
     if (LevelEditor->IsMultiViewport())
     {
         std::shared_ptr<FEditorViewportClient> viewportClient = LevelEditor->GetActiveViewportClient();
@@ -98,7 +97,7 @@ void FRenderer::RenderPass(UWorld* World, std::shared_ptr<FEditorViewportClient>
 
     RenderGBuffer(World, ActiveViewport);
 
-    //RenderLightPass(World, ActiveViewport);
+    RenderLightPass(World, ActiveViewport);
 
     //RenderPostProcessPass(World, ActiveViewport);
 
@@ -132,13 +131,11 @@ void FRenderer::CreateShader()
         { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
     };
     ShaderManager.CreateVertexShader(
-        L"Shaders/FullScreenVertexShader.hlsl", "main", FullScreenVS, 
+        L"Shaders/FullScreenVertexShader.hlsl", "main", FullScreenVS,
         fullscreenLayout, ARRAYSIZE(fullscreenLayout), &FullScreenInputLayout, &FullScreenStride, sizeof(FVertexTexture));
 
-    ShaderManager.CreatePixelShader(L"Shaders/LightingPassPixelShader.hlsl", "main", LightingPassPS);
-
     // GBuffer Shader Setting
-    D3D11_INPUT_ELEMENT_DESC GBufferLayout[] ={
+    D3D11_INPUT_ELEMENT_DESC GBufferLayout[] = {
         {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
         {"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
         {"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
@@ -146,7 +143,7 @@ void FRenderer::CreateShader()
         {"MATERIAL_INDEX", 0, DXGI_FORMAT_R32_UINT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0}
     };
 
-    ShaderManager.CreateVertexShader(L"Shaders/MeshVertexShader.hlsl", "main", 
+    ShaderManager.CreateVertexShader(L"Shaders/MeshVertexShader.hlsl", "main",
         GBufferVS, GBufferLayout, ARRAYSIZE(GBufferLayout), &GBufferInputLayout, &Stride, sizeof(FVertexSimple));
 
     ShaderManager.CreatePixelShader(L"Shaders/MeshPixelShader.hlsl", "main", GBufferPS);
@@ -167,7 +164,7 @@ void FRenderer::CreateShader()
     ShaderManager.CreatePixelShader(
         L"Shaders/StaticMeshPixelShader.hlsl", "mainPS",
         PixelShader);
-    
+
     // 텍스쳐 셰이더 설정
     D3D11_INPUT_ELEMENT_DESC textureLayout[] = {
         {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
@@ -214,7 +211,7 @@ void FRenderer::PrepareShader() const
     if (ConstantBuffer)
     {
         Graphics->DeviceContext->VSSetConstantBuffers(0, 1, &ConstantBuffer);
-        Graphics->DeviceContext->PSSetConstantBuffers(1, 1, &MaterialConstantBuffer);
+        Graphics->DeviceContext->PSSetConstantBuffers(0, 1, &MaterialConstantBuffer);
 
         //Graphics->DeviceContext->PSSetConstantBuffers(0, 1, &ConstantBuffer);
         //Graphics->DeviceContext->PSSetConstantBuffers(1, 1, &MaterialConstantBuffer);
@@ -223,6 +220,19 @@ void FRenderer::PrepareShader() const
         //Graphics->DeviceContext->PSSetConstantBuffers(4, 1, &SubMeshConstantBuffer);
         //Graphics->DeviceContext->PSSetConstantBuffers(5, 1, &TextureConstantBuffer);
         //Graphics->DeviceContext->PSSetConstantBuffers(6, 1, &FireballConstantBuffer);
+    }
+}
+
+void FRenderer::PrepareLightShader() const
+{
+    Graphics->DeviceContext->VSSetShader(FullScreenVS, nullptr, 0);
+    Graphics->DeviceContext->PSSetShader(LightingPassPS, nullptr, 0);
+    Graphics->DeviceContext->IASetInputLayout(FullScreenInputLayout);
+
+    if (ConstantBuffer)
+    {
+        Graphics->DeviceContext->PSSetConstantBuffers(0, 1, &LPLightConstantBuffer);
+        //Graphics->DeviceContext->PSSetConstantBuffers(1, 1, &LPMaterialConstantBuffer);
     }
 }
 
@@ -322,40 +332,40 @@ void FRenderer::PrepareRender()
     {
         for (const auto iter : TObjectRange<USceneComponent>())
         {
-                UE_LOG(LogLevel::Display, "%d", GUObjectArray.GetObjectItemArrayUnsafe().Num());
-                if (UStaticMeshComponent* pStaticMeshComp = Cast<UStaticMeshComponent>(iter))
-                {
-                    if (!Cast<UGizmoBaseComponent>(iter))
-                        StaticMeshObjs.Add(pStaticMeshComp);
-                }
-                if (UGizmoBaseComponent* pGizmoComp = Cast<UGizmoBaseComponent>(iter))
-                {
-                    GizmoObjs.Add(pGizmoComp);
-                }
-                if (UBillboardComponent* pBillboardComp = Cast<UBillboardComponent>(iter))
-                {
-                    BillboardObjs.Add(pBillboardComp);
-                }
-                if (ULightComponentBase* pLightComp = Cast<ULightComponentBase>(iter))
-                {
-                    LightObjs.Add(pLightComp);
-                }
-                if (UFireballComponent* pFireComp = Cast<UFireballComponent>(iter))
-                {
-                    FireballObjs.Add(pFireComp);
-                }
-                if (UHeightFogComponent* HeightFog = Cast<UHeightFogComponent>(iter))
-                {
-                    fogData.FogDensity = HeightFog->GetFogDensity();
-                    fogData.FogHeightFalloff = HeightFog->GetFogHeightFalloff();
-                    fogData.StartDistance = HeightFog->GetStartDistance();
-                    fogData.FogCutoffDistance = HeightFog->GetFogCutoffDistance();
-                    fogData.FogMaxOpacity = HeightFog->GetFogMaxOpacity();
-                    fogData.FogInscatteringColor = HeightFog->GetColor();
-                    fogData.CameraPosition = GEngine->GetLevelEditor()->GetActiveViewportClient()->GetCameraLocation();
-                    fogData.FogHeight = HeightFog->GetWorldLocation().z;
-                    ConstantBufferUpdater.UpdateFogConstant(FogConstantBuffer, fogData);
-                } 
+            UE_LOG(LogLevel::Display, "%d", GUObjectArray.GetObjectItemArrayUnsafe().Num());
+            if (UStaticMeshComponent* pStaticMeshComp = Cast<UStaticMeshComponent>(iter))
+            {
+                if (!Cast<UGizmoBaseComponent>(iter))
+                    StaticMeshObjs.Add(pStaticMeshComp);
+            }
+            if (UGizmoBaseComponent* pGizmoComp = Cast<UGizmoBaseComponent>(iter))
+            {
+                GizmoObjs.Add(pGizmoComp);
+            }
+            if (UBillboardComponent* pBillboardComp = Cast<UBillboardComponent>(iter))
+            {
+                BillboardObjs.Add(pBillboardComp);
+            }
+            if (ULightComponentBase* pLightComp = Cast<ULightComponentBase>(iter))
+            {
+                LightObjs.Add(pLightComp);
+            }
+            if (UFireballComponent* pFireComp = Cast<UFireballComponent>(iter))
+            {
+                FireballObjs.Add(pFireComp);
+            }
+            if (UHeightFogComponent* HeightFog = Cast<UHeightFogComponent>(iter))
+            {
+                fogData.FogDensity = HeightFog->GetFogDensity();
+                fogData.FogHeightFalloff = HeightFog->GetFogHeightFalloff();
+                fogData.StartDistance = HeightFog->GetStartDistance();
+                fogData.FogCutoffDistance = HeightFog->GetFogCutoffDistance();
+                fogData.FogMaxOpacity = HeightFog->GetFogMaxOpacity();
+                fogData.FogInscatteringColor = HeightFog->GetColor();
+                fogData.CameraPosition = GEngine->GetLevelEditor()->GetActiveViewportClient()->GetCameraLocation();
+                fogData.FogHeight = HeightFog->GetWorldLocation().z;
+                ConstantBufferUpdater.UpdateFogConstant(FogConstantBuffer, fogData);
+            }
         }
     }
     else if (GEngine->GetWorld()->WorldType == EWorldType::PIE)
@@ -421,10 +431,13 @@ void FRenderer::RenderPrimitive(OBJ::FStaticMeshRenderData* renderData, TArray<F
     {
         int materialIndex = renderData->MaterialSubsets[subMeshIndex].MaterialIndex;
 
-        subMeshIndex == selectedSubMeshIndex ? ConstantBufferUpdater.UpdateSubMeshConstant(SubMeshConstantBuffer, true) : ConstantBufferUpdater.UpdateSubMeshConstant(SubMeshConstantBuffer, false);
+        subMeshIndex == selectedSubMeshIndex ?
+            ConstantBufferUpdater.UpdateSubMeshConstant(SubMeshConstantBuffer, true)
+            : ConstantBufferUpdater.UpdateSubMeshConstant(SubMeshConstantBuffer, false);
 
         overrideMaterial[materialIndex] != nullptr ?
-            UpdateMaterial(overrideMaterial[materialIndex]->GetMaterialInfo()) : UpdateMaterial(materials[materialIndex]->Material->GetMaterialInfo());
+            UpdateMaterial(overrideMaterial[materialIndex]->GetMaterialInfo())
+            : UpdateMaterial(materials[materialIndex]->Material->GetMaterialInfo());
 
         if (renderData->IndexBuffer)
         {
@@ -626,7 +639,7 @@ void FRenderer::RenderBillboards(UWorld* World, std::shared_ptr<FEditorViewportC
 
         if (UParticleSubUVComp* SubUVParticle = Cast<UParticleSubUVComp>(BillboardComp))
         {
-            
+
             const FQuadRenderData& QuadRenderData = UEditorEngine::resourceMgr.GetQuadRenderData();
             RenderTexturePrimitive(
                 SubUVParticle->vertexSubUVBuffer, SubUVParticle->numTextVertices,
@@ -643,7 +656,7 @@ void FRenderer::RenderBillboards(UWorld* World, std::shared_ptr<FEditorViewportC
         else
         {
             const FQuadRenderData& QuadRenderData = UEditorEngine::resourceMgr.GetQuadRenderData();
-            
+
             RenderTexturePrimitive(
                 QuadRenderData.VertexTextureBuffer, QuadRenderData.numVertices,
                 QuadRenderData.IndexTextureBuffer, QuadRenderData.numIndices, BillboardComp->Texture->TextureSRV, BillboardComp->Texture->SamplerState
@@ -706,8 +719,8 @@ void FRenderer::UpdateMaterial(const FObjMaterialInfo& MaterialInfo) const
     }
     else
     {
-        ID3D11ShaderResourceView* nullSRV[1] = {nullptr};
-        ID3D11SamplerState* nullSampler[1] = {nullptr};
+        ID3D11ShaderResourceView* nullSRV[1] = { nullptr };
+        ID3D11SamplerState* nullSampler[1] = { nullptr };
 
         Graphics->DeviceContext->PSSetShaderResources(0, 1, nullSRV);
         Graphics->DeviceContext->PSSetSamplers(0, 1, nullSampler);
@@ -727,10 +740,27 @@ void FRenderer::RenderGBuffer(UWorld* World, std::shared_ptr<FEditorViewportClie
 
 void FRenderer::RenderLightPass(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport)
 {
-    ConstantBufferUpdater.UpdateLightConstant(LightingBuffer);
+    PrepareLightShader();
 
-    // Directional Light
+    //ID3D11RenderTargetView* rtv = Graphics->FrameBufferRTV;
+    //Graphics->DeviceContext->OMSetRenderTargets(1, &rtv, Graphics->DepthStencilView);
+
+    FLightConstant GlobalLight = {
+        .Ambient = FVector4(1.0f, 1.0f, 1.0f, 1.0f),
+        .Diffuse = FVector4(1.0f, 1.0f, 1.0f, 1.0f),
+        .Specular = FVector4(1.0f, 1.0f, 1.0f, 1.0f),
+        .Emissive = FVector(1.0f, 1.0f, 1.0f),
+        .Padding1 = 0,
+        .Direction = FVector(1, -1, -1),
+        .Padding2 = 0,
+        .CameraPosition = ActiveViewport->GetCameraLocation(),
+        .Padding = 0
+    };
+
+    ConstantBufferUpdater.UpdateGlobalLightConstant(LPLightConstantBuffer, GlobalLight);
+
     RenderLight(World, ActiveViewport);
+    // Directional Light
 
     // Point Light
     if (FireballObjs.Num() > 0) {
@@ -755,51 +785,46 @@ void FRenderer::RenderLightPass(UWorld* World, std::shared_ptr<FEditorViewportCl
     // Spot Light
 
 #pragma region d
-    //// 1. RenderTarget: 조명 결과를 화면에 출력 (FrameBufferRTV 등)
-    //ID3D11RenderTargetView* rtv = Graphics->FrameBufferRTV;
-    //Graphics->DeviceContext->OMSetRenderTargets(1, &rtv, Graphics->DepthStencilView);
 
-    //// 2. Viewport 설정
-    //D3D11_VIEWPORT viewport = {};
-    //viewport.TopLeftX = 0;
-    //viewport.TopLeftY = 0;
-    //viewport.Width = static_cast<float>(Graphics->screenWidth);
-    //viewport.Height = static_cast<float>(Graphics->screenHeight);
-    //viewport.MinDepth = 0.0f;
-    //viewport.MaxDepth = 1.0f;
-    //Graphics->DeviceContext->RSSetViewports(1, &viewport);
+    // 1. RenderTarget: 조명 결과를 화면에 출력 (FrameBufferRTV 등)
+    ID3D11RenderTargetView* rtv = Graphics->FrameBufferRTV;
+    Graphics->DeviceContext->OMSetRenderTargets(1, &rtv, Graphics->DepthStencilView);
 
-    //// 3. 셰이더 설정 (조명 계산용 PS, FullScreen Quad용 VS)
-    //Graphics->DeviceContext->VSSetShader(FullScreenVS, nullptr, 0);
-    //Graphics->DeviceContext->PSSetShader(LightingPassPS, nullptr, 0);
-    //Graphics->DeviceContext->IASetInputLayout(FullScreenInputLayout);
-    //Graphics->DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    // 5. GBuffer에서 SRV 연결 (Normal, Albedo, Position)
+    ID3D11ShaderResourceView* SRVs[] = {
+        Graphics->GBufferSRV_Normal,
+        Graphics->GBufferSRV_Albedo,
+        Graphics->GBufferSRV_Ambient,
+        Graphics->GBufferSRV_Position
+    };
+    Graphics->DeviceContext->PSSetShaderResources(0, 4, SRVs);
 
-    //// 4. ConstantBuffer 바인딩
-    //Graphics->DeviceContext->PSSetConstantBuffers(0, 1, &LPLightConstantBuffer);        // LightBuffer
-    //Graphics->DeviceContext->PSSetConstantBuffers(1, 1, &LPMaterialConstantBuffer); // MaterialBuffer
+    ID3D11SamplerState* SamplerState;
+    D3D11_SAMPLER_DESC samplerDesc = {};
+    samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    samplerDesc.MinLOD = 0;
+    samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
 
-    //// 5. GBuffer에서 SRV 연결 (Normal, Albedo, Position)
-    //ID3D11ShaderResourceView* SRVs[] = {
-    //    Graphics->GBufferSRV_Normal,
-    //    Graphics->GBufferSRV_Albedo,
-    //    Graphics->GBufferSRV_Position
-    //};
-    //Graphics->DeviceContext->PSSetShaderResources(0, 3, SRVs);
+    Graphics->Device->CreateSamplerState(&samplerDesc, &SamplerState);
+    Graphics->DeviceContext->PSSetSamplers(0, 1, &SamplerState);
 
-    //// 6. Fullscreen Quad 렌더링
-    //const FQuadRenderData& quad = UEditorEngine::resourceMgr.GetQuadRenderData();
-    //UINT stride = FullScreenStride;
-    //UINT offset = 0;
+    // 6. Fullscreen Quad 렌더링
+    const FQuadRenderData& quad = UEditorEngine::resourceMgr.GetQuadRenderData();
+    UINT stride = FullScreenStride;
+    UINT offset = 0;
 
-    //Graphics->DeviceContext->IASetVertexBuffers(0, 1, &quad.VertexTextureBuffer, &stride, &offset);
-    //Graphics->DeviceContext->IASetIndexBuffer(quad.IndexTextureBuffer, DXGI_FORMAT_R32_UINT, 0);
+    Graphics->DeviceContext->IASetVertexBuffers(0, 1, &quad.VertexTextureBuffer, &stride, &offset);
+    Graphics->DeviceContext->IASetIndexBuffer(quad.IndexTextureBuffer, DXGI_FORMAT_R32_UINT, 0);
 
-    //Graphics->DeviceContext->DrawIndexed(quad.numIndices, 0, 0);
+    Graphics->DeviceContext->DrawIndexed(quad.numIndices, 0, 0);
 
-    //// 7. SRV 언바인딩 (다음 Pass에서 충돌 방지)
-    //ID3D11ShaderResourceView* nullSRVs[3] = { nullptr, nullptr, nullptr };
-    //Graphics->DeviceContext->PSSetShaderResources(0, 3, nullSRVs);
+    // 7. SRV 언바인딩 (다음 Pass에서 충돌 방지)
+    ID3D11ShaderResourceView* nullSRVs[4] = { nullptr, nullptr, nullptr, nullptr };
+    Graphics->DeviceContext->PSSetShaderResources(0, 4, nullSRVs);
 #pragma endregion
 }
 
@@ -807,7 +832,7 @@ void FRenderer::RenderPostProcessPass(UWorld* World, std::shared_ptr<FEditorView
 {
     // Fog
     if (!PostProcessColorSRV || !SceneDepthSRV || !PostProcessSampler || !DepthSampler || !FogConstantBuffer)
-        return; 
+        return;
 
     // 1. Topology 설정
     Graphics->DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
@@ -876,7 +901,7 @@ ID3D11ShaderResourceView* FRenderer::CreateOBBSRV(ID3D11Buffer* pBoundingBoxBuff
 ID3D11ShaderResourceView* FRenderer::CreateConeSRV(ID3D11Buffer* pConeBuffer, UINT numCones)
 {
     D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
-    srvDesc.Format = DXGI_FORMAT_UNKNOWN; 
+    srvDesc.Format = DXGI_FORMAT_UNKNOWN;
     srvDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
     srvDesc.Buffer.ElementOffset = 0;
     srvDesc.Buffer.NumElements = numCones;
@@ -977,7 +1002,7 @@ void FRenderer::CreateDummyPostProcessResources()
 
     Graphics->Device->CreateTexture2D(&colorDesc, &colorInitData, &DummyColorTexture);
     Graphics->Device->CreateShaderResourceView(DummyColorTexture, nullptr, &DummyColorSRV);
-    
+
     // ----------- SRV 연결 (PostProcessPass에서 사용할 것들) -----------
     PostProcessColorSRV = DummyColorSRV;
 }

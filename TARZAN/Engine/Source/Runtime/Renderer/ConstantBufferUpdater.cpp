@@ -64,6 +64,23 @@ void FConstantBufferUpdater::UpdateLightConstant(ID3D11Buffer* LightingBuffer) c
     DeviceContext->Unmap(LightingBuffer, 0);
 }
 
+void FConstantBufferUpdater::UpdateGlobalLightConstant(ID3D11Buffer* GlobalLightBuffer, FLightConstant GlobalLight) const
+{
+    if (!GlobalLightBuffer) return;
+    D3D11_MAPPED_SUBRESOURCE mappedResource;
+    DeviceContext->Map(GlobalLightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+    {
+        FLightConstant* constants = static_cast<FLightConstant*>(mappedResource.pData);
+        constants->Ambient = GlobalLight.Ambient;
+        constants->Diffuse = GlobalLight.Diffuse;
+        constants->Specular = GlobalLight.Specular;
+        constants->Emissive = GlobalLight.Emissive;
+        constants->Direction = GlobalLight.Direction;
+        constants->CameraPosition = GlobalLight.CameraPosition;
+    }
+    DeviceContext->Unmap(GlobalLightBuffer, 0);
+}
+
 
 void FConstantBufferUpdater::UpdateLitUnlitConstant(ID3D11Buffer* FlagBuffer, int isLit) const
 {

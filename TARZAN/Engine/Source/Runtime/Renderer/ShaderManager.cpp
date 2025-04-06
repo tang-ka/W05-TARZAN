@@ -47,8 +47,11 @@ bool FShaderManager::CreatePixelShader(
     const FString& psEntry,
     ID3D11PixelShader*& outPS)
 {
+    DWORD shaderFlags = D3DCOMPILE_ENABLE_STRICTNESS;
+    shaderFlags |= D3DCOMPILE_DEBUG;
+    shaderFlags |= D3DCOMPILE_SKIP_OPTIMIZATION;
     ID3DBlob* psBlob = nullptr;
-    HRESULT hr = D3DCompileFromFile(psPath.c_str(), nullptr, nullptr, *psEntry, "ps_5_0", 0, 0, &psBlob, nullptr);
+    HRESULT hr = D3DCompileFromFile(psPath.c_str(), nullptr, nullptr, *psEntry, "ps_5_0", shaderFlags, 0, &psBlob, nullptr);
     if (FAILED(hr)) return false;
 
     hr = Device->CreatePixelShader(psBlob->GetBufferPointer(), psBlob->GetBufferSize(), nullptr, &outPS);

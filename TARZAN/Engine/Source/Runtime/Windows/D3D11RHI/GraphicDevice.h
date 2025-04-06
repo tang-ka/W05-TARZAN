@@ -31,17 +31,21 @@ public:
     // GBuffer(Normal, Albedo)
     ID3D11Texture2D* GBufferTexture_Normal = nullptr;
     ID3D11Texture2D* GBufferTexture_Albedo = nullptr;
+    ID3D11Texture2D* GBufferTexture_Ambient = nullptr;
     ID3D11Texture2D* GBufferTexture_Position = nullptr;
+
 
     ID3D11RenderTargetView* GBufferRTV_Normal = nullptr;
     ID3D11RenderTargetView* GBufferRTV_Albedo = nullptr;
+    ID3D11RenderTargetView* GBufferRTV_Ambient = nullptr;
     ID3D11RenderTargetView* GBufferRTV_Position = nullptr;
 
     ID3D11ShaderResourceView* GBufferSRV_Normal = nullptr;
     ID3D11ShaderResourceView* GBufferSRV_Albedo = nullptr;
+    ID3D11ShaderResourceView* GBufferSRV_Ambient = nullptr;
     ID3D11ShaderResourceView* GBufferSRV_Position = nullptr;
 
-    ID3D11RenderTargetView* gbuffers[3];
+    ID3D11RenderTargetView* gbuffers[4];
     // - 
     
     UINT screenWidth = 0;

@@ -5,7 +5,7 @@
 
 void FGraphicsDevice::Initialize(HWND hWindow) {
     CreateDeviceAndSwapChain(hWindow);
-    //CreateFrameBuffer();
+    CreateFrameBuffer();
     CreateGBuffer();
     CreateDepthStencilBuffer(hWindow);
     CreateDepthStencilState();
@@ -161,128 +161,55 @@ void FGraphicsDevice::CreateRasterizerState()
     Device->CreateRasterizerState(&rasterizerdesc, &RasterizerStateWIREFRAME);
 }
 
-//void FGraphicsDevice::CreateGBuffer()
-//{
-//    SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&GBufferRTV_Normal);
-//
-//    D3D11_TEXTURE2D_DESC GBufferTexDesc = {};
-//    {
-//        GBufferTexDesc.Width = screenWidth;
-//        GBufferTexDesc.Height = screenHeight;
-//        GBufferTexDesc.MipLevels = 1;
-//        GBufferTexDesc.ArraySize = 1;
-//        GBufferTexDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
-//        GBufferTexDesc.SampleDesc.Count = 1;
-//        GBufferTexDesc.Usage = D3D11_USAGE_DEFAULT;
-//        GBufferTexDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
-//    }
-//    
-//    D3D11_RENDER_TARGET_VIEW_DESC GBufferRTVDesc = {};
-//    {
-//        GBufferRTVDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;      // 색상 포맷
-//        GBufferRTVDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D; // 2D 텍스처
-//    }
-//
-//    Device->CreateTexture2D(&GBufferTexDesc, nullptr, &GBufferTexture_Normal);
-//    Device->CreateTexture2D(&GBufferTexDesc, nullptr, &GBufferTexture_Albedo);
-//    Device->CreateTexture2D(&GBufferTexDesc, nullptr, &GBufferTexture_Position);
-//
-//    Device->CreateRenderTargetView(GBufferTexture_Normal, &GBufferRTVDesc, &GBufferRTV_Normal);
-//    Device->CreateRenderTargetView(GBufferTexture_Albedo, &GBufferRTVDesc, &GBufferRTV_Albedo);
-//    Device->CreateRenderTargetView(GBufferTexture_Position, &GBufferRTVDesc, &GBufferRTV_Position);
-//
-//    Device->CreateShaderResourceView(GBufferTexture_Normal, nullptr, &GBufferSRV_Normal);
-//    Device->CreateShaderResourceView(GBufferTexture_Albedo, nullptr, &GBufferSRV_Albedo);
-//    Device->CreateShaderResourceView(GBufferTexture_Position, nullptr, &GBufferSRV_Position);
-//
-//    gbuffers[0] = GBufferRTV_Normal;
-//    gbuffers[1] = GBufferRTV_Albedo;
-//    gbuffers[2] = GBufferRTV_Position;
-//}
-
 void FGraphicsDevice::CreateGBuffer()
 {
-    SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&GBufferTexture_Normal);
+    //SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&GBufferTexture_Albedo);
 
     D3D11_TEXTURE2D_DESC GBufferTexDesc = {};
-    GBufferTexDesc.Width = screenWidth;
-    GBufferTexDesc.Height = screenHeight;
-    GBufferTexDesc.MipLevels = 1;
-    GBufferTexDesc.ArraySize = 1;
-    GBufferTexDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
-    GBufferTexDesc.SampleDesc.Count = 1;
-    GBufferTexDesc.Usage = D3D11_USAGE_DEFAULT;
-    GBufferTexDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
-
+    {
+        GBufferTexDesc.Width = screenWidth;
+        GBufferTexDesc.Height = screenHeight;
+        GBufferTexDesc.MipLevels = 1;
+        GBufferTexDesc.ArraySize = 1;
+        GBufferTexDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+        GBufferTexDesc.SampleDesc.Count = 1;
+        GBufferTexDesc.Usage = D3D11_USAGE_DEFAULT;
+        GBufferTexDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+    }
+    
     D3D11_RENDER_TARGET_VIEW_DESC GBufferRTVDesc = {};
-    GBufferRTVDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
-    GBufferRTVDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
-
-    HRESULT hr = 0;
-    // 텍스처 생성
-   // hr = Device->CreateTexture2D(&GBufferTexDesc, nullptr, &GBufferTexture_Normal);
-   /* if (FAILED(hr))
     {
-        MessageBox(nullptr, L"GBufferTexture_Normal 생성 실패!", L"Error", MB_ICONERROR | MB_OK);
-        return;
-    }*/
-    hr = Device->CreateTexture2D(&GBufferTexDesc, nullptr, &GBufferTexture_Albedo);
-    if (FAILED(hr))
-    {
-        MessageBox(nullptr, L"GBufferTexture_Albedo 생성 실패!", L"Error", MB_ICONERROR | MB_OK);
-        return;
-    }
-    hr = Device->CreateTexture2D(&GBufferTexDesc, nullptr, &GBufferTexture_Position);
-    if (FAILED(hr))
-    {
-        MessageBox(nullptr, L"GBufferTexture_Position 생성 실패!", L"Error", MB_ICONERROR | MB_OK);
-        return;
+        GBufferRTVDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;      // 색상 포맷
+        GBufferRTVDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D; // 2D 텍스처
     }
 
-    // 렌더 타겟 뷰 생성
-    hr = Device->CreateRenderTargetView(GBufferTexture_Normal, &GBufferRTVDesc, &GBufferRTV_Normal);
-    if (FAILED(hr))
+    D3D11_SHADER_RESOURCE_VIEW_DESC GBufferSRVDesc = {};
     {
-        MessageBox(nullptr, L"GBufferRTV_Normal 생성 실패!", L"Error", MB_ICONERROR | MB_OK);
-        return;
-    }
-    hr = Device->CreateRenderTargetView(GBufferTexture_Albedo, &GBufferRTVDesc, &GBufferRTV_Albedo);
-    if (FAILED(hr))
-    {
-        MessageBox(nullptr, L"GBufferRTV_Albedo 생성 실패!", L"Error", MB_ICONERROR | MB_OK);
-        return;
-    }
-    hr = Device->CreateRenderTargetView(GBufferTexture_Position, &GBufferRTVDesc, &GBufferRTV_Position);
-    if (FAILED(hr))
-    {
-        MessageBox(nullptr, L"GBufferRTV_Position 생성 실패!", L"Error", MB_ICONERROR | MB_OK);
-        return;
+        GBufferSRVDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+        GBufferSRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+        GBufferSRVDesc.Texture2D.MipLevels = 1;
+        GBufferSRVDesc.Texture2D.MostDetailedMip = 0;
     }
 
-    // 셰이더 리소스 뷰 생성
-    //hr = Device->CreateShaderResourceView(GBufferTexture_Normal, nullptr, &GBufferSRV_Normal);
-    //if (FAILED(hr))
-    //{
-    //    MessageBox(nullptr, L"GBufferSRV_Normal 생성 실패!", L"Error", MB_ICONERROR | MB_OK);
-    //    return;
-    //}
-    hr = Device->CreateShaderResourceView(GBufferTexture_Albedo, nullptr, &GBufferSRV_Albedo);
-    if (FAILED(hr))
-    {
-        MessageBox(nullptr, L"GBufferSRV_Albedo 생성 실패!", L"Error", MB_ICONERROR | MB_OK);
-        return;
-    }
-    hr = Device->CreateShaderResourceView(GBufferTexture_Position, nullptr, &GBufferSRV_Position);
-    if (FAILED(hr))
-    {
-        MessageBox(nullptr, L"GBufferSRV_Position 생성 실패!", L"Error", MB_ICONERROR | MB_OK);
-        return;
-    }
+    Device->CreateTexture2D(&GBufferTexDesc, nullptr, &GBufferTexture_Normal);
+    Device->CreateTexture2D(&GBufferTexDesc, nullptr, &GBufferTexture_Albedo);
+    Device->CreateTexture2D(&GBufferTexDesc, nullptr, &GBufferTexture_Ambient);
+    Device->CreateTexture2D(&GBufferTexDesc, nullptr, &GBufferTexture_Position);
 
-    // gbuffers 배열에 RTV들을 저장 (OMSetRenderTargets 시 사용)
+    Device->CreateRenderTargetView(GBufferTexture_Normal, &GBufferRTVDesc, &GBufferRTV_Normal);
+    Device->CreateRenderTargetView(GBufferTexture_Albedo, &GBufferRTVDesc, &GBufferRTV_Albedo);
+    Device->CreateRenderTargetView(GBufferTexture_Ambient, &GBufferRTVDesc, &GBufferRTV_Ambient);
+    Device->CreateRenderTargetView(GBufferTexture_Position, &GBufferRTVDesc, &GBufferRTV_Position);
+
+    Device->CreateShaderResourceView(GBufferTexture_Normal, &GBufferSRVDesc, &GBufferSRV_Normal);
+    Device->CreateShaderResourceView(GBufferTexture_Albedo, &GBufferSRVDesc, &GBufferSRV_Albedo);
+    Device->CreateShaderResourceView(GBufferTexture_Ambient, &GBufferSRVDesc, &GBufferSRV_Ambient);
+    Device->CreateShaderResourceView(GBufferTexture_Position, &GBufferSRVDesc, &GBufferSRV_Position);
+
     gbuffers[0] = GBufferRTV_Normal;
     gbuffers[1] = GBufferRTV_Albedo;
-    gbuffers[2] = GBufferRTV_Position;
+    gbuffers[2] = GBufferRTV_Ambient;
+    gbuffers[3] = GBufferRTV_Position;
 }
 
 void FGraphicsDevice::CreateFrameBuffer()
@@ -292,7 +219,7 @@ void FGraphicsDevice::CreateFrameBuffer()
 
     // 렌더 타겟 뷰 생성
     D3D11_RENDER_TARGET_VIEW_DESC framebufferRTVdesc = {};
-    framebufferRTVdesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB; // 색상 포맷
+    framebufferRTVdesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT; // 색상 포맷
     framebufferRTVdesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D; // 2D 텍스처
 
     Device->CreateRenderTargetView(FrameBuffer, &framebufferRTVdesc, &FrameBufferRTV);
@@ -302,7 +229,7 @@ void FGraphicsDevice::CreateFrameBuffer()
     textureDesc.Height = screenHeight;
     textureDesc.MipLevels = 1;
     textureDesc.ArraySize = 1;
-    textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    textureDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
     textureDesc.SampleDesc.Count = 1;
     textureDesc.Usage = D3D11_USAGE_DEFAULT;
     textureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
@@ -310,7 +237,7 @@ void FGraphicsDevice::CreateFrameBuffer()
     Device->CreateTexture2D(&textureDesc, nullptr, &UUIDFrameBuffer);
 
     D3D11_RENDER_TARGET_VIEW_DESC UUIDFrameBufferRTVDesc = {};
-    UUIDFrameBufferRTVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;      // 색상 포맷
+    UUIDFrameBufferRTVDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;      // 색상 포맷
     UUIDFrameBufferRTVDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D; // 2D 텍스처
 
     Device->CreateRenderTargetView(UUIDFrameBuffer, &UUIDFrameBufferRTVDesc, &UUIDFrameBufferRTV);
@@ -442,8 +369,11 @@ void FGraphicsDevice::SwapBuffer() {
 
 void FGraphicsDevice::Prepare()
 {
+    DeviceContext->ClearRenderTargetView(FrameBufferRTV, ClearColor); // 렌더 타겟 뷰에 저장된 이전 프레임 데이터를 삭제
+    DeviceContext->ClearRenderTargetView(UUIDFrameBufferRTV, ClearColor); // 렌더 타겟 뷰에 저장된 이전 프레임 데이터를 삭제
     DeviceContext->ClearRenderTargetView(GBufferRTV_Normal, ClearColor); // 렌더 타겟 뷰에 저장된 이전 프레임 데이터를 삭제
     DeviceContext->ClearRenderTargetView(GBufferRTV_Albedo, ClearColor); // 렌더 타겟 뷰에 저장된 이전 프레임 데이터를 삭제
+    DeviceContext->ClearRenderTargetView(GBufferRTV_Ambient, ClearColor); // 렌더 타겟 뷰에 저장된 이전 프레임 데이터를 삭제
     DeviceContext->ClearRenderTargetView(GBufferRTV_Position, ClearColor); // 렌더 타겟 뷰에 저장된 이전 프레임 데이터를 삭제
     DeviceContext->ClearDepthStencilView(DepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0); // 깊이 버퍼 초기화 추가
 
@@ -455,7 +385,7 @@ void FGraphicsDevice::Prepare()
     DeviceContext->OMSetDepthStencilState(DepthStencilState, 0);
 
     //DeviceContext->OMSetRenderTargets(2, RTVs, DepthStencilView); // 렌더 타겟 설정(백버퍼를 가르킴)
-    DeviceContext->OMSetRenderTargets(3, gbuffers, DepthStencilView);
+    DeviceContext->OMSetRenderTargets(4, gbuffers, DepthStencilView);
 
     DeviceContext->OMSetBlendState(nullptr, nullptr, 0xffffffff); // 블렌뎅 상태 설정, 기본블렌딩 상태임
 }
@@ -479,6 +409,7 @@ void FGraphicsDevice::Prepare(D3D11_VIEWPORT* viewport)
 void FGraphicsDevice::OnResize(HWND hWindow)
 {
     // 먼저 기존 GBuffer 관련 리소스를 해제합니다.
+    ReleaseFrameBuffer();
     ReleaseGBuffer();
 
     if (DepthStencilView)
@@ -501,6 +432,7 @@ void FGraphicsDevice::OnResize(HWND hWindow)
     screenHeight = SwapchainDesc.BufferDesc.Height;
 
     // GBuffer와 DepthStencilBuffer를 재생성합니다.
+    CreateFrameBuffer();
     CreateGBuffer();
     CreateDepthStencilBuffer(hWindow);
 }

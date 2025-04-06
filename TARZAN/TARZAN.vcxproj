@@ -199,13 +199,15 @@
       <RuntimeLibrary>MultiThreadedDebugDll</RuntimeLibrary>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <Optimization>Disabled</Optimization>
-<SupportJustMyCode>false</SupportJustMyCode>
-<AssemblerOutput>NoListing</AssemblerOutput>
-<AssemblerListingLocation></AssemblerListingLocation>
-<UndefineAllPreprocessorDefinitions>false</UndefineAllPreprocessorDefinitions>
-<BrowseInformation>false</BrowseInformation>
-<BrowseInformationFile></BrowseInformationFile>
-<CompileAs>Default</CompileAs>
+      <SupportJustMyCode>false</SupportJustMyCode>
+      <AssemblerOutput>NoListing</AssemblerOutput>
+      <AssemblerListingLocation>
+      </AssemblerListingLocation>
+      <UndefineAllPreprocessorDefinitions>false</UndefineAllPreprocessorDefinitions>
+      <BrowseInformation>false</BrowseInformation>
+      <BrowseInformationFile>
+      </BrowseInformationFile>
+      <CompileAs>Default</CompileAs>
       <ConformanceMode>true</ConformanceMode>
       <DiagnosticsFormat>Column</DiagnosticsFormat>
       <DisableLanguageExtensions>false</DisableLanguageExtensions>
@@ -467,23 +469,17 @@
     <ClInclude Include="UHeightFogComponent.h" />
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="Shaders\FullScreenVertexShader.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
-</FxCompile>
-<FxCompile Include="Shaders\PostProcessPixelShader.hlsl">
-  <ObjectFileOutput>$(OutDir)%(Filename).cso</ObjectFileOutput>
-  <TrackerLogDirectory>$(IntDir)TARZAN.tlog\</TrackerLogDirectory>
-  <EntryPointName>main</EntryPointName>
-  <SuppressStartupBanner>true</SuppressStartupBanner>
-  <ShaderModel>4.0_level_9_3</ShaderModel>
-  <MinimalRebuildFromTracking>true</MinimalRebuildFromTracking>
-  <DisableOptimizations>true</DisableOptimizations>
-  <EnableDebuggingInformation>true</EnableDebuggingInformation>
-  <ExcludedFromBuild>true</ExcludedFromBuild>
-</FxCompile>
+    <FxCompile Include="Shaders\PostProcessPixelShader.hlsl">
+      <ObjectFileOutput>$(OutDir)%(Filename).cso</ObjectFileOutput>
+      <TrackerLogDirectory>$(IntDir)TARZAN.tlog\</TrackerLogDirectory>
+      <EntryPointName>main</EntryPointName>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <ShaderModel>4.0_level_9_3</ShaderModel>
+      <MinimalRebuildFromTracking>true</MinimalRebuildFromTracking>
+      <DisableOptimizations>true</DisableOptimizations>
+      <EnableDebuggingInformation>true</EnableDebuggingInformation>
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </FxCompile>
     <FxCompile Include="Shaders\StaticMeshPixelShader.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>

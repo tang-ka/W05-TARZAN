@@ -516,7 +516,8 @@
     <FxCompile Include="Shaders\VertexTextureShader.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="Shaders\FullScreenVertexShader.hlsl" />
+    <FxCompile Include="Shaders\PostProcessPixelShader.hlsl" />
+    <FxCompile Include="Shaders\StaticMeshPixelShader.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="TARZAN.natvis" />
