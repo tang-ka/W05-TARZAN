@@ -262,7 +262,7 @@ struct FCone
 
     FVector ConeBaseCenter; // 원뿔 밑면 중심
     float ConeHeight; // 원뿔 높이 (Apex와 BaseCenter 간 차이)
-    FVector4 Color;
+    FLinearColor Color;
 
     int ConeSegmentCount; // 원뿔 밑면 분할 수
     float pad[3];
@@ -377,4 +377,18 @@ struct FFireballArrayInfo
     FFireballConstant FireballConstants[Max_Fireball];
     int FireballCount = 0;
     FVector padding;
+};
+
+
+struct FFogConstants    
+{
+    float FogDensity = 0.5f;
+    float FogHeightFalloff = 0.5f;
+    float StartDistance = 0.0f;
+    float FogCutoffDistance = 1000.0f;
+    float FogMaxOpacity = 1.0f;
+    FVector padding;
+    FLinearColor FogInscatteringColor = FLinearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    FVector CameraPosition;
+    float FogHeight;
 };

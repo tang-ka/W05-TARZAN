@@ -42,7 +42,7 @@ cbuffer LightingConstants : register(b2)
 cbuffer FlagConstants : register(b3)
 {
     bool IsLit;
-    float3 flagPad0;
+    float2 flagPad0;
 }
 
 cbuffer SubMeshConstants : register(b4)
@@ -75,6 +75,19 @@ cbuffer FireballBuffer : register(b6)
     float3 padding;
 }
 
+cbuffer FogConstants : register(b7)
+{
+    float FogDensity;
+    float FogHeightFalloff;
+    float FogStartDistance;
+    float FogCutoffDistance;
+    float FogMaxOpacity;
+    float3 FogPad0;
+    float4 FogColor;
+    float3 CameraPosition; 
+    float FogHeight;
+};
+
 float3 ComputeFireballLighting(float4 worldPos, float3 normal)
 {
     float3 N = normalize(normal);
@@ -100,6 +113,31 @@ float3 ComputeFireballLighting(float4 worldPos, float3 normal)
     }
     return totalLighting;
 }
+
+float ComputeFogFactor(float3 worldPos)
+{
+    float dist = distance(CameraPosition, worldPos);
+
+    // 거리 기반
+    float fogRange = FogCutoffDistance - FogStartDistance;
+    float disFactor = saturate((dist - FogStartDistance) / fogRange); // 0~1  50일떄 0
+
+    // 높이 기반 (지수 감쇠)
+    float heightDiff = worldPos.z - FogHeight; 
+    heightDiff = max(heightDiff, 0.0); 
+    float heightFactor = saturate(exp(-heightDiff * FogHeightFalloff)); // 0~1
+    
+    float fogFactor =  heightFactor * disFactor;
+
+    // 밀도 곱
+    fogFactor *= FogDensity;
+
+    // 최대 불투명도 제한
+   fogFactor = min(fogFactor, FogMaxOpacity);
+
+    return fogFactor;
+}
+
 
 
 struct PS_INPUT
@@ -157,8 +195,12 @@ PS_OUTPUT mainPS(PS_INPUT input)
     
     float3 texColor = Textures.Sample(Sampler, input.texcoord + UVOffset);
     float3 color;
+    bool isEmptyPixel = false;
     if (texColor.g == 0) // TODO: boolean으로 변경
+    {
         color = saturate(Material.DiffuseColor);
+        isEmptyPixel = true;
+    }
     else
     {
         color = texColor + Material.DiffuseColor;
@@ -171,8 +213,8 @@ PS_OUTPUT mainPS(PS_INPUT input)
             color = float3(1, 1, 1);
     }
     
-    // 발광 색상 추가
-
+    float fogFactor = ComputeFogFactor(input.Worldposition.xyz);
+  
     if (IsLit == 1)
     {
         if (input.normalFlag > 0.5)
@@ -195,23 +237,26 @@ PS_OUTPUT mainPS(PS_INPUT input)
         float3 fireballLighting = ComputeFireballLighting(input.Worldposition, input.normal);
         color += fireballLighting;
         color += Material.EmissiveColor;
+        color = lerp(FogColor.rgb, color, 1.0 - fogFactor);
+        output.color = float4(color, Material.TransparencyScalar);
+        return output;
+    }
+    else // unlit 상태일 때
+    {
+        if (input.normalFlag < 0.5)
+        {
+            color = lerp(FogColor.rgb, color, 1.0 - fogFactor);
+
+            output.color = float4(color, Material.TransparencyScalar);
+            return output;
+        }
+
+     
+        color = lerp(FogColor.rgb, color, 1.0 - fogFactor);
+
         output.color = float4(color, Material.TransparencyScalar);
         //output.color = float4(input.normal.xyz, 1);
         return output;
     }
 
-    else // unlit 상태일 때 PaperTexture 효과 적용
-    {
-        if (input.normalFlag < 0.5)
-        {
-            output.color = float4(color, Material.TransparencyScalar);
-            return output;
-        }
-        
-        output.color = float4(color, 1);
-        // 투명도 적용
-        output.color.a = Material.TransparencyScalar;
-            
-        return output;
-    }
 }

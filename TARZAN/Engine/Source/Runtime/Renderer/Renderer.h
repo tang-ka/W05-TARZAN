@@ -52,6 +52,7 @@ public:
 
     ID3D11VertexShader* VertexShader = nullptr;
     ID3D11PixelShader* PixelShader = nullptr;
+    ID3D11PixelShader* PostProcessPixelShader = nullptr;
     ID3D11InputLayout* InputLayout = nullptr;
 
     ID3D11Buffer* ConstantBuffer = nullptr;
@@ -63,8 +64,10 @@ public:
     ID3D11Buffer* FireballConstantBuffer = nullptr;
     ID3D11Buffer* LPLightConstantBuffer = nullptr;
     ID3D11Buffer* LPMaterialConstantBuffer = nullptr;
+    ID3D11Buffer* FogConstantBuffer = nullptr;
 
     FLighting lightingData;
+    FFogConstants fogData;
 
     uint32 FullScreenStride;
 
@@ -194,5 +197,17 @@ private:
 private:
     ID3D11DeviceContext* Context;
     TArray<RenderPass*> Passes;
+
+private:
+    // PostProcess용 Dummy Data (Todo : 추후 LightPass와 연결)
+    ID3D11Texture2D* DummyColorTexture = nullptr;
+    ID3D11ShaderResourceView* DummyColorSRV = nullptr;
+    void CreateDummyPostProcessResources();
+    
+    ID3D11ShaderResourceView* PostProcessColorSRV = nullptr; // t0
+    ID3D11ShaderResourceView* SceneDepthSRV = nullptr;       // t1
+
+    ID3D11SamplerState* PostProcessSampler = nullptr; // s0
+    ID3D11SamplerState* DepthSampler = nullptr;       // s1
 };
 
