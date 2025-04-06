@@ -286,8 +286,9 @@ void FRenderer::PrepareRender()
                     fogData.StartDistance = HeightFog->GetStartDistance();
                     fogData.FogCutoffDistance = HeightFog->GetFogCutoffDistance();
                     fogData.FogMaxOpacity = HeightFog->GetFogMaxOpacity();
-                    fogData.FogInscatteringColor = HeightFog->GetFogInscatteringColor();
+                    fogData.FogInscatteringColor = HeightFog->GetColor();
                     fogData.CameraPosition = GEngine->GetLevelEditor()->GetActiveViewportClient()->GetCameraLocation();
+                    fogData.FogHeight = HeightFog->GetWorldLocation().z;
                     ConstantBufferUpdater.UpdateFogConstant(FogConstantBuffer, fogData);
                 } 
         }

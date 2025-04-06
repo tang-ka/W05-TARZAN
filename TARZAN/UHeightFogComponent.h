@@ -16,14 +16,14 @@ public:
     void SetStartDistance(float distance) { StartDistance = distance; }
     void SetFogCutoffDistance(float distance) { FogCutoffDistance = distance; }
     void SetFogMaxOpacity(float opacity) { FogMaxOpacity = opacity; }
-    void SetFogInscatteringColor(const FLinearColor& color) { FogInscatteringColor = color; }
+    void SetColor(const FLinearColor& color) { FogInscatteringColor = color; }
     // Getters
     float GetFogDensity() const { return FogDensity; }
     float GetFogHeightFalloff() const { return FogHeightFalloff; }
     float GetStartDistance() const { return StartDistance; }
     float GetFogCutoffDistance() const { return FogCutoffDistance; }
     float GetFogMaxOpacity() const { return FogMaxOpacity; }
-    FLinearColor GetFogInscatteringColor() const { return FogInscatteringColor; }
+    FLinearColor GetColor() const { return FogInscatteringColor; }
 
 
 private:

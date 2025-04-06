@@ -85,7 +85,7 @@ cbuffer FogConstants : register(b7)
     float3 FogPad0;
     float4 FogColor;
     float3 CameraPosition; 
-    float FogPad1;
+    float FogHeight;
 };
 
 
@@ -119,21 +119,26 @@ float ComputeFogFactor(float3 worldPos)
 {
     float dist = distance(CameraPosition, worldPos);
 
-    // 거리 기반 
+    // 거리 기반
     float fogRange = FogCutoffDistance - FogStartDistance;
-    float fogFactor = saturate((dist - FogStartDistance) / fogRange); //clamped between 0 and 1
+    float disFactor = saturate((dist - FogStartDistance) / fogRange); // 0~1  50일떄 0
 
- 
-    //float heightFactor = exp(-FogHeightFalloff * (worldPos.z));
+    // 높이 기반 (지수 감쇠)
+    float heightDiff = worldPos.z - FogHeight; 
+    heightDiff = max(heightDiff, 0.0); 
+    float heightFactor = saturate(exp(-heightDiff * FogHeightFalloff)); // 0~1
+    
+    float fogFactor =  heightFactor * disFactor;
 
-
-    //fogFactor *= FogDensity * heightFactor;
+    // 밀도 곱
+    fogFactor *= FogDensity;
 
     // 최대 불투명도 제한
-    fogFactor = min(fogFactor, FogMaxOpacity);
+   fogFactor = min(fogFactor, FogMaxOpacity);
 
     return fogFactor;
 }
+
 
 
 struct PS_INPUT

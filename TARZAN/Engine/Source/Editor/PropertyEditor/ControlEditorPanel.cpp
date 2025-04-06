@@ -15,7 +15,10 @@
 #include "UnrealEd/EditorViewportClient.h"
 #include "PropertyEditor/ShowFlags.h"
 #include "UnrealEd/SceneMgr.h"
+#include "UHeightFogComponent.h"
+#include "FireballComp.h"
 #include "UEditorStateManager.h"
+
 
 void ControlEditorPanel::Render()
 {
@@ -260,7 +263,10 @@ void ControlEditorPanel::CreateModifyButton(ImVec2 ButtonSize, ImFont* IconFont)
             { .label= "Sphere",    .obj= OBJ_SPHERE },
             { .label= "SpotLight", .obj= OBJ_SpotLight },
             { .label= "Particle",  .obj= OBJ_PARTICLE },
-            { .label= "Text",      .obj= OBJ_Text }
+            { .label= "Text",      .obj= OBJ_Text },
+            {.label = "Fog",       .obj = OBJ_Fog},
+            {.label = "Fireball",   .obj = OBJ_Fireball }
+            
         };
 
         for (const auto& primitive : primitives)
@@ -270,6 +276,7 @@ void ControlEditorPanel::CreateModifyButton(ImVec2 ButtonSize, ImFont* IconFont)
                 // GEngineLoop.GetWorld()->SpawnObject(static_cast<OBJECTS>(primitive.obj));
                 UWorld* World = GEngine->GetWorld().get();
                 AActor* SpawnedActor = nullptr;
+                AStaticMeshActor* TempActor = nullptr;
                 switch (static_cast<OBJECTS>(primitive.obj))
                 {
                 case OBJ_SPHERE:
@@ -281,7 +288,7 @@ void ControlEditorPanel::CreateModifyButton(ImVec2 ButtonSize, ImFont* IconFont)
                 }
                 case OBJ_CUBE:
                 {
-                    AStaticMeshActor* TempActor = World->SpawnActor<AStaticMeshActor>();
+                    TempActor = World->SpawnActor<AStaticMeshActor>();
                     TempActor->SetActorLabel(TEXT("OBJ_CUBE"));
                     UStaticMeshComponent* MeshComp = TempActor->GetStaticMeshComponent();
                     FManagerOBJ::CreateStaticMesh("Assets/Cube.obj");
@@ -316,6 +323,23 @@ void ControlEditorPanel::CreateModifyButton(ImVec2 ButtonSize, ImFont* IconFont)
                     TextComponent->SetTexture(L"Assets/Texture/font.png");
                     TextComponent->SetRowColumnCount(106, 106);
                     TextComponent->SetText(L"안녕하세요 Jungle 1");
+                    break;
+                }
+                case OBJ_Fog:
+                {
+                    SpawnedActor = World->SpawnActor<AActor>();
+                    SpawnedActor->SetActorLabel(TEXT("OBJ_Fog"));
+                    SpawnedActor->AddComponent<UHeightFogComponent>();
+                    break;
+                }
+                case OBJ_Fireball:
+                {
+                    TempActor = World->SpawnActor<AStaticMeshActor>();
+                    TempActor->SetActorLabel(TEXT("OBJ_Fireball"));
+                    UStaticMeshComponent* MeshComp = TempActor->GetStaticMeshComponent();
+                    FManagerOBJ::CreateStaticMesh("Assets/Cube.obj");
+                    MeshComp->SetStaticMesh(FManagerOBJ::GetStaticMesh(L"Cube.obj"));
+                    TempActor->AddComponent<UFireballComponent>();
                     break;
                 }
                 case OBJ_TRIANGLE:
