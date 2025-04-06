@@ -34,6 +34,9 @@ public:
     
     void Render();
 private:
+    void RenderPass(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport);
+    void RenderImGui();
+private:
     float litFlag = 0;
 public:
     FGraphicsDevice* Graphics;
@@ -102,11 +105,10 @@ public:
 
 private:
 #pragma region Render Pass
-    void DeprecatedRender();
-    void RenderGBuffer();
-    void RenderLightPass();
-    void RenderPostProcessPass();
-    void RenderOverlayPass();
+    void RenderGBuffer(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport);
+    void RenderLightPass(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport);
+    void RenderPostProcessPass(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport);
+    void RenderOverlayPass(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport);
 #pragma endregion
 
 public://텍스쳐용 기능 추가
@@ -196,7 +198,6 @@ private:
     
 private:
     ID3D11DeviceContext* Context;
-    TArray<RenderPass*> Passes;
 
 private:
     // PostProcess용 Dummy Data (Todo : 추후 LightPass와 연결)
