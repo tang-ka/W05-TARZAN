@@ -28,26 +28,27 @@ SamplerState g_sampler0 : register(s0);
 
 struct PS_INPUT
 {
-    float4 position : SV_POSITION; // 변환된 화면 좌표
-    float3 normal : NORMAL; // 정규화된 노멀 벡터
-    float2 texcoord : TEXCOORD1;
-    float4 Worldposition : POSITION; // 버텍스 위치
+    float4 Position : SV_POSITION; // 변환된 화면 좌표
+    float3 Normal : NORMAL; // 정규화된 노멀 벡터
+    float2 TexCoord : TEXCOORD1;
+    float4 WorldPosition : POSITION; // 버텍스 위치
 };
 
 struct PS_OUTPUT
 {
     float4 Normal : SV_Target0;
     float4 Albedo : SV_Target1;
+    float4 WorldPos : SV_Target2;
 };
 
 PS_OUTPUT main(PS_INPUT input)
 {   
     PS_OUTPUT output;
     
-    float3 normal = normalize(input.normal);
+    float3 normal = normalize(input.Normal);
     output.Normal = float4(normal.xyz, 1); // TODO: WorldSpace에서의 Normal값으로 변경
     
-    float2 uv = input.texcoord/* + UVOffset*/;
+    float2 uv = input.TexCoord/* + UVOffset*/;
     float4 diffuseColor = float4(Material.DiffuseColor, 1.0f);
     float4 textureColor = g_DiffuseMap.Sample(g_sampler0, float2(uv.x, uv.y));
     

@@ -98,11 +98,11 @@ void FRenderer::RenderPass(UWorld* World, std::shared_ptr<FEditorViewportClient>
 
     RenderGBuffer(World, ActiveViewport);
 
-    RenderLightPass(World, ActiveViewport);
+    //RenderLightPass(World, ActiveViewport);
 
-    RenderPostProcessPass(World, ActiveViewport);
+    //RenderPostProcessPass(World, ActiveViewport);
 
-    RenderOverlayPass(World, ActiveViewport);
+    //RenderOverlayPass(World, ActiveViewport);
 }
 
 void FRenderer::RenderImGui()
@@ -203,25 +203,26 @@ void FRenderer::ReleaseShader()
 // Prepare
 void FRenderer::PrepareShader() const
 {
-    Graphics->DeviceContext->VSSetShader(VertexShader, nullptr, 0);
-    Graphics->DeviceContext->PSSetShader(PixelShader, nullptr, 0);
-    Graphics->DeviceContext->IASetInputLayout(InputLayout);
+    //Graphics->DeviceContext->VSSetShader(VertexShader, nullptr, 0);
+    //Graphics->DeviceContext->PSSetShader(PixelShader, nullptr, 0);
+    //Graphics->DeviceContext->IASetInputLayout(InputLayout);
 
-    //Graphics->DeviceContext->VSSetShader(GBufferVS, nullptr, 0);
-    //Graphics->DeviceContext->PSSetShader(GBufferPS, nullptr, 0);
-    //Graphics->DeviceContext->IASetInputLayout(GBufferInputLayout);
+    Graphics->DeviceContext->VSSetShader(GBufferVS, nullptr, 0);
+    Graphics->DeviceContext->PSSetShader(GBufferPS, nullptr, 0);
+    Graphics->DeviceContext->IASetInputLayout(GBufferInputLayout);
 
     if (ConstantBuffer)
     {
         Graphics->DeviceContext->VSSetConstantBuffers(0, 1, &ConstantBuffer);
-
-        Graphics->DeviceContext->PSSetConstantBuffers(0, 1, &ConstantBuffer);
         Graphics->DeviceContext->PSSetConstantBuffers(1, 1, &MaterialConstantBuffer);
-        Graphics->DeviceContext->PSSetConstantBuffers(2, 1, &LightingBuffer);
-        Graphics->DeviceContext->PSSetConstantBuffers(3, 1, &FlagBuffer);
-        Graphics->DeviceContext->PSSetConstantBuffers(4, 1, &SubMeshConstantBuffer);
-        Graphics->DeviceContext->PSSetConstantBuffers(5, 1, &TextureConstantBuffer);
-        Graphics->DeviceContext->PSSetConstantBuffers(6, 1, &FireballConstantBuffer);
+
+        //Graphics->DeviceContext->PSSetConstantBuffers(0, 1, &ConstantBuffer);
+        //Graphics->DeviceContext->PSSetConstantBuffers(1, 1, &MaterialConstantBuffer);
+        //Graphics->DeviceContext->PSSetConstantBuffers(2, 1, &LightingBuffer);
+        //Graphics->DeviceContext->PSSetConstantBuffers(3, 1, &FlagBuffer);
+        //Graphics->DeviceContext->PSSetConstantBuffers(4, 1, &SubMeshConstantBuffer);
+        //Graphics->DeviceContext->PSSetConstantBuffers(5, 1, &TextureConstantBuffer);
+        //Graphics->DeviceContext->PSSetConstantBuffers(6, 1, &FireballConstantBuffer);
     }
 }
 
@@ -406,16 +407,16 @@ void FRenderer::RenderPrimitive(OBJ::FStaticMeshRenderData* renderData, TArray<F
 {
     UINT offset = 0;
     Graphics->DeviceContext->IASetVertexBuffers(0, 1, &renderData->VertexBuffer, &Stride, &offset);
-
     if (renderData->IndexBuffer)
         Graphics->DeviceContext->IASetIndexBuffer(renderData->IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
+    // submesh X
     if (renderData->MaterialSubsets.Num() == 0)
     {
-        // no submesh
         Graphics->DeviceContext->DrawIndexed(renderData->Indices.Num(), 0, 0);
     }
 
+    // submesh O
     for (int subMeshIndex = 0; subMeshIndex < renderData->MaterialSubsets.Num(); subMeshIndex++)
     {
         int materialIndex = renderData->MaterialSubsets[subMeshIndex].MaterialIndex;
@@ -507,26 +508,21 @@ void FRenderer::RenderStaticMeshes(UWorld* World, std::shared_ptr<FEditorViewpor
             StaticMeshComp->GetWorldRotation(),
             StaticMeshComp->GetWorldScale()
         );
-        // 최종 MVP 행렬
         FMatrix MVP = Model * ActiveViewport->GetViewMatrix() * ActiveViewport->GetProjectionMatrix();
-        // 노말 회전시 필요 행렬
         FMatrix NormalMatrix = FMatrix::Transpose(FMatrix::Inverse(Model));
         FVector4 UUIDColor = StaticMeshComp->EncodeUUID() / 255.0f;
-        if (World->GetSelectedActor() == StaticMeshComp->GetOwner())
-        {
-            ConstantBufferUpdater.UpdateConstant(ConstantBuffer, MVP,Model, NormalMatrix, UUIDColor, true);
-        }
-        else
-            ConstantBufferUpdater.UpdateConstant(ConstantBuffer, MVP, Model, NormalMatrix, UUIDColor, false);
 
-        if (USkySphereComponent* skysphere = Cast<USkySphereComponent>(StaticMeshComp))
-        {
-            ConstantBufferUpdater.UpdateTextureConstant(TextureConstantBuffer, skysphere->UOffset, skysphere->VOffset);
-        }
-        else
-        {
-            ConstantBufferUpdater.UpdateTextureConstant(TextureConstantBuffer, 0, 0);
-        }
+        bool isSelected = World->GetSelectedActor() == StaticMeshComp->GetOwner();
+        ConstantBufferUpdater.UpdateConstant(ConstantBuffer, MVP, Model, NormalMatrix, UUIDColor, isSelected);
+
+        //if (USkySphereComponent* skysphere = Cast<USkySphereComponent>(StaticMeshComp))
+        //{
+        //    ConstantBufferUpdater.UpdateTextureConstant(TextureConstantBuffer, skysphere->UOffset, skysphere->VOffset);
+        //}
+        //else
+        //{
+        //    ConstantBufferUpdater.UpdateTextureConstant(TextureConstantBuffer, 0, 0);
+        //}
 
         if (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_AABB))
         {
@@ -536,7 +532,6 @@ void FRenderer::RenderStaticMeshes(UWorld* World, std::shared_ptr<FEditorViewpor
                 Model
             );
         }
-
 
         if (!StaticMeshComp->GetStaticMesh()) continue;
 
@@ -726,8 +721,8 @@ void FRenderer::RenderGBuffer(UWorld* World, std::shared_ptr<FEditorViewportClie
         RenderStaticMeshes(World, ActiveViewport);
 
     // Billboard
-    if (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_BillboardText))
-        RenderBillboards(World, ActiveViewport);
+    //if (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_BillboardText))
+    //    RenderBillboards(World, ActiveViewport);
 }
 
 void FRenderer::RenderLightPass(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport)
