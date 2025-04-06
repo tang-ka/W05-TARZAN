@@ -329,6 +329,30 @@ struct FSubUVConstant
     float indexV;
 };
 
+#pragma region Lighting Pass Constants
+struct FLightConstant
+{
+    FVector4 Ambient;
+    FVector4 Diffuse;
+    FVector4 Specular;
+    FVector Emissive;
+    float Padding1;
+    FVector Direction;
+    float Padding2;
+    FVector CameraPosition;
+    float Padding;
+};
+
+struct FMaterial
+{
+    FVector4 Diffuse;
+    FVector4 Ambient;
+    FVector4 Specular;
+    FVector Emissive;
+    float Roughness;
+};
+#pragma endregion
+
 struct FFireballConstant
 {
     FVector Position = (0,0,0);

@@ -11,6 +11,7 @@ cbuffer GridParametersData : register(b1)
     float3 GridOrigin; // Grid의 중심
     float Padding;
 };
+
 cbuffer PrimitiveCounts : register(b3)
 {
     int BoundingBoxCount; // 렌더링할 AABB의 개수

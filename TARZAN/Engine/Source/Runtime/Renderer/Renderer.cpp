@@ -64,7 +64,7 @@ void FRenderer::Initialize(FGraphicsDevice* graphics)
 
 void FRenderer::Render()
 {
-    RenderGBuffer();
+    DeprecatedRender();
 
     RenderLightPass();
 
@@ -89,6 +89,32 @@ void FRenderer::Release()
 #pragma region Shader
 void FRenderer::CreateShader()
 {
+    D3D11_INPUT_ELEMENT_DESC fullscreenLayout[] = {
+        { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+        { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+    };
+    ShaderManager.CreateVertexShader(
+        L"Shaders/FullScreenVertexShader.hlsl", "main", FullScreenVS, 
+        fullscreenLayout, ARRAYSIZE(fullscreenLayout), &FullScreenInputLayout, &FullScreenStride, sizeof(FVertexTexture));
+
+    ShaderManager.CreatePixelShader(L"Shaders/LightingPassPixelShader.hlsl", "main", LightingPassPS);
+
+    // GBuffer Shader Setting
+    D3D11_INPUT_ELEMENT_DESC GBufferLayout[] ={
+        {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"MATERIAL_INDEX", 0, DXGI_FORMAT_R32_UINT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0}
+    };
+
+    ShaderManager.CreateVertexShader(L"Shaders/MeshVertexShader.hlsl", "main", 
+        GBufferVS, GBufferLayout, ARRAYSIZE(GBufferLayout), &GBufferInputLayout, &Stride, sizeof(FVertexSimple));
+
+    ShaderManager.CreatePixelShader(L"Shaders/MeshPixelShader.hlsl", "main", GBufferPS);
+
+    ShaderManager.CreatePixelShader(L"Shaders/LightingPassPixelShader.hlsl", "main", LightingPassPS);
+
     // 기본 셰이더 설정
     D3D11_INPUT_ELEMENT_DESC layout[] = {
         {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
@@ -137,17 +163,21 @@ void FRenderer::ReleaseShader()
     ShaderManager.ReleaseShader(nullptr, VertexLineShader, PixelLineShader);
 }
 
-
 // Prepare
 void FRenderer::PrepareShader() const
 {
-    Graphics->DeviceContext->VSSetShader(VertexShader, nullptr, 0);
-    Graphics->DeviceContext->PSSetShader(PixelShader, nullptr, 0);
-    Graphics->DeviceContext->IASetInputLayout(InputLayout);
+    //Graphics->DeviceContext->VSSetShader(VertexShader, nullptr, 0);
+    //Graphics->DeviceContext->PSSetShader(PixelShader, nullptr, 0);
+    //Graphics->DeviceContext->IASetInputLayout(InputLayout);
+
+    Graphics->DeviceContext->VSSetShader(GBufferVS, nullptr, 0);
+    Graphics->DeviceContext->PSSetShader(GBufferPS, nullptr, 0);
+    Graphics->DeviceContext->IASetInputLayout(GBufferInputLayout);
 
     if (ConstantBuffer)
     {
         Graphics->DeviceContext->VSSetConstantBuffers(0, 1, &ConstantBuffer);
+
         Graphics->DeviceContext->PSSetConstantBuffers(0, 1, &ConstantBuffer);
         Graphics->DeviceContext->PSSetConstantBuffers(1, 1, &MaterialConstantBuffer);
         Graphics->DeviceContext->PSSetConstantBuffers(2, 1, &LightingBuffer);
@@ -155,7 +185,6 @@ void FRenderer::PrepareShader() const
         Graphics->DeviceContext->PSSetConstantBuffers(4, 1, &SubMeshConstantBuffer);
         Graphics->DeviceContext->PSSetConstantBuffers(5, 1, &TextureConstantBuffer);
         Graphics->DeviceContext->PSSetConstantBuffers(6, 1, &FireballConstantBuffer);
-
     }
 }
 
@@ -214,6 +243,9 @@ void FRenderer::CreateConstantBuffer()
     LightingBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FLighting));
     FlagBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FLitUnlitConstants));
     FireballConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FFireballArrayInfo));
+
+    LPLightConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FLightConstant));
+    LPMaterialConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FMaterial));
 }
 
 void FRenderer::ReleaseConstantBuffer()
@@ -228,6 +260,8 @@ void FRenderer::ReleaseConstantBuffer()
     RenderResourceManager.ReleaseBuffer(LightingBuffer);
     RenderResourceManager.ReleaseBuffer(FlagBuffer);
     RenderResourceManager.ReleaseBuffer(FireballConstantBuffer);
+    RenderResourceManager.ReleaseBuffer(LPLightConstantBuffer);
+    RenderResourceManager.ReleaseBuffer(LPMaterialConstantBuffer);
 }
 #pragma endregion ConstantBuffer
 
@@ -308,6 +342,7 @@ void FRenderer::Render(UWorld* World, std::shared_ptr<FEditorViewportClient> Act
     Graphics->ChangeRasterizer(ActiveViewport->GetViewMode());
     ChangeViewMode(ActiveViewport->GetViewMode());
     ConstantBufferUpdater.UpdateLightConstant(LightingBuffer);
+
     if (FireballObjs.Num() > 0) {
         FFireballArrayInfo fireballArrayInfo;
         fireballArrayInfo.FireballCount = 0;
@@ -330,9 +365,12 @@ void FRenderer::Render(UWorld* World, std::shared_ptr<FEditorViewportClient> Act
 
     if (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_Primitives))
         RenderStaticMeshes(World, ActiveViewport);
+
     RenderGizmos(World, ActiveViewport);
+
     if (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_BillboardText))
         RenderBillboards(World, ActiveViewport);
+
     RenderLight(World, ActiveViewport);
 
     ClearRenderArr();
@@ -671,7 +709,7 @@ void FRenderer::UpdateMaterial(const FObjMaterialInfo& MaterialInfo) const
     }
 }
 
-void FRenderer::RenderGBuffer()
+void FRenderer::DeprecatedRender()
 {
     FGraphicsDevice graphicDevice = GEngine->graphicDevice;
     SLevelEditor* LevelEditor = GEngine->GetLevelEditor();
@@ -696,8 +734,61 @@ void FRenderer::RenderGBuffer()
     }
 }
 
+void FRenderer::RenderGBuffer()
+{
+    SLevelEditor* LevelEditor = GEngine->GetLevelEditor();
+    std::shared_ptr<UWorld> GWorld = GEngine->GetWorld();
+
+    Render(GWorld.get(), LevelEditor->GetActiveViewportClient());
+}
+
 void FRenderer::RenderLightPass()
 {
+    // 1. RenderTarget: 조명 결과를 화면에 출력 (FrameBufferRTV 등)
+    ID3D11RenderTargetView* rtv = Graphics->FrameBufferRTV;
+    Graphics->DeviceContext->OMSetRenderTargets(1, &rtv, Graphics->DepthStencilView);
+
+    // 2. Viewport 설정
+    D3D11_VIEWPORT viewport = {};
+    viewport.TopLeftX = 0;
+    viewport.TopLeftY = 0;
+    viewport.Width = static_cast<float>(Graphics->screenWidth);
+    viewport.Height = static_cast<float>(Graphics->screenHeight);
+    viewport.MinDepth = 0.0f;
+    viewport.MaxDepth = 1.0f;
+    Graphics->DeviceContext->RSSetViewports(1, &viewport);
+
+    // 3. 셰이더 설정 (조명 계산용 PS, FullScreen Quad용 VS)
+    Graphics->DeviceContext->VSSetShader(FullScreenVS, nullptr, 0);
+    Graphics->DeviceContext->PSSetShader(LightingPassPS, nullptr, 0);
+    Graphics->DeviceContext->IASetInputLayout(FullScreenInputLayout);
+    Graphics->DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+    // 4. ConstantBuffer 바인딩
+    Graphics->DeviceContext->PSSetConstantBuffers(0, 1, &LPLightConstantBuffer);        // LightBuffer
+    Graphics->DeviceContext->PSSetConstantBuffers(1, 1, &LPMaterialConstantBuffer); // MaterialBuffer
+
+    // 5. GBuffer에서 SRV 연결 (Normal, Albedo, Position)
+    ID3D11ShaderResourceView* SRVs[] = {
+        Graphics->GBufferSRV_Normal,
+        Graphics->GBufferSRV_Albedo,
+        Graphics->GBufferSRV_Position
+    };
+    Graphics->DeviceContext->PSSetShaderResources(0, 3, SRVs);
+
+    // 6. Fullscreen Quad 렌더링
+    const FQuadRenderData& quad = UEditorEngine::resourceMgr.GetQuadRenderData();
+    UINT stride = FullScreenStride;
+    UINT offset = 0;
+
+    Graphics->DeviceContext->IASetVertexBuffers(0, 1, &quad.VertexTextureBuffer, &stride, &offset);
+    Graphics->DeviceContext->IASetIndexBuffer(quad.IndexTextureBuffer, DXGI_FORMAT_R32_UINT, 0);
+
+    Graphics->DeviceContext->DrawIndexed(quad.numIndices, 0, 0);
+
+    // 7. SRV 언바인딩 (다음 Pass에서 충돌 방지)
+    ID3D11ShaderResourceView* nullSRVs[3] = { nullptr, nullptr, nullptr };
+    Graphics->DeviceContext->PSSetShaderResources(0, 3, nullSRVs);
 }
 
 void FRenderer::RenderPostProcessPass()

@@ -1,0 +1,89 @@
+Texture2D g_GBufferNormal : register(t0);
+Texture2D g_GBufferAlbedo : register(t1);
+Texture2D g_GBufferPosition : register(t2);
+
+sampler2D g_sampler: register(s0);
+
+struct FLight
+{
+    float4 Ambient;
+    float4 Diffuse;
+    float4 Specular;
+    float3 Emissive;
+    float Padding1;
+    float3 Direction;
+    float Padding2;
+};
+
+struct FMaterial
+{
+    float4 Diffuse;
+    float4 Ambient;
+    float4 Specular;
+    float3 Emissive;
+    float Roughness;
+};
+
+cbuffer LightConstants : register(b0)
+{
+    FLight GlobalLight;
+    float3 CameraPosition;
+    float Padding;
+};
+
+cbuffer MaterialConstants : register(b1)
+{
+    FMaterial Material;
+};
+
+struct PS_Input
+{
+    float4 Position : SV_POSITION;
+    float2 TexCoord : TEXCOORD;
+};
+
+float4 ComputeDirectionalLight(float3 normal, float3 worldPosition, float3 albedo)
+{
+    // 각 광원 요소에 대한 색상을 초기화
+    float4 ambientColor = 0;
+    float4 diffuseColor = 0;
+    float4 specularColor = 0;
+    float4 emissiveColor = 0;
+    
+    float3 lightDir = normalize(-GlobalLight.Direction);
+    normal = normalize(normal);
+    
+    // === Ambient ===
+    ambientColor = float4(albedo, 1.0f) * GlobalLight.Ambient * Material.Ambient;
+    
+    // === Diffuse ===
+    float NdotL = saturate(dot(normal, lightDir));
+    float diffuseBoost = lerp(1.0f, 1.3f, 1.0f - Material.Roughness);
+    diffuseColor = float4(albedo, 1.0f) * GlobalLight.Diffuse * Material.Diffuse * NdotL * diffuseBoost;
+    
+    // === Specular ===
+    float3 viewDir = normalize(CameraPosition - worldPosition);
+    float3 reflectDir = reflect(-lightDir, normal);
+    float specFactor = saturate(dot(reflectDir, viewDir));
+    //float shininess = lerp(64.0f, 1.0f, 1.0f - saturate(Material.Roughness));
+    float shininess = lerp(64.0f, 1.0f, 1.0f - Material.Roughness);
+    float specular = pow(specFactor, shininess);
+    specular *= lerp(1.0f, 0.1f, pow(1.0f - Material.Roughness, 2.0f));
+    specularColor = GlobalLight.Specular * Material.Specular * specular;
+    
+    // === Emissive ===
+    float viewDot = saturate(dot(viewDir, normal));
+    float emissive = pow(smoothstep(0.0f, 1.0f, 1.0f - viewDot), 2.0f);
+    emissiveColor = float4(GlobalLight.Emissive * Material.Emissive * emissive, 1.0f);
+
+    return ambientColor + diffuseColor + specularColor + emissiveColor;
+}
+
+float4 main() : SV_TARGET
+{
+    float3 normal = g_GBufferNormal.Sample(g_ClampSampler, uv).xyz;
+    float3 albedo = g_GBufferAlbedo.Sample(g_ClampSampler, uv).rgb;
+    float3 worldPos = g_GBufferPosition.Sample(g_ClampSampler, uv).xyz;
+
+    return ComputeDirectionalLight(normal, worldPos, albedo);
+}

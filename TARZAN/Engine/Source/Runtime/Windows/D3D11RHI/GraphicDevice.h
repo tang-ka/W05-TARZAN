@@ -16,15 +16,33 @@ public:
     ID3D11Device* Device = nullptr;
     ID3D11DeviceContext* DeviceContext = nullptr;
     IDXGISwapChain* SwapChain = nullptr;
+    
     ID3D11Texture2D* FrameBuffer = nullptr;
     ID3D11Texture2D* UUIDFrameBuffer = nullptr;
+    
     ID3D11RenderTargetView* RTVs[2];
     ID3D11RenderTargetView* FrameBufferRTV = nullptr;
     ID3D11RenderTargetView* UUIDFrameBufferRTV = nullptr;
+
     ID3D11RasterizerState* RasterizerStateSOLID = nullptr;
     ID3D11RasterizerState* RasterizerStateWIREFRAME = nullptr;
     DXGI_SWAP_CHAIN_DESC SwapchainDesc;
 
+    // GBuffer(Normal, Albedo)
+    ID3D11Texture2D* GBufferTexture_Normal = nullptr;
+    ID3D11Texture2D* GBufferTexture_Albedo = nullptr;
+    ID3D11Texture2D* GBufferTexture_Position = nullptr;
+
+    ID3D11RenderTargetView* GBufferRTV_Normal = nullptr;
+    ID3D11RenderTargetView* GBufferRTV_Albedo = nullptr;
+    ID3D11RenderTargetView* GBufferRTV_Position = nullptr;
+
+    ID3D11ShaderResourceView* GBufferSRV_Normal = nullptr;
+    ID3D11ShaderResourceView* GBufferSRV_Albedo = nullptr;
+    ID3D11ShaderResourceView* GBufferSRV_Position = nullptr;
+
+    ID3D11RenderTargetView* gbuffers[3];
+    // - 
     
     UINT screenWidth = 0;
     UINT screenHeight = 0;
@@ -42,9 +60,11 @@ public:
     void CreateDepthStencilBuffer(HWND hWindow);
     void CreateDepthStencilState();
     void CreateRasterizerState();
+    void CreateGBuffer();
     void CreateFrameBuffer();
     
     void ReleaseDeviceAndSwapChain();
+    void ReleaseGBuffer();
     void ReleaseFrameBuffer();
     void ReleaseRasterizerState();
     void ReleaseDepthStencilResources();

@@ -75,8 +75,6 @@ cbuffer FireballBuffer : register(b6)
     float3 padding;
 }
 
-
-
 float3 ComputeFireballLighting(float4 worldPos, float3 normal)
 {
     float3 N = normalize(normal);
@@ -198,6 +196,7 @@ PS_OUTPUT mainPS(PS_INPUT input)
         color += fireballLighting;
         color += Material.EmissiveColor;
         output.color = float4(color, Material.TransparencyScalar);
+        //output.color = float4(input.normal.xyz, 1);
         return output;
     }
 

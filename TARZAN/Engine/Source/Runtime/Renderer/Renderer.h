@@ -37,9 +37,23 @@ private:
     float litFlag = 0;
 public:
     FGraphicsDevice* Graphics;
+
+    // Full Screen Vertex Shader
+    ID3D11VertexShader* FullScreenVS = nullptr;
+    ID3D11InputLayout* FullScreenInputLayout = nullptr;
+    
+    // GBuffer Shader
+    ID3D11VertexShader* GBufferVS= nullptr;
+    ID3D11PixelShader* GBufferPS = nullptr;
+    ID3D11InputLayout* GBufferInputLayout = nullptr;
+    
+    // Lighting Shader
+    ID3D11PixelShader* LightingPassPS = nullptr;
+
     ID3D11VertexShader* VertexShader = nullptr;
     ID3D11PixelShader* PixelShader = nullptr;
     ID3D11InputLayout* InputLayout = nullptr;
+
     ID3D11Buffer* ConstantBuffer = nullptr;
     ID3D11Buffer* LightingBuffer = nullptr;
     ID3D11Buffer* FlagBuffer = nullptr;
@@ -47,8 +61,12 @@ public:
     ID3D11Buffer* SubMeshConstantBuffer = nullptr;
     ID3D11Buffer* TextureConstantBuffer = nullptr;
     ID3D11Buffer* FireballConstantBuffer = nullptr;
+    ID3D11Buffer* LPLightConstantBuffer = nullptr;
+    ID3D11Buffer* LPMaterialConstantBuffer = nullptr;
 
     FLighting lightingData;
+
+    uint32 FullScreenStride;
 
     uint32 Stride;
     uint32 Stride2;
@@ -81,6 +99,7 @@ public:
 
 private:
 #pragma region Render Pass
+    void DeprecatedRender();
     void RenderGBuffer();
     void RenderLightPass();
     void RenderPostProcessPass();
@@ -137,11 +156,14 @@ public: // line shader
     void RenderLight(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport);
     void RenderBillboards(UWorld* World,std::shared_ptr<FEditorViewportClient> ActiveViewport);
 private:
+    // GBuffer
     TArray<UStaticMeshComponent*> StaticMeshObjs;
-    TArray<UGizmoBaseComponent*> GizmoObjs;
     TArray<UBillboardComponent*> BillboardObjs;
+    // Lighting
     TArray<ULightComponentBase*> LightObjs;
     TArray<UFireballComponent*> FireballObjs;
+    // Overaly
+    TArray<UGizmoBaseComponent*> GizmoObjs;
 
 public:
     ID3D11VertexShader* VertexLineShader = nullptr;

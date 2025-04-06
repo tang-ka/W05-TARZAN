@@ -6,6 +6,7 @@
 void FGraphicsDevice::Initialize(HWND hWindow) {
     CreateDeviceAndSwapChain(hWindow);
     CreateFrameBuffer();
+    CreateGBuffer();
     CreateDepthStencilBuffer(hWindow);
     CreateDepthStencilState();
     CreateRasterizerState();
@@ -145,6 +146,43 @@ void FGraphicsDevice::CreateRasterizerState()
     Device->CreateRasterizerState(&rasterizerdesc, &RasterizerStateWIREFRAME);
 }
 
+void FGraphicsDevice::CreateGBuffer()
+{
+    D3D11_TEXTURE2D_DESC GBufferTexDesc = {};
+    {
+        GBufferTexDesc.Width = screenWidth;
+        GBufferTexDesc.Height = screenHeight;
+        GBufferTexDesc.MipLevels = 1;
+        GBufferTexDesc.ArraySize = 1;
+        GBufferTexDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+        GBufferTexDesc.SampleDesc.Count = 1;
+        GBufferTexDesc.Usage = D3D11_USAGE_DEFAULT;
+        GBufferTexDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+    }
+    
+    D3D11_RENDER_TARGET_VIEW_DESC GBufferRTVDesc = {};
+    {
+        GBufferRTVDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;      // 색상 포맷
+        GBufferRTVDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D; // 2D 텍스처
+    }
+
+    Device->CreateTexture2D(&GBufferTexDesc, nullptr, &GBufferTexture_Normal);
+    Device->CreateTexture2D(&GBufferTexDesc, nullptr, &GBufferTexture_Albedo);
+    Device->CreateTexture2D(&GBufferTexDesc, nullptr, &GBufferTexture_Position);
+
+    Device->CreateRenderTargetView(GBufferTexture_Normal, &GBufferRTVDesc, &GBufferRTV_Normal);
+    Device->CreateRenderTargetView(GBufferTexture_Albedo, &GBufferRTVDesc, &GBufferRTV_Albedo);
+    Device->CreateRenderTargetView(GBufferTexture_Position, &GBufferRTVDesc, &GBufferRTV_Position);
+
+    Device->CreateShaderResourceView(GBufferTexture_Normal, nullptr, &GBufferSRV_Normal);
+    Device->CreateShaderResourceView(GBufferTexture_Albedo, nullptr, &GBufferSRV_Albedo);
+    Device->CreateShaderResourceView(GBufferTexture_Position, nullptr, &GBufferSRV_Position);
+
+    gbuffers[0] = GBufferRTV_Normal;
+    gbuffers[1] = GBufferRTV_Albedo;
+    gbuffers[2] = GBufferRTV_Position;
+}
+
 void FGraphicsDevice::CreateFrameBuffer()
 {
     // 스왑 체인으로부터 백 버퍼 텍스처 가져오기
@@ -203,6 +241,21 @@ void FGraphicsDevice::ReleaseDeviceAndSwapChain()
         DeviceContext->Release();
         DeviceContext = nullptr;
     }
+}
+
+void FGraphicsDevice::ReleaseGBuffer()
+{
+    if (GBufferTexture_Normal) { GBufferTexture_Normal->Release(); GBufferTexture_Normal = nullptr; }
+    if (GBufferRTV_Normal) { GBufferRTV_Normal->Release(); GBufferRTV_Normal = nullptr; }
+    if (GBufferSRV_Normal) { GBufferSRV_Normal->Release(); GBufferSRV_Normal = nullptr; }
+
+    if (GBufferTexture_Albedo) { GBufferTexture_Albedo->Release(); GBufferTexture_Albedo = nullptr; }
+    if (GBufferRTV_Albedo) { GBufferRTV_Albedo->Release(); GBufferRTV_Albedo = nullptr; }
+    if (GBufferSRV_Albedo) { GBufferSRV_Albedo->Release(); GBufferSRV_Albedo = nullptr; }
+
+    if (GBufferTexture_Position) { GBufferTexture_Position->Release(); GBufferTexture_Position = nullptr; }
+    if (GBufferRTV_Position) { GBufferRTV_Position->Release(); GBufferRTV_Position = nullptr; }
+    if (GBufferSRV_Position) { GBufferSRV_Position->Release(); GBufferSRV_Position = nullptr; }
 }
 
 void FGraphicsDevice::ReleaseFrameBuffer()
@@ -275,6 +328,7 @@ void FGraphicsDevice::Release()
     ReleaseRasterizerState();
     DeviceContext->OMSetRenderTargets(0, nullptr, nullptr);
 
+    ReleaseGBuffer();
     ReleaseFrameBuffer();
     ReleaseDepthStencilResources();
     ReleaseDeviceAndSwapChain();
@@ -283,6 +337,7 @@ void FGraphicsDevice::Release()
 void FGraphicsDevice::SwapBuffer() {
     SwapChain->Present(1, 0);
 }
+
 void FGraphicsDevice::Prepare()
 {
     DeviceContext->ClearRenderTargetView(FrameBufferRTV, ClearColor); // 렌더 타겟 뷰에 저장된 이전 프레임 데이터를 삭제
@@ -296,7 +351,9 @@ void FGraphicsDevice::Prepare()
 
     DeviceContext->OMSetDepthStencilState(DepthStencilState, 0);
 
-    DeviceContext->OMSetRenderTargets(2, RTVs, DepthStencilView); // 렌더 타겟 설정(백버퍼를 가르킴)
+    //DeviceContext->OMSetRenderTargets(2, RTVs, DepthStencilView); // 렌더 타겟 설정(백버퍼를 가르킴)
+    DeviceContext->OMSetRenderTargets(3, gbuffers, DepthStencilView);
+
     DeviceContext->OMSetBlendState(nullptr, nullptr, 0xffffffff); // 블렌뎅 상태 설정, 기본블렌딩 상태임
 }
 
@@ -354,11 +411,7 @@ void FGraphicsDevice::OnResize(HWND hWindow) {
 
     CreateFrameBuffer();
     CreateDepthStencilBuffer(hWindow);
-
-
-
 }
-
 
 void FGraphicsDevice::ChangeRasterizer(EViewModeIndex evi)
 {
@@ -381,7 +434,6 @@ void FGraphicsDevice::ChangeDepthStencilState(ID3D11DepthStencilState* newDetptS
 }
 
 uint32 FGraphicsDevice::GetPixelUUID(POINT pt)
-
 {
     // pt.x 값 제한하기
     if (pt.x < 0) {
