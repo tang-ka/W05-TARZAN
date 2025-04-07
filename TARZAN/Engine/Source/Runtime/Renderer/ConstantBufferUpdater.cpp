@@ -55,10 +55,10 @@ void FConstantBufferUpdater::UpdateLightConstant(ID3D11Buffer* LightingBuffer) c
         FLighting* constants = static_cast<FLighting*>(mappedResource.pData);
         constants->lightDirX = 1.0f;
         constants->lightDirY = 1.0f;
-        constants->lightDirZ = 1.0f;
-        constants->lightColorX = 1.0f;
+        constants->lightDirZ = -1.0f;
+        constants->lightColorX = 0.0f;
         constants->lightColorY = 1.0f;
-        constants->lightColorZ = 1.0f;
+        constants->lightColorZ = 0.0f;
         constants->AmbientFactor = 0.06f;
     }
     DeviceContext->Unmap(LightingBuffer, 0);

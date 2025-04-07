@@ -188,6 +188,40 @@ float4 PaperTexture(float3 originalColor)
     return float4(saturate(finalColor), 1.0);
 }
 
+float3 ComputeVolumetricFog(float3 worldPos)
+{
+    float3 rayDir = normalize(worldPos - CameraPosition);
+    float stepLength = 1.0; // 단위 거리당 샘플링
+    int numSteps = 16;
+
+    float3 fogColor = FogColor.rgb;
+    float3 accumFog = float3(0, 0, 0);
+    float transmittance = 1.0;
+
+    for (int i = 0; i < numSteps; ++i)
+    {
+        float dist = (i + 1) * stepLength;
+        float3 samplePos = CameraPosition + rayDir * dist;
+
+        // 높이에 따른 밀도 (height fog 요소 포함)
+        float heightDiff = max(samplePos.z - FogHeight, 0.0);
+        float heightFactor = exp(-heightDiff * FogHeightFalloff);
+
+        float fogDensity = FogDensity * heightFactor;
+
+        // 라이트 방향 기반 산란 간단 표현 (볼륨 안에서 라이트 쪽을 더 밝게)
+        float lightIntensity = saturate(dot(normalize(LightDirection), -rayDir));
+
+        float3 sampleFog = fogColor * fogDensity * lightIntensity;
+
+        accumFog += sampleFog * transmittance * stepLength;
+        transmittance *= exp(-fogDensity * stepLength);
+    }
+
+    return accumFog;
+}
+
+
 PS_OUTPUT mainPS(PS_INPUT input)
 {
     PS_OUTPUT output;
@@ -215,6 +249,9 @@ PS_OUTPUT mainPS(PS_INPUT input)
     }
     
     float fogFactor = ComputeFogFactor(input.Worldposition.xyz);
+
+    float3 volumetricFog = ComputeVolumetricFog(input.Worldposition.xyz);
+
   
     if (IsLit == 1)
     {
@@ -238,7 +275,12 @@ PS_OUTPUT mainPS(PS_INPUT input)
         float3 fireballLighting = ComputeFireballLighting(input.Worldposition, input.normal);
         color += fireballLighting;
         color += Material.EmissiveColor;
+       // 기존 Fog 처리 후
         color = lerp(FogColor.rgb, color, 1.0 - fogFactor);
+
+// Volumetric Fog를 추가로 더해주기
+        color += volumetricFog;
+
         output.color = float4(color, Material.TransparencyScalar);
         return output;
     }
@@ -246,14 +288,24 @@ PS_OUTPUT mainPS(PS_INPUT input)
     {
         if (input.normalFlag < 0.5)
         {
+            // 기존 Fog 처리 후
             color = lerp(FogColor.rgb, color, 1.0 - fogFactor);
+
+// Volumetric Fog를 추가로 더해주기
+            color += volumetricFog;
+
 
             output.color = float4(color, Material.TransparencyScalar);
             return output;
         }
 
      
+        // 기존 Fog 처리 후
         color = lerp(FogColor.rgb, color, 1.0 - fogFactor);
+
+// Volumetric Fog를 추가로 더해주기
+        color += volumetricFog;
+
 
         output.color = float4(color, Material.TransparencyScalar);
         return output;
