@@ -240,6 +240,8 @@ void FRenderer::PrepareRender()
                     fogData.CameraPosition = GEngine->GetLevelEditor()->GetActiveViewportClient()->GetCameraLocation();
                     fogData.FogHeight = HeightFog->GetWorldLocation().z;
                     ConstantBufferUpdater.UpdateFogConstant(FogConstantBuffer, fogData);
+                    //FLOAT ClearColor[4] = { fogData.FogInscatteringColor.R * fogData.FogMaxOpacity, fogData.FogInscatteringColor.G* fogData.FogMaxOpacity, fogData.FogInscatteringColor.B* fogData.FogMaxOpacity, 1.0};
+                    //Graphics->DeviceContext->ClearRenderTargetView(Graphics->FrameBufferRTV, ClearColor);
                 } 
         }
     }

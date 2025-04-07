@@ -17,6 +17,7 @@
 #include "UnrealEd/SceneMgr.h"
 #include "UHeightFogComponent.h"
 #include "FireballComp.h"
+#include "Components/SkySphereComponent.h"
 #include "UEditorStateManager.h"
 
 
@@ -283,7 +284,9 @@ void ControlEditorPanel::CreateModifyButton(ImVec2 ButtonSize, ImFont* IconFont)
                 {
                     SpawnedActor = World->SpawnActor<AActor>();
                     SpawnedActor->SetActorLabel(TEXT("OBJ_SPHERE"));
-                    SpawnedActor->AddComponent<USphereComp>();
+                    USkySphereComponent* MeshComp = SpawnedActor->AddComponent<USkySphereComponent>();
+                    FManagerOBJ::CreateStaticMesh("Assets/SkySphere.obj");
+                    MeshComp->SetStaticMesh(FManagerOBJ::GetStaticMesh(L"SkySphere.obj"));
                     break;
                 }
                 case OBJ_CUBE:
