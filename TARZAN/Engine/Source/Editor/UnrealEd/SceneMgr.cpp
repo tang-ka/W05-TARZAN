@@ -17,113 +17,164 @@
 #include "Engine/World.h"
 #include "Engine/FLoaderOBJ.h"
 #include "LevelEditor/SLevelEditor.h"
-
+#include "UObject/UObjectGlobals.h"
 using json = nlohmann::json;
 
-void FSceneMgr::ParseSceneData(const FString& jsonStr)
+/**
+ * JSON 객체로부터 FSceneData 구조체를 파싱하여 채웁니다.
+ * @param j 파싱할 nlohmann::json 객체.
+ * @param OutSceneData 파싱된 데이터를 저장할 FSceneData 참조.
+ * @return 파싱 성공 여부 (간단한 버전에서는 bool 반환, 상세 오류 처리는 예외나 로그 사용).
+ */
+
+bool FSceneMgr::ParseSceneData(const json& j , FSceneData& OutSceneData)
 {
-    SceneData sceneData;
+try // JSON 파싱 및 데이터 접근 시 예외 발생 가능성 처리
+    {
+        // 기존 데이터 클리어
+        OutSceneData.Actors.Empty();
 
+        // Version 파싱
+        if (j.contains("Version") && j["Version"].is_number_integer()) {
+            OutSceneData.Version = j["Version"].get<int32>();
+        } else {
+            // 필수 필드가 없으면 오류 처리 또는 기본값 사용
+            UE_LOG(LogLevel::Warning, TEXT("JSON does not contain a valid 'Version' field."));
+            // return false; // 또는 기본값 0 등으로 진행
+            OutSceneData.Version = 0;
+        }
 
-        json j = json::parse(*jsonStr);
+        // NextUUID 파싱 (선택적 필드 처리 예시)
+        OutSceneData.NextUUID = j.value("NextUUID", 0); // 없으면 기본값 0 사용
 
-        // 버전과 NextUUID 읽기
-        // sceneData.Version = j["Version"].get<int>();
-        sceneData.NextUUID = j["NextUUID"].get<int>();
-
-        auto perspectiveCamera = j["PerspectiveCamera"];
-        std::shared_ptr<FEditorViewportClient> activeViewportClient = GEngine->GetLevelEditor()->GetActiveViewportClient();
-
-        if (perspectiveCamera.contains("Location")) {
-            auto location = perspectiveCamera["Location"].get<std::vector<float>>();
-            activeViewportClient->ViewTransformPerspective.SetLocation(FVector(location[0], location[1], location[2]));
-        }
-        if (perspectiveCamera.contains("Rotation")) {
-            auto rotation = perspectiveCamera["Rotation"].get<std::vector<float>>();
-            activeViewportClient->ViewTransformPerspective.SetRotation(FVector(rotation[0], rotation[1], rotation[2]));
-        }
-        if (perspectiveCamera.contains("FOV")) {
-            auto fovArray = perspectiveCamera["FOV"].get<std::vector<float>>();
-            activeViewportClient->SetViewFOV(fovArray[0]);
-        }
-        if (perspectiveCamera.contains("NearClip")) {
-            auto nearClipArray = perspectiveCamera["NearClip"].get<std::vector<float>>();
-            activeViewportClient->SetNearClip(nearClipArray[0]);
-        }
-        if (perspectiveCamera.contains("FarClip")) {
-            auto farClipArray = perspectiveCamera["FarClip"].get<std::vector<float>>();
-            activeViewportClient->SetFarClip(farClipArray[0]);
-        }
-        // Primitives 처리 (C++14 스타일)
-        auto primitives = j["Primitives"];
-        for (auto it = primitives.begin(); it != primitives.end(); ++it)
+        // --- Actors 배열 파싱 ---
+        if (j.contains("Actors") && j["Actors"].is_array())
         {
-            int id = std::stoi(it.key());  // Key는 문자열, 숫자로 변환
-            const json& value = it.value();
-            UObject* obj = nullptr;
-            if (value.contains("Type"))
-            {
-                const FString TypeName = value["Type"].get<std::string>();
-                if (TypeName == USphereComp::StaticClass()->GetName())
-                {
-                    obj = FObjectFactory::ConstructObject<USphereComp>();
-                }
-                else if (TypeName == UCubeComp::StaticClass()->GetName())
-                {
-                    obj = FObjectFactory::ConstructObject<UCubeComp>();
-                }
-                else if (TypeName == UGizmoArrowComponent::StaticClass()->GetName())
-                {
-                    obj = FObjectFactory::ConstructObject<UGizmoArrowComponent>();
-                }
-                else if (TypeName == UBillboardComponent::StaticClass()->GetName())
-                {
-                    obj = FObjectFactory::ConstructObject<UBillboardComponent>();
-                }
-                else if (TypeName == ULightComponentBase::StaticClass()->GetName())
-                {
-                    obj = FObjectFactory::ConstructObject<ULightComponentBase>();
-                }
-                else if (TypeName == USkySphereComponent::StaticClass()->GetName())
-                {
-                    obj = FObjectFactory::ConstructObject<USkySphereComponent>();
-                    USkySphereComponent* skySphere = static_cast<USkySphereComponent*>(obj);
-                }
-                else if (TypeName == "StaticMeshComp")
-                {
-                    UWorld* World = GEngine->GetWorld().get();
-                    AActor* SpawnedActor = nullptr;
-                    std::string Path = value["ObjStaticMeshAsset"].get<std::string>();
-                    FString FileName = Path.substr(Path.find_last_of("/\\") + 1);
-                    FWString WFileName = FileName.ToWideString();
+            const json& actorsArrayJson = j["Actors"];
+            OutSceneData.Actors.Reserve(actorsArrayJson.size()); // 미리 메모리 할당
 
-                    AStaticMeshActor* TempActor = World->SpawnActor<AStaticMeshActor>();
-                    TempActor->SetActorLocation(FVector(value["Location"].get<std::vector<float>>()[0],
-                          value["Location"].get<std::vector<float>>()[1],
-                          value["Location"].get<std::vector<float>>()[2]));
-                    TempActor->SetActorRotation(FVector(value["Rotation"].get<std::vector<float>>()[0],
-                        value["Rotation"].get<std::vector<float>>()[1],
-                        value["Rotation"].get<std::vector<float>>()[2]));
-                    TempActor->SetActorScale(FVector(value["Scale"].get<std::vector<float>>()[0],
-                        value["Scale"].get<std::vector<float>>()[1],
-                        value["Scale"].get<std::vector<float>>()[2]
-                        ));
-                    TempActor->SetActorLabel(TEXT("OBJ_CUBE"));
-                    UStaticMeshComponent* MeshComp = TempActor->GetStaticMeshComponent();
-                    FManagerOBJ::CreateStaticMesh("Assets/" + FileName);
-                    MeshComp->SetStaticMesh(FManagerOBJ::GetStaticMesh(WFileName));
+            for (const auto& actorJson : actorsArrayJson) // 각 액터 JSON 객체 순회
+            {
+                if (!actorJson.is_object()) {
+                    UE_LOG(LogLevel::Warning, TEXT("Item in 'Actors' array is not a valid JSON object. Skipping."));
+                    continue; // 유효하지 않은 항목 건너뛰기
                 }
-            }
+
+                FActorSaveData actorData; // 현재 액터 데이터 생성
+
+                // 액터 기본 정보 파싱 (문자열 변환 포함)
+                if (actorJson.contains("ActorID") && actorJson["ActorID"].is_string()) {
+                    actorData.ActorID = FString((actorJson["ActorID"].get<std::string>().c_str()));
+                } else { /* 오류 처리 또는 기본값 */ }
+
+                if (actorJson.contains("ActorClass") && actorJson["ActorClass"].is_string()) {
+                    actorData.ActorClass = FString((actorJson["ActorClass"].get<std::string>().c_str()));
+                } else { /* 필수 필드 오류 처리 */ UE_LOG(LogLevel::Warning,  TEXT("Actor JSON missing 'ActorClass'.")); return false; }
+
+                // ActorLabel은 선택적일 수 있음
+                actorData.ActorLabel = FString((actorJson.value("ActorLabel", "").c_str())); // 없으면 빈 문자열
+
+                if (actorJson.contains("RootComponentID") && actorJson["RootComponentID"].is_string()) {
+                     actorData.RootComponentID = FString((actorJson["RootComponentID"].get<std::string>().c_str()));
+                } else { /* 루트 컴포넌트가 없는 경우 ""가 될 수 있으므로 오류는 아닐 수 있음 */ actorData.RootComponentID = TEXT("");}
+
+
+                // --- Components 배열 파싱 ---
+                if (actorJson.contains("Components") && actorJson["Components"].is_array())
+                {
+                    const json& componentsArrayJson = actorJson["Components"];
+                    actorData.Components.Reserve(componentsArrayJson.size());
+
+                    for (const auto& componentJson : componentsArrayJson) // 각 컴포넌트 JSON 객체 순회
+                    {
+                         if (!componentJson.is_object()) {
+                            UE_LOG(LogLevel::Warning, TEXT("Item in 'Components' array is not a valid JSON object. Skipping."));
+                            continue;
+                         }
+
+                         FComponentSaveData componentData; // 현재 컴포넌트 데이터 생성
+
+                         // 컴포넌트 기본 정보 파싱
+                        if (componentJson.contains("ComponentID") && componentJson["ComponentID"].is_string()) {
+                            componentData.ComponentID = FString((componentJson["ComponentID"].get<std::string>().c_str()));
+                        } else { /* 오류 처리 */ }
+
+                        if (componentJson.contains("ComponentClass") && componentJson["ComponentClass"].is_string()) {
+                            componentData.ComponentClass = FString((componentJson["ComponentClass"].get<std::string>().c_str()));
+                        } else { /* 필수 필드 오류 처리 */ UE_LOG(LogLevel::Warning, TEXT("Component JSON missing 'ComponentClass'.")); return false; }
+
+                        // --- Properties 객체 파싱 ---
+                        if (componentJson.contains("Properties") && componentJson["Properties"].is_object())
+                        {
+                            const json& propertiesJson = componentJson["Properties"];
+                            // Properties는 TMap이므로 Reserve 불필요
+
+                            // JSON 객체의 모든 키-값 쌍 순회
+                            for (auto it = propertiesJson.begin(); it != propertiesJson.end(); ++it)
+                            {
+                                // it.key()는 속성 이름(std::string), it.value()는 속성 값(json 문자열)
+                                if (it.value().is_string()) // 값이 문자열인지 확인
+                                {
+                                    FString Key = FString((it.key().c_str()));
+                                    FString Value = FString((it.value().get<std::string>().c_str()));
+                                    componentData.Properties.Add(Key, Value); // TMap에 추가
+                                }
+                                else {
+                                    // 값이 문자열이 아닌 경우 (예상치 못한 데이터) 경고
+                                     UE_LOG(LogLevel::Warning,  TEXT("Property '%s' in component '%s' has non-string value. Skipping."),
+                                         *FString((it.key().c_str())), *componentData.ComponentID);
+                                }
+                            }
+                        } // Properties 파싱 끝
+
+                        actorData.Components.Add(componentData); // 완성된 컴포넌트 데이터를 액터에 추가
+                    } // 컴포넌트 루프 끝
+                } // Components 배열 파싱 끝
+
+                OutSceneData.Actors.Add(actorData); // 완성된 액터 데이터를 씬 데이터에 추가
+            } // 액터 루프 끝
+        } // Actors 배열 파싱 끝
+        else {
+             UE_LOG(LogLevel::Warning, TEXT("JSON does not contain a valid 'Actors' array. Scene might be empty."));
+             // 액터가 없는 빈 씬일 수 있으므로 오류는 아님
         }
+
+        return true; // 파싱 성공
+    }
+    catch (const json::parse_error& e)
+    {
+        // JSON 파싱 자체에서 오류 발생 시
+        UE_LOG(LogLevel::Warning, TEXT("JSON parse error: %hs at byte %d"), e.what(), e.byte);
+        return false;
+    }
+    catch (const json::type_error& e)
+    {
+        // JSON 타입 불일치 (예: 배열을 기대했는데 객체가 옴)
+        UE_LOG(LogLevel::Warning, TEXT("JSON type error: %hs"), e.what());
+        return false;
+    }
+    catch (const std::exception& e)
+    {
+        // 기타 예외 처리
+        UE_LOG(LogLevel::Warning, TEXT("An unexpected error occurred during JSON parsing: %hs"), e.what());
+        return false;
+    }
+    catch (...)
+    {
+        // 알 수 없는 예외
+        UE_LOG(LogLevel::Warning, TEXT("An unknown error occurred during JSON parsing."));
+        return false;
+    }
 }
 
-FString FSceneMgr::LoadSceneFromFile(const FString& filename)
+
+void FSceneMgr::LoadSceneFromFile(const FString& filename, UWorld& world)
 {
     std::string NewFileName = *filename;
     std::ifstream inFile(NewFileName);
     if (!inFile) {
         UE_LOG(LogLevel::Error, "Failed to open file for reading: %s", *filename);
-        return FString();
+        return ;
     }
 
     json j;
@@ -132,68 +183,367 @@ FString FSceneMgr::LoadSceneFromFile(const FString& filename)
     }
     catch (const std::exception& e) {
         UE_LOG(LogLevel::Error, "Error parsing JSON: %s", e.what());
-        return FString();
+        return;
     }
 
     inFile.close();
 
-    return j.dump(4);
+    FSceneData SceneDate;
+    bool Result = ParseSceneData(j,SceneDate);
+    if (!Result)
+    {
+        UE_LOG(LogLevel::Error, "Failed to parse scene data from file: %s", *filename);
+        return ;
+    }
+
+    LoadSceneFromData(SceneDate, &world);
+    
+    
+    int a = 0;
+
+    
+
+    return ;
 }
 
-std::string FSceneMgr::SerializeSceneData(const SceneData& sceneData)
+bool FSceneMgr::LoadSceneFromData(const FSceneData& sceneData, UWorld* targetWorld)
 {
-    json j;
+    if (targetWorld == nullptr)
+    {
+        UE_LOG(LogLevel::Error, TEXT("LoadSceneFromData: Target World is null!"));
+        return false;
+    }
+
+    // 임시 맵: 저장된 ID와 새로 생성된 객체 포인터를 매핑
+    TMap<FString, AActor*> SpawnedActorsMap;
+    //TMap<FString, UActorComponent*> SpawnedComponentsMap;
+
+    // --- 1단계: 액터 및 컴포넌트 생성 ---
+    UE_LOG(LogLevel::Display, TEXT("Loading Scene Data: Phase 1 - Spawning Actors and Components..."));
+    for (const FActorSaveData& actorData : sceneData.Actors)
+    {
+        // 1.1. 액터 클래스 찾기
+        AActor* SpawnedActor = nullptr;
+
+        if (actorData.ActorClass == AActor::StaticClass()->GetName())
+        {
+            SpawnedActor = targetWorld->SpawnActor<AActor>();
+        }
+        if (actorData.ActorClass == AStaticMeshActor::StaticClass()->GetName())
+        {
+            SpawnedActor = targetWorld->SpawnActor<AStaticMeshActor>();
+        }
+        // 또는 특정 경로에서 클래스 로드: UClass* ActorClass = LoadClass<AActor>(nullptr, *actorData.ActorClass);
+        if (SpawnedActor == nullptr)
+        {
+            UE_LOG(LogLevel::Error, TEXT("LoadSceneFromData: Could not find Actor Class '%s'. Skipping Actor '%s'."),
+                   *actorData.ActorClass, *actorData.ActorID);
+            continue;
+        }
+
+        
+        // 액터 클래스가 AActor의 자식인지 확인
+
+        // 1.2. 액터 스폰 (기본 위치/회전 사용, 나중에 루트 컴포넌트가 설정)
+        //FActorSpawnParameters SpawnParams;
+        //SpawnParams.Name = FName(*actorData.ActorID); // 저장된 ID를 이름으로 사용 시도 (Unique해야 함)
+        //SpawnParams.NameMode = FActorSpawnParameters::ESpawnActorNameMode::Requested; // 이름 충돌 시 엔진이 처리하도록 할 수도 있음
+        //AActor* SpawnedActor = targetWorld->SpawnActor<AActor>(ActorClass, FVector::ZeroVector);
+
+        if (SpawnedActor == nullptr)
+        {
+            UE_LOG(LogLevel::Error, TEXT("LoadSceneFromData: Failed to spawn Actor '%s' of class '%s'."),
+                   *actorData.ActorID, *actorData.ActorClass);
+            continue;
+        }
+
+        SpawnedActor->SetActorLabel(actorData.ActorLabel); // 액터 레이블 설정
+        SpawnedActorsMap.Add(actorData.ActorID, SpawnedActor); // 맵에 추가
+
+        // 액터별 로컬 컴포넌트 맵: ComponentID -> 생성/재사용된 컴포넌트 포인터
+        TMap<FString, UActorComponent*> ActorComponentsMap;
+
+        // 1.3. 컴포넌트 생성 및 속성 설정 (아직 부착 안 함)
+        for (const FComponentSaveData& componentData : actorData.Components)
+        {
+            //UClass* ComponentClass = FindObject<UClass>(ANY_PACKAGE, *componentData.ComponentClass);
+            
+
+
+            // 컴포넌트 생성 (액터를 Outer로 지정, 저장된 ID를 이름으로)
+            UActorComponent* TargetComponent = nullptr; // 최종적으로 사용할 컴포넌트 포인터
+
+            // *** 핵심 변경: 저장된 ID(이름)로 액터에서 기존 컴포넌트를 먼저 찾아본다 ***
+            FName ComponentFName(*componentData.ComponentID);
+            TargetComponent = FindObject<UActorComponent>(SpawnedActor, ComponentFName); // Outer를 SpawnedActor로 지정하여 검색
+
+            // 클래스 일치 확인
+            if (TargetComponent && TargetComponent->GetClass()->GetName() != componentData.ComponentClass) {
+                UE_LOG(LogLevel::Warning, TEXT("Component '%s' class mismatch. Recreating."), *componentData.ComponentID);
+                // TODO: 기존 컴포넌트를 제거해야 할 수도 있음? 아니면 그냥 새것으로 덮어쓰나? 정책 필요.
+                TargetComponent = nullptr; // 새로 생성하도록 리셋
+            }
+            
+            if (TargetComponent == nullptr)
+            {
+                if (componentData.ComponentClass == UStaticMesh::StaticClass()->GetName())
+                {
+                    TargetComponent = SpawnedActor->AddComponent<UStaticMeshComponent>();
+                }
+                else if (componentData.ComponentClass == UCubeComp::StaticClass()->GetName())
+                {
+                    TargetComponent = SpawnedActor->AddComponent<UCubeComp>();
+                }
+                else
+                {
+                    TargetComponent = SpawnedActor->AddComponent<UActorComponent>();
+                }
+                
+                // !!! 중요: 컴포넌트 등록 !!!
+                //NewComponent->RegisterComponent();
+            }
+            
+            if (TargetComponent == nullptr)
+            {
+                 UE_LOG(LogLevel::Error, TEXT("LoadSceneFromData: Failed to create Component '%s' of class '%s' for Actor '%s'."),
+                       *componentData.ComponentID, *componentData.ComponentClass, *actorData.ActorID);
+                continue;
+            }
+
+
+
+            // --- 이제 TargetComponent는 유효한 기존 컴포넌트 또는 새로 생성된 컴포넌트 ---
+            if (TargetComponent)
+            {
+                // 1.4. 컴포넌트 속성 설정 (공통 로직)
+                //ApplyComponentProperties(TargetComponent, componentData.Properties);
+                TargetComponent->SetProperties( componentData.Properties); // 태그 설정 (ID로 사용)
+
+                // 1.5. *** 수정: 복합 키를 사용하여 컴포넌트 맵에 추가 ***
+                //FString CompositeKey = actorData.ActorID + TEXT("::") + componentData.ComponentID; // 예: "MyActor1::MeshComponent"
+                ActorComponentsMap.Add(componentData.ComponentID, TargetComponent);
+            }
+        }
+
+        // 루트 컴포넌트 설정
+        if (!actorData.RootComponentID.IsEmpty())
+        {
+            UActorComponent** FoundRootCompPtr = ActorComponentsMap.Find(actorData.RootComponentID);
+            if (FoundRootCompPtr && *FoundRootCompPtr)
+            {
+                USceneComponent* RootSceneComp = Cast<USceneComponent>(*FoundRootCompPtr);
+                if (RootSceneComp) {
+                    SpawnedActor->SetRootComponent(RootSceneComp);
+                    UE_LOG(LogLevel::Display, TEXT("Set RootComponent '%s' for Actor '%s'"), *actorData.RootComponentID, *actorData.ActorID);
+                }
+                else { /* 루트가 SceneComponent 아님 경고 */ }
+            }
+            else { /* 루트 컴포넌트 못 찾음 경고 */ }
+        }
+
+        // 컴포넌트 부착 및 상대 트랜스폼 설정
+        for (const FComponentSaveData& componentData : actorData.Components) // 다시 컴포넌트 데이터 순회
+        {
+            UActorComponent** FoundCompPtr = ActorComponentsMap.Find(componentData.ComponentID);
+            if (FoundCompPtr == nullptr || *FoundCompPtr == nullptr) continue; // 위에서 생성/찾기 실패한 경우
+
+            USceneComponent* CurrentSceneComp = Cast<USceneComponent>(*FoundCompPtr);
+            if (CurrentSceneComp == nullptr) continue; // SceneComponent만 부착/트랜스폼 가능
+
+            // 부착 정보 찾기 (Properties 맵 사용)
+            const FString* ParentIDPtr = componentData.Properties.Find(TEXT("AttachParentID"));
+            if (ParentIDPtr && !ParentIDPtr->IsEmpty() && *ParentIDPtr != TEXT("nullptr"))
+            {
+                // !!! 부모 검색 범위를 ActorComponentsMap (현재 액터의 컴포넌트)으로 한정 !!!
+                UActorComponent** FoundParentCompPtr = ActorComponentsMap.Find(*ParentIDPtr);
+                if (FoundParentCompPtr && *FoundParentCompPtr)
+                {
+                    USceneComponent* ParentSceneComp = Cast<USceneComponent>(*FoundParentCompPtr);
+                    if (ParentSceneComp) {
+                        // 부착 실행 (SetupAttachment 대신 AttachToComponent 권장 - 규칙 명시 가능)
+                        CurrentSceneComp->SetupAttachment(ParentSceneComp);
+                        UE_LOG(LogLevel::Display, TEXT("Attached Component '%s' to Parent '%s' in Actor '%s'"), *componentData.ComponentID, *(*ParentIDPtr), *actorData.ActorID);
+                    }
+                    else { /* 부모가 SceneComponent 아님 경고 */ }
+                }
+                else {
+                    // 부모 컴포넌트를 이 액터 내에서 찾지 못함 (오류 가능성 높음)
+                    UE_LOG(LogLevel::Warning, TEXT("Could not find Parent component '%s' within Actor '%s' for '%s'."), *(*ParentIDPtr), *actorData.ActorID, *componentData.ComponentID);
+                }
+            }
+
+            FVector RelativeLocation = FVector::ZeroVector;
+            const FString* LocStr = componentData.Properties.Find(TEXT("RelativeLocation"));
+            if (LocStr) RelativeLocation.InitFromString(*LocStr); // 또는 직접 파싱
+
+            FQuat RelativeQuat;
+            const FString* QuatStr = componentData.Properties.Find(TEXT("QuatRotation")); // 쿼터니언 저장/로드 권장
+            if (QuatStr) RelativeQuat.InitFromString(*QuatStr);
+
+            FVector RelativeScale3D = FVector::OneVector;
+            const FString* ScaleStr = componentData.Properties.Find(TEXT("RelativeScale")); // 스케일 키 이름 확인! (GetProperties와 일치해야 함)
+            if (ScaleStr) RelativeScale3D.InitFromString(*ScaleStr);
+
+            CurrentSceneComp->SetLocation(RelativeLocation);
+            CurrentSceneComp->SetRotation(RelativeQuat);
+            CurrentSceneComp->SetScale(RelativeScale3D);
+        }
+
+    }
+    UE_LOG(LogLevel::Display, TEXT("Loading Scene Data: Phase 1 Complete. Spawned %d actors."), SpawnedActorsMap.Num());
+
+    //// --- 2단계: 루트 컴포넌트 설정 및 부착 ---
+    //UE_LOG(LogLevel::Display, TEXT("Loading Scene Data: Phase 2 - Setting Root Components and Attachments..."));
+    //for (const FActorSaveData& actorData : sceneData.Actors)
+    //{
+    //    AActor** FoundActorPtr = SpawnedActorsMap.Find(actorData.ActorID);
+    //    if (FoundActorPtr == nullptr || *FoundActorPtr == nullptr) continue; // 1단계에서 스폰 실패한 경우
+
+    //    AActor* CurrentActor = *FoundActorPtr;
+
+    //    // 2.1. 루트 컴포넌트 설정
+    //    if (!actorData.RootComponentID.IsEmpty())
+    //    {
+    //        UActorComponent** FoundCompPtr = SpawnedComponentsMap.Find(actorData.RootComponentID);
+    //        if (FoundCompPtr && *FoundCompPtr)
+    //        {
+    //            USceneComponent* RootSceneComp = Cast<USceneComponent>(*FoundCompPtr);
+    //            if (RootSceneComp) {
+    //                CurrentActor->SetRootComponent(RootSceneComp);
+    //                 UE_LOG(LogLevel::Display, TEXT("Set RootComponent '%s' for Actor '%s'"), *actorData.RootComponentID, *actorData.ActorID);
+    //            } else {
+    //                UE_LOG(LogLevel::Warning, TEXT("Component '%s' designated as root for Actor '%s' is not a SceneComponent."),
+    //                       *actorData.RootComponentID, *actorData.ActorID);
+    //            }
+    //        } else {
+    //             UE_LOG(LogLevel::Warning, TEXT("Could not find component '%s' designated as root for Actor '%s'."),
+    //                       *actorData.RootComponentID, *actorData.ActorID);
+    //        }
+    //    }
+
+    //    // 2.2. 컴포넌트 부착 및 상대 트랜스폼 설정
+    //    for (const FComponentSaveData& componentData : actorData.Components)
+    //    {
+    //        UActorComponent** FoundCompPtr = SpawnedComponentsMap.Find(componentData.ComponentID);
+    //        if (FoundCompPtr == nullptr || *FoundCompPtr == nullptr) continue; // 1단계에서 생성 실패한 경우
+
+    //        USceneComponent* CurrentSceneComp = Cast<USceneComponent>(*FoundCompPtr);
+    //        if (CurrentSceneComp == nullptr) continue; // SceneComponent만 부착 가능
+
+    //        // 부착 정보 찾기
+    //        const FString* ParentIDPtr = componentData.Properties.Find(TEXT("AttachParentID"));
+    //        if (ParentIDPtr && !ParentIDPtr->IsEmpty() && *ParentIDPtr != TEXT("nullptr")) // "nullptr" 문자열 체크 추가
+    //        {
+    //            UActorComponent** FoundParentCompPtr = SpawnedComponentsMap.Find(*ParentIDPtr);
+    //            if (FoundParentCompPtr && *FoundParentCompPtr)
+    //            {
+    //                USceneComponent* ParentSceneComp = Cast<USceneComponent>(*FoundParentCompPtr);
+    //                if (ParentSceneComp) {
+    //                    // !!! 부착 실행 !!!
+    //                    CurrentSceneComp->SetupAttachment(ParentSceneComp);
+    //                     UE_LOG(LogLevel::Display, TEXT("Attached Component '%s' to Parent '%s'"), *componentData.ComponentID, *(*ParentIDPtr));
+    //                } else {
+    //                     UE_LOG(LogLevel::Warning, TEXT("Parent component '%s' for '%s' is not a SceneComponent."), *(*ParentIDPtr), *componentData.ComponentID);
+    //                }
+    //            } else {
+    //                 UE_LOG(LogLevel::Warning, TEXT("Could not find Parent component '%s' for '%s'."), *(*ParentIDPtr), *componentData.ComponentID);
+    //            }
+    //        }
+
+    //        // FVector RelativeLocation;
+    //        // FVector RelativeRotation;
+    //        // FVector RelativeScale3D;
+    //        // FQuat RelativeQuat;
+    //        //
+    //        // RelativeLocation.InitFromString(*componentData.Properties[TEXT("RelativeLocation")]);
+    //        // RelativeRotation.InitFromString(*componentData.Properties[TEXT("RelativeRotation")]);
+    //        // RelativeScale3D.InitFromString(*componentData.Properties[TEXT("RelativeScale3D")]);
+    //        // RelativeQuat.InitFromString(*componentData.Properties[TEXT("RelativeQuat")]);
+
+
+    //        
+    //        
+    //        //CurrentSceneComp->SetRelativeTransform(RelativeTransform, false, nullptr, ETeleportType::TeleportPhysics); 
+    //    }
+    //}
+    UE_LOG(LogLevel::Display, TEXT("Scene loading complete."));
+
+    // 임시 맵 정리 (선택적)
+    SpawnedActorsMap.Empty();
+    //SpawnedComponentsMap.Empty();
+
+    // 필요하다면 추가적인 월드 초기화 로직 (예: 네비게이션 재빌드 요청)
+    // ...
+
+    UE_LOG(LogLevel::Display, TEXT("Scene loading complete."));
+    return true;
+}
+
+std::string FSceneMgr::SerializeSceneData(const FSceneData& sceneData)
+{
+    json j; // 최종 JSON 객체
 
     // Version과 NextUUID 저장
     j["Version"] = sceneData.Version;
-    j["NextUUID"] = sceneData.NextUUID;
+    // NextUUID는 이제 씬 에셋 ID 관리 등에 사용될 수 있으나,
+    // 액터/컴포넌트 고유 ID는 각 데이터 내에 있으므로 그 자체의 의미는 줄어들 수 있음.
+    j["NextUUID"] = sceneData.NextUUID; // 필요하다면 유지
 
-    // Primitives 처리 (C++17 스타일)
-    for (const auto& [Id, Obj] : sceneData.Primitives)
+    // --- 새로운 구조 기반 직렬화 ---
+
+    json actorsArrayJson = json::array(); // 액터 목록을 담을 JSON 배열
+
+    // FSceneData의 Actors 배열 순회
+    for (const FActorSaveData& actorData : sceneData.Actors)
     {
-        USceneComponent* primitive = static_cast<USceneComponent*>(Obj);
-        std::vector<float> Location = { primitive->GetWorldLocation().x,primitive->GetWorldLocation().y,primitive->GetWorldLocation().z };
-        std::vector<float> Rotation = { primitive->GetWorldRotation().x,primitive->GetWorldRotation().y,primitive->GetWorldRotation().z };
-        std::vector<float> Scale = { primitive->GetWorldScale().x,primitive->GetWorldScale().y,primitive->GetWorldScale().z };
+        json actorJson = json::object(); // 개별 액터 정보를 담을 JSON 객체
 
-        std::string primitiveName = *primitive->GetName();
-        size_t pos = primitiveName.rfind('_');
-        if (pos != INDEX_NONE) {
-            primitiveName = primitiveName.substr(0, pos);
+        // 액터 기본 정보 저장 (FString -> std::string 변환 필요 시 TCHAR_TO_UTF8 사용)
+        actorJson["ActorID"] = (*actorData.ActorID);
+        actorJson["ActorClass"] = (*actorData.ActorClass);
+        actorJson["ActorLabel"] = (*actorData.ActorLabel);
+        actorJson["RootComponentID"] = (*actorData.RootComponentID);
+
+        json componentsArrayJson = json::array(); // 컴포넌트 목록을 담을 JSON 배열
+
+        // 액터의 Components 배열 순회
+        for (const FComponentSaveData& componentData : actorData.Components)
+        {
+            json componentJson = json::object(); // 개별 컴포넌트 정보를 담을 JSON 객체
+
+            // 컴포넌트 기본 정보 저장
+            componentJson["ComponentID"] = (*componentData.ComponentID);
+            componentJson["ComponentClass"] = (*componentData.ComponentClass);
+
+            // Properties 맵 저장 (TMap<FString, FString> -> JSON object)
+            json propertiesJson = json::object();
+            for (const auto& Pair : componentData.Properties) // TMap 순회
+            {
+                const FString& Key = Pair.Key;
+                const FString& Value = Pair.Value;
+                // JSON 키와 값 모두 문자열로 저장
+                propertiesJson[(*Key)] = (*Value);
+            }
+            componentJson["Properties"] = propertiesJson; // 프로퍼티 객체를 컴포넌트 객체에 추가
+
+            componentsArrayJson.push_back(componentJson); // 완성된 컴포넌트 JSON을 배열에 추가
         }
-        j["Primitives"][std::to_string(Id)] = {
-            {"Location", Location},
-            {"Rotation", Rotation},
-            {"Scale", Scale},
-            {"Type",primitiveName}
-        };
+
+        actorJson["Components"] = componentsArrayJson; // 컴포넌트 배열을 액터 객체에 추가
+        actorsArrayJson.push_back(actorJson); // 완성된 액터 JSON을 배열에 추가
     }
 
-    for (const auto& [id, camera] : sceneData.Cameras)
-    {
-        UCameraComponent* cameraComponent = static_cast<UCameraComponent*>(camera);
-        TArray<float> Location = { cameraComponent->GetWorldLocation().x, cameraComponent->GetWorldLocation().y, cameraComponent->GetWorldLocation().z };
-        TArray<float> Rotation = { 0.0f, cameraComponent->GetWorldRotation().y, cameraComponent->GetWorldRotation().z };
-        float FOV = cameraComponent->GetFOV();
-        float nearClip = cameraComponent->GetNearClip();
-        float farClip = cameraComponent->GetFarClip();
+    j["Actors"] = actorsArrayJson; // 액터 배열을 최종 JSON 객체에 추가
     
-        //
-        j["PerspectiveCamera"][std::to_string(id)] = {
-            {"Location", Location},
-            {"Rotation", Rotation},
-            {"FOV", FOV},
-            {"NearClip", nearClip},
-            {"FarClip", farClip}
-        };
-    }
-
-
+    
     return j.dump(4); // 4는 들여쓰기 수준
+
 }
 
-bool FSceneMgr::SaveSceneToFile(const FString& filename, const SceneData& sceneData)
+bool FSceneMgr::SaveSceneToFile(const FString& filename, const UWorld& world)
 {
+    FSceneData sceneData  = CreateSceneData(world);
+    
     std::ofstream outFile(*filename);
     if (!outFile) {
         FString errorMessage = "Failed to open file for writing: ";
@@ -206,5 +556,49 @@ bool FSceneMgr::SaveSceneToFile(const FString& filename, const SceneData& sceneD
     outFile.close();
 
     return true;
+}
+
+FSceneData FSceneMgr::CreateSceneData(const UWorld& world)
+{
+    FSceneData sceneData;
+    sceneData.Version = 1;
+
+    const TSet<AActor*>& Actors =  world.GetActors();
+
+    sceneData.Actors.Reserve(Actors.Num());
+
+    for (const auto& Actor : Actors)
+    {
+        FActorSaveData actorData;
+
+        actorData.ActorID = Actor->GetName();
+        actorData.ActorClass = Actor->GetClass()->GetName();
+        actorData.ActorLabel = Actor->GetActorLabel();
+
+        USceneComponent* RootComp = Actor->GetRootComponent();
+        actorData.RootComponentID = (RootComp != nullptr) ? RootComp->GetName() : TEXT(""); // 루트 없으면 빈 문자열
+        
+        for (const auto& Component : Actor->GetComponents())
+        {
+            FComponentSaveData componentData;
+            componentData.ComponentID = Component->GetName();
+            componentData.ComponentClass = Component->GetClass()->GetName();
+            
+            //TMap<FString, FString> InProperties;
+            Component->GetProperties(componentData.Properties);
+            
+            // 컴포넌트의 속성들을 JSON으로 변환하여 저장
+            // for (const auto& Property : InProperties)
+            // {
+            //    FString Value = Property.Value;
+            //     
+            //     componentData.Properties[Property.Key] = Value;
+            // }
+
+            actorData.Components.Add(componentData);
+        }
+        sceneData.Actors.Add(actorData);
+    }
+    return sceneData;
 }
 

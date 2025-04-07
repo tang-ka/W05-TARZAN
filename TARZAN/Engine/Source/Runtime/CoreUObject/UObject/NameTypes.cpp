@@ -444,3 +444,5 @@ bool FName::operator==(const FName& Other) const
 {
 	return ComparisonIndex == Other.ComparisonIndex;
 }
+
+const FName NAME_None = FName(); 

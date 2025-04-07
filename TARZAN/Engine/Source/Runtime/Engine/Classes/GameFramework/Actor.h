@@ -51,7 +51,7 @@ public:
      */
     template <typename T>
         requires std::derived_from<T, UActorComponent>
-    T* AddComponent();
+    T* AddComponent(FName Name = NAME_None);
 
     void AddComponent(UActorComponent* Component);
     /** Actor가 가지고 있는 Component를 제거합니다. */
@@ -164,9 +164,9 @@ inline bool AActor::AddActorLocalOffset(const FVector& DeltaLocation)
 }
 
 template <typename T> requires std::derived_from<T, UActorComponent>
-T* AActor::AddComponent()
+T* AActor::AddComponent(FName Name)
 {
-    T* Component = FObjectFactory::ConstructObject<T>();
+    T* Component = FObjectFactory::ConstructObject<T>(this, Name);
     OwnedComponents.Add(Component);
     Component->Owner = this;
 

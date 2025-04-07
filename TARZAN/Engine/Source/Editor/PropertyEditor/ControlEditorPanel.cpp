@@ -104,6 +104,7 @@ void ControlEditorPanel::CreateMenuButton(ImVec2 ButtonSize, ImFont* IconFont)
         
         if (ImGui::MenuItem("New Scene"))
         {
+             GEngine->GetWorld()->NewScene();
             // TODO: New Scene
         }
 
@@ -134,9 +135,11 @@ void ControlEditorPanel::CreateMenuButton(ImVec2 ButtonSize, ImFont* IconFont)
                 return;
             }
 
-            // TODO: Save Scene
+            GEngine->GetWorld()->SaveScene(FileName);
 
-            tinyfd_messageBox("알림", "저장되었습니다.", "ok", "info", 1);
+            tinyfd_messageBox("알림",
+
+            "저장되었습니다.", "ok", "info", 1);
         }
 
         ImGui::Separator();

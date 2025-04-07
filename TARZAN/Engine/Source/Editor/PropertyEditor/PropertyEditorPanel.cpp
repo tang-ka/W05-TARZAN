@@ -18,6 +18,10 @@
 #include <Components/UParticleSubUVComp.h>
 #include <Components/Movement/MovementComponent.h>
 
+#include "Components/Movement/ProjectileMovementComponent.h"
+#include "Components/Movement/RotatingMovementComponent.h"
+
+
 void PropertyEditorPanel::Render()
 {
     /* Pre Setup */
@@ -144,6 +148,16 @@ void PropertyEditorPanel::Render()
                     UFireballComponent* FireballComponent = PickedActor->AddComponent<UFireballComponent>();
                     PickedComponent = FireballComponent;
                 }
+                if (ImGui::Selectable("ProjectileMovementComponent"))
+                {
+                    UProjectileMovementComponent* ProjectileComponent = PickedActor->AddComponent<UProjectileMovementComponent>();
+                    PickedComponent = ProjectileComponent;
+                }
+                if (ImGui::Selectable("RotatingMovementComponent"))
+                {
+                    URotatingMovementComponent* RotatingComponent = PickedActor->AddComponent<URotatingMovementComponent>();
+                    PickedComponent = RotatingComponent;
+                }
                 if (ImGui::Selectable("HeightFogComponent"))
                 {
                     UHeightFogComponent* HeightFogComponent = PickedActor->AddComponent<UHeightFogComponent>();
@@ -169,9 +183,9 @@ void PropertyEditorPanel::Render()
             {
                 LastComponent = PickedComponent;
                 bFirstFrame = true;
-                Location = SceneComp->GetWorldLocation();
-                Rotation = SceneComp->GetWorldRotation();
-                Scale = SceneComp->GetWorldScale();
+                Location = SceneComp->GetLocalLocation();
+                Rotation = SceneComp->GetLocalRotation();
+                Scale = SceneComp->GetLocalScale();
             }
 
             bool bChanged = false;
