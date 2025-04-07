@@ -360,8 +360,8 @@ struct FFireballConstant
     float Intensity = 2;
     float Radius = 2;
     float RadiusFallOff = 2;
-    float InnerAngle = 0;
-    float OuterAngle = 0;
+    float InnerAngle = 15;
+    float OuterAngle = 45;
     FLinearColor Color = FLinearColor::Red();
     FVector Direction = (0, 0, 0);
     int LightType = 0; 
