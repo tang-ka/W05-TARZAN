@@ -53,6 +53,7 @@ private:
 
     FName NamePrivate;
     UClass* ClassPrivate = nullptr;
+    UObject* OuterPrivate = nullptr; // Outer 객체의 포인터
 
 public:
     UObject();
@@ -73,6 +74,8 @@ public:
     uint32 GetInternalIndex() const { return InternalIndex; }
 
     UClass* GetClass() const { return ClassPrivate; }
+    UObject* GetOuter() const { return OuterPrivate; }
+    
 
 
     /** this가 SomeBase인지, SomeBase의 자식 클래스인지 확인합니다. */

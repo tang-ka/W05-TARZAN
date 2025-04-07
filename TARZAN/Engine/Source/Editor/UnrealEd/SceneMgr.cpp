@@ -17,6 +17,7 @@
 #include "Engine/World.h"
 #include "Engine/FLoaderOBJ.h"
 #include "LevelEditor/SLevelEditor.h"
+#include "UObject/UObjectGlobals.h"
 using json = nlohmann::json;
 
 /**
@@ -189,6 +190,14 @@ void FSceneMgr::LoadSceneFromFile(const FString& filename, UWorld& world)
 
     FSceneData SceneDate;
     bool Result = ParseSceneData(j,SceneDate);
+    if (!Result)
+    {
+        UE_LOG(LogLevel::Error, "Failed to parse scene data from file: %s", *filename);
+        return ;
+    }
+
+    LoadSceneFromData(SceneDate, &world);
+    
     
     int a = 0;
 
@@ -207,7 +216,7 @@ bool FSceneMgr::LoadSceneFromData(const FSceneData& sceneData, UWorld* targetWor
 
     // 임시 맵: 저장된 ID와 새로 생성된 객체 포인터를 매핑
     TMap<FString, AActor*> SpawnedActorsMap;
-    TMap<FString, UActorComponent*> SpawnedComponentsMap;
+    //TMap<FString, UActorComponent*> SpawnedComponentsMap;
 
     // --- 1단계: 액터 및 컴포넌트 생성 ---
     UE_LOG(LogLevel::Display, TEXT("Loading Scene Data: Phase 1 - Spawning Actors and Components..."));
@@ -220,7 +229,7 @@ bool FSceneMgr::LoadSceneFromData(const FSceneData& sceneData, UWorld* targetWor
         {
             SpawnedActor = targetWorld->SpawnActor<AActor>();
         }
-        else if (actorData.ActorClass == AStaticMeshActor::StaticClass()->GetName())
+        if (actorData.ActorClass == AStaticMeshActor::StaticClass()->GetName())
         {
             SpawnedActor = targetWorld->SpawnActor<AStaticMeshActor>();
         }
@@ -251,114 +260,222 @@ bool FSceneMgr::LoadSceneFromData(const FSceneData& sceneData, UWorld* targetWor
         SpawnedActor->SetActorLabel(actorData.ActorLabel); // 액터 레이블 설정
         SpawnedActorsMap.Add(actorData.ActorID, SpawnedActor); // 맵에 추가
 
+        // 액터별 로컬 컴포넌트 맵: ComponentID -> 생성/재사용된 컴포넌트 포인터
+        TMap<FString, UActorComponent*> ActorComponentsMap;
+
         // 1.3. 컴포넌트 생성 및 속성 설정 (아직 부착 안 함)
         for (const FComponentSaveData& componentData : actorData.Components)
         {
-            UClass* ComponentClass = FindObject<UClass>(ANY_PACKAGE, *componentData.ComponentClass);
-            // 또는 LoadClass<UActorComponent>(...)
-             if (ComponentClass == nullptr)
-            {
-                UE_LOG(LogTemp, Error, TEXT("LoadSceneFromData: Could not find Component Class '%s' for Actor '%s'. Skipping Component '%s'."),
-                       *componentData.ComponentClass, *actorData.ActorID, *componentData.ComponentID);
-                continue;
-            }
+            //UClass* ComponentClass = FindObject<UClass>(ANY_PACKAGE, *componentData.ComponentClass);
+            
+
 
             // 컴포넌트 생성 (액터를 Outer로 지정, 저장된 ID를 이름으로)
-            UActorComponent* NewComponent = NewObject<UActorComponent>(SpawnedActor, ComponentClass, FName(*componentData.ComponentID));
-            if (NewComponent == nullptr)
+            UActorComponent* TargetComponent = nullptr; // 최종적으로 사용할 컴포넌트 포인터
+
+            // *** 핵심 변경: 저장된 ID(이름)로 액터에서 기존 컴포넌트를 먼저 찾아본다 ***
+            FName ComponentFName(*componentData.ComponentID);
+            TargetComponent = FindObject<UActorComponent>(SpawnedActor, ComponentFName); // Outer를 SpawnedActor로 지정하여 검색
+
+            // 클래스 일치 확인
+            if (TargetComponent && TargetComponent->GetClass()->GetName() != componentData.ComponentClass) {
+                UE_LOG(LogLevel::Warning, TEXT("Component '%s' class mismatch. Recreating."), *componentData.ComponentID);
+                // TODO: 기존 컴포넌트를 제거해야 할 수도 있음? 아니면 그냥 새것으로 덮어쓰나? 정책 필요.
+                TargetComponent = nullptr; // 새로 생성하도록 리셋
+            }
+            
+            if (TargetComponent == nullptr)
             {
-                 UE_LOG(LogTemp, Error, TEXT("LoadSceneFromData: Failed to create Component '%s' of class '%s' for Actor '%s'."),
+                if (componentData.ComponentClass == UStaticMesh::StaticClass()->GetName())
+                {
+                    TargetComponent = SpawnedActor->AddComponent<UStaticMeshComponent>();
+                }
+                else if (componentData.ComponentClass == UCubeComp::StaticClass()->GetName())
+                {
+                    TargetComponent = SpawnedActor->AddComponent<UCubeComp>();
+                }
+                else
+                {
+                    TargetComponent = SpawnedActor->AddComponent<UActorComponent>();
+                }
+                
+                // !!! 중요: 컴포넌트 등록 !!!
+                //NewComponent->RegisterComponent();
+            }
+            
+            if (TargetComponent == nullptr)
+            {
+                 UE_LOG(LogLevel::Error, TEXT("LoadSceneFromData: Failed to create Component '%s' of class '%s' for Actor '%s'."),
                        *componentData.ComponentID, *componentData.ComponentClass, *actorData.ActorID);
                 continue;
             }
 
-            // !!! 중요: 컴포넌트 등록 !!!
-            NewComponent->RegisterComponent();
 
-            SpawnedComponentsMap.Add(componentData.ComponentID, NewComponent); // 맵에 추가
 
-            // 1.4. 컴포넌트 속성 설정 (Properties 맵 파싱)
-            //    (이 부분은 길어질 수 있으므로 별도 함수로 분리하는 것이 좋음)
-            ApplyComponentProperties(NewComponent, componentData.Properties);
-        }
-    }
-    UE_LOG(LogTemp, Log, TEXT("Loading Scene Data: Phase 1 Complete. Spawned %d actors."), SpawnedActorsMap.Num());
-
-    // --- 2단계: 루트 컴포넌트 설정 및 부착 ---
-    UE_LOG(LogTemp, Log, TEXT("Loading Scene Data: Phase 2 - Setting Root Components and Attachments..."));
-    for (const FActorSaveData& actorData : sceneData.Actors)
-    {
-        AActor** FoundActorPtr = SpawnedActorsMap.Find(actorData.ActorID);
-        if (FoundActorPtr == nullptr || *FoundActorPtr == nullptr) continue; // 1단계에서 스폰 실패한 경우
-
-        AActor* CurrentActor = *FoundActorPtr;
-
-        // 2.1. 루트 컴포넌트 설정
-        if (!actorData.RootComponentID.IsEmpty())
-        {
-            UActorComponent** FoundCompPtr = SpawnedComponentsMap.Find(actorData.RootComponentID);
-            if (FoundCompPtr && *FoundCompPtr)
+            // --- 이제 TargetComponent는 유효한 기존 컴포넌트 또는 새로 생성된 컴포넌트 ---
+            if (TargetComponent)
             {
-                USceneComponent* RootSceneComp = Cast<USceneComponent>(*FoundCompPtr);
-                if (RootSceneComp) {
-                    CurrentActor->SetRootComponent(RootSceneComp);
-                     UE_LOG(LogTemp, Verbose, TEXT("Set RootComponent '%s' for Actor '%s'"), *actorData.RootComponentID, *actorData.ActorID);
-                } else {
-                    UE_LOG(LogTemp, Warning, TEXT("Component '%s' designated as root for Actor '%s' is not a SceneComponent."),
-                           *actorData.RootComponentID, *actorData.ActorID);
-                }
-            } else {
-                 UE_LOG(LogTemp, Warning, TEXT("Could not find component '%s' designated as root for Actor '%s'."),
-                           *actorData.RootComponentID, *actorData.ActorID);
+                // 1.4. 컴포넌트 속성 설정 (공통 로직)
+                //ApplyComponentProperties(TargetComponent, componentData.Properties);
+                TargetComponent->SetProperties( componentData.Properties); // 태그 설정 (ID로 사용)
+
+                // 1.5. *** 수정: 복합 키를 사용하여 컴포넌트 맵에 추가 ***
+                //FString CompositeKey = actorData.ActorID + TEXT("::") + componentData.ComponentID; // 예: "MyActor1::MeshComponent"
+                ActorComponentsMap.Add(componentData.ComponentID, TargetComponent);
             }
         }
 
-        // 2.2. 컴포넌트 부착 및 상대 트랜스폼 설정
-        for (const FComponentSaveData& componentData : actorData.Components)
+        // 루트 컴포넌트 설정
+        if (!actorData.RootComponentID.IsEmpty())
         {
-            UActorComponent** FoundCompPtr = SpawnedComponentsMap.Find(componentData.ComponentID);
-            if (FoundCompPtr == nullptr || *FoundCompPtr == nullptr) continue; // 1단계에서 생성 실패한 경우
+            UActorComponent** FoundRootCompPtr = ActorComponentsMap.Find(actorData.RootComponentID);
+            if (FoundRootCompPtr && *FoundRootCompPtr)
+            {
+                USceneComponent* RootSceneComp = Cast<USceneComponent>(*FoundRootCompPtr);
+                if (RootSceneComp) {
+                    SpawnedActor->SetRootComponent(RootSceneComp);
+                    UE_LOG(LogLevel::Display, TEXT("Set RootComponent '%s' for Actor '%s'"), *actorData.RootComponentID, *actorData.ActorID);
+                }
+                else { /* 루트가 SceneComponent 아님 경고 */ }
+            }
+            else { /* 루트 컴포넌트 못 찾음 경고 */ }
+        }
+
+        // 컴포넌트 부착 및 상대 트랜스폼 설정
+        for (const FComponentSaveData& componentData : actorData.Components) // 다시 컴포넌트 데이터 순회
+        {
+            UActorComponent** FoundCompPtr = ActorComponentsMap.Find(componentData.ComponentID);
+            if (FoundCompPtr == nullptr || *FoundCompPtr == nullptr) continue; // 위에서 생성/찾기 실패한 경우
 
             USceneComponent* CurrentSceneComp = Cast<USceneComponent>(*FoundCompPtr);
-            if (CurrentSceneComp == nullptr) continue; // SceneComponent만 부착 가능
+            if (CurrentSceneComp == nullptr) continue; // SceneComponent만 부착/트랜스폼 가능
 
-            // 부착 정보 찾기
+            // 부착 정보 찾기 (Properties 맵 사용)
             const FString* ParentIDPtr = componentData.Properties.Find(TEXT("AttachParentID"));
-            if (ParentIDPtr && !ParentIDPtr->IsEmpty() && *ParentIDPtr != TEXT("nullptr")) // "nullptr" 문자열 체크 추가
+            if (ParentIDPtr && !ParentIDPtr->IsEmpty() && *ParentIDPtr != TEXT("nullptr"))
             {
-                UActorComponent** FoundParentCompPtr = SpawnedComponentsMap.Find(*ParentIDPtr);
+                // !!! 부모 검색 범위를 ActorComponentsMap (현재 액터의 컴포넌트)으로 한정 !!!
+                UActorComponent** FoundParentCompPtr = ActorComponentsMap.Find(*ParentIDPtr);
                 if (FoundParentCompPtr && *FoundParentCompPtr)
                 {
                     USceneComponent* ParentSceneComp = Cast<USceneComponent>(*FoundParentCompPtr);
                     if (ParentSceneComp) {
-                        // !!! 부착 실행 !!!
-                        CurrentSceneComp->AttachToComponent(ParentSceneComp, FAttachmentTransformRules::KeepRelativeTransform);
-                         UE_LOG(LogTemp, Verbose, TEXT("Attached Component '%s' to Parent '%s'"), *componentData.ComponentID, *(*ParentIDPtr));
-                    } else {
-                         UE_LOG(LogTemp, Warning, TEXT("Parent component '%s' for '%s' is not a SceneComponent."), *(*ParentIDPtr), *componentData.ComponentID);
+                        // 부착 실행 (SetupAttachment 대신 AttachToComponent 권장 - 규칙 명시 가능)
+                        CurrentSceneComp->SetupAttachment(ParentSceneComp);
+                        UE_LOG(LogLevel::Display, TEXT("Attached Component '%s' to Parent '%s' in Actor '%s'"), *componentData.ComponentID, *(*ParentIDPtr), *actorData.ActorID);
                     }
-                } else {
-                     UE_LOG(LogTemp, Warning, TEXT("Could not find Parent component '%s' for '%s'."), *(*ParentIDPtr), *componentData.ComponentID);
+                    else { /* 부모가 SceneComponent 아님 경고 */ }
+                }
+                else {
+                    // 부모 컴포넌트를 이 액터 내에서 찾지 못함 (오류 가능성 높음)
+                    UE_LOG(LogLevel::Warning, TEXT("Could not find Parent component '%s' within Actor '%s' for '%s'."), *(*ParentIDPtr), *actorData.ActorID, *componentData.ComponentID);
                 }
             }
 
-            // 상대 트랜스폼 설정 (부착 후 설정)
-            FTransform RelativeTransform = FTransform::Identity; // 기본값
-            // Properties에서 RelativeLocation, RelativeRotation, RelativeScale 파싱 (ApplyComponentProperties에서 분리하거나 여기서 처리)
-            ParseRelativeTransform(componentData.Properties, RelativeTransform); // 이 함수 구현 필요
-            CurrentSceneComp->SetRelativeTransform(RelativeTransform, false, nullptr, ETeleportType::TeleportPhysics); // 물리가 튀지 않도록 Teleport
+            FVector RelativeLocation = FVector::ZeroVector;
+            const FString* LocStr = componentData.Properties.Find(TEXT("RelativeLocation"));
+            if (LocStr) RelativeLocation.InitFromString(*LocStr); // 또는 직접 파싱
+
+            FQuat RelativeQuat;
+            const FString* QuatStr = componentData.Properties.Find(TEXT("QuatRotation")); // 쿼터니언 저장/로드 권장
+            if (QuatStr) RelativeQuat.InitFromString(*QuatStr);
+
+            FVector RelativeScale3D = FVector::OneVector;
+            const FString* ScaleStr = componentData.Properties.Find(TEXT("RelativeScale")); // 스케일 키 이름 확인! (GetProperties와 일치해야 함)
+            if (ScaleStr) RelativeScale3D.InitFromString(*ScaleStr);
+
+            CurrentSceneComp->SetLocation(RelativeLocation);
+            CurrentSceneComp->SetRotation(RelativeQuat);
+            CurrentSceneComp->SetScale(RelativeScale3D);
         }
+
     }
-    UE_LOG(LogTemp, Log, TEXT("Loading Scene Data: Phase 2 Complete."));
+    UE_LOG(LogLevel::Display, TEXT("Loading Scene Data: Phase 1 Complete. Spawned %d actors."), SpawnedActorsMap.Num());
+
+    //// --- 2단계: 루트 컴포넌트 설정 및 부착 ---
+    //UE_LOG(LogLevel::Display, TEXT("Loading Scene Data: Phase 2 - Setting Root Components and Attachments..."));
+    //for (const FActorSaveData& actorData : sceneData.Actors)
+    //{
+    //    AActor** FoundActorPtr = SpawnedActorsMap.Find(actorData.ActorID);
+    //    if (FoundActorPtr == nullptr || *FoundActorPtr == nullptr) continue; // 1단계에서 스폰 실패한 경우
+
+    //    AActor* CurrentActor = *FoundActorPtr;
+
+    //    // 2.1. 루트 컴포넌트 설정
+    //    if (!actorData.RootComponentID.IsEmpty())
+    //    {
+    //        UActorComponent** FoundCompPtr = SpawnedComponentsMap.Find(actorData.RootComponentID);
+    //        if (FoundCompPtr && *FoundCompPtr)
+    //        {
+    //            USceneComponent* RootSceneComp = Cast<USceneComponent>(*FoundCompPtr);
+    //            if (RootSceneComp) {
+    //                CurrentActor->SetRootComponent(RootSceneComp);
+    //                 UE_LOG(LogLevel::Display, TEXT("Set RootComponent '%s' for Actor '%s'"), *actorData.RootComponentID, *actorData.ActorID);
+    //            } else {
+    //                UE_LOG(LogLevel::Warning, TEXT("Component '%s' designated as root for Actor '%s' is not a SceneComponent."),
+    //                       *actorData.RootComponentID, *actorData.ActorID);
+    //            }
+    //        } else {
+    //             UE_LOG(LogLevel::Warning, TEXT("Could not find component '%s' designated as root for Actor '%s'."),
+    //                       *actorData.RootComponentID, *actorData.ActorID);
+    //        }
+    //    }
+
+    //    // 2.2. 컴포넌트 부착 및 상대 트랜스폼 설정
+    //    for (const FComponentSaveData& componentData : actorData.Components)
+    //    {
+    //        UActorComponent** FoundCompPtr = SpawnedComponentsMap.Find(componentData.ComponentID);
+    //        if (FoundCompPtr == nullptr || *FoundCompPtr == nullptr) continue; // 1단계에서 생성 실패한 경우
+
+    //        USceneComponent* CurrentSceneComp = Cast<USceneComponent>(*FoundCompPtr);
+    //        if (CurrentSceneComp == nullptr) continue; // SceneComponent만 부착 가능
+
+    //        // 부착 정보 찾기
+    //        const FString* ParentIDPtr = componentData.Properties.Find(TEXT("AttachParentID"));
+    //        if (ParentIDPtr && !ParentIDPtr->IsEmpty() && *ParentIDPtr != TEXT("nullptr")) // "nullptr" 문자열 체크 추가
+    //        {
+    //            UActorComponent** FoundParentCompPtr = SpawnedComponentsMap.Find(*ParentIDPtr);
+    //            if (FoundParentCompPtr && *FoundParentCompPtr)
+    //            {
+    //                USceneComponent* ParentSceneComp = Cast<USceneComponent>(*FoundParentCompPtr);
+    //                if (ParentSceneComp) {
+    //                    // !!! 부착 실행 !!!
+    //                    CurrentSceneComp->SetupAttachment(ParentSceneComp);
+    //                     UE_LOG(LogLevel::Display, TEXT("Attached Component '%s' to Parent '%s'"), *componentData.ComponentID, *(*ParentIDPtr));
+    //                } else {
+    //                     UE_LOG(LogLevel::Warning, TEXT("Parent component '%s' for '%s' is not a SceneComponent."), *(*ParentIDPtr), *componentData.ComponentID);
+    //                }
+    //            } else {
+    //                 UE_LOG(LogLevel::Warning, TEXT("Could not find Parent component '%s' for '%s'."), *(*ParentIDPtr), *componentData.ComponentID);
+    //            }
+    //        }
+
+    //        // FVector RelativeLocation;
+    //        // FVector RelativeRotation;
+    //        // FVector RelativeScale3D;
+    //        // FQuat RelativeQuat;
+    //        //
+    //        // RelativeLocation.InitFromString(*componentData.Properties[TEXT("RelativeLocation")]);
+    //        // RelativeRotation.InitFromString(*componentData.Properties[TEXT("RelativeRotation")]);
+    //        // RelativeScale3D.InitFromString(*componentData.Properties[TEXT("RelativeScale3D")]);
+    //        // RelativeQuat.InitFromString(*componentData.Properties[TEXT("RelativeQuat")]);
+
+
+    //        
+    //        
+    //        //CurrentSceneComp->SetRelativeTransform(RelativeTransform, false, nullptr, ETeleportType::TeleportPhysics); 
+    //    }
+    //}
+    UE_LOG(LogLevel::Display, TEXT("Scene loading complete."));
 
     // 임시 맵 정리 (선택적)
     SpawnedActorsMap.Empty();
-    SpawnedComponentsMap.Empty();
+    //SpawnedComponentsMap.Empty();
 
     // 필요하다면 추가적인 월드 초기화 로직 (예: 네비게이션 재빌드 요청)
     // ...
 
-    UE_LOG(LogTemp, Log, TEXT("Scene loading complete."));
+    UE_LOG(LogLevel::Display, TEXT("Scene loading complete."));
     return true;
 }
 

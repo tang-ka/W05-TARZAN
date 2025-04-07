@@ -23,6 +23,9 @@ public:
     virtual void PostDuplicate() override;
     
     void GetProperties(TMap<FString, FString>& OutProperties) const override;
+    void SetProperties(const TMap<FString, FString>& InProperties) override;
+
+    
 private:
     FString m_Type;
 

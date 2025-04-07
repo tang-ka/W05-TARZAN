@@ -30,6 +30,7 @@ public:
     void Tick(ELevelTick tickType, float deltaSeconds);
     void Release();
     void ReloadScene(const FString& FileName);
+    void NewScene();
     void SaveScene(const FString& FileName);
     
     void ClearScene();
@@ -83,7 +84,7 @@ template <typename T>
     requires std::derived_from<T, AActor>
 T* UWorld::SpawnActor()
 {
-    T* Actor = FObjectFactory::ConstructObject<T>();
+    T* Actor = FObjectFactory::ConstructObject<T>(this);
     // TODO: 일단 AddComponent에서 Component마다 초기화
     // 추후에 RegisterComponent() 만들어지면 주석 해제
     // Actor->InitializeComponents();

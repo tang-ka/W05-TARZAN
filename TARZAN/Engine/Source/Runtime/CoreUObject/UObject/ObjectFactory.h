@@ -9,19 +9,30 @@ class FObjectFactory
 public:
     template <typename T>
         requires std::derived_from<T, UObject>
-    static T* ConstructObject()
+    static T* ConstructObject(UObject* Outer, FName Name = NAME_None)
     {
         uint32 id = UEngineStatics::GenUUID();
-        FString Name = T::StaticClass()->GetName() + "_" + std::to_string(id);
+        //FString Name = T::StaticClass()->GetName() + "_" + std::to_string(id);
+
+        FName ObjectName = Name;
+        if (ObjectName == NAME_None) // 이름이 제공되지 않으면 자동 생성
+        {
+            uint32 id = UEngineStatics::GenUUID(); // UUID 생성은 이름 충돌 방지에 좋음
+            ObjectName = FName(*FString::Printf(TEXT("%s_%u"), *T::StaticClass()->GetName(), id));
+            // 또는 ObjectName = FName(T::StaticClass()->GetName(), id); // FName 생성자 활용 가능
+        }
 
         T* Obj = new T; // TODO: FPlatformMemory::Malloc으로 변경, placement new 사용시 Free방법 생각하기
         Obj->ClassPrivate = T::StaticClass();
-        Obj->NamePrivate = Name;
+        Obj->NamePrivate = ObjectName;
         Obj->UUID = id;
+
+        // TODO: 리소스는 우선 nullptr 처리 차후 패키징 방법 생각하기
+        Obj->OuterPrivate = Outer;
 
         GUObjectArray.AddObject(Obj);
 
-        UE_LOG(LogLevel::Display, "Created New Object : %s", *Name);
+        UE_LOG(LogLevel::Display, "Created New Object : %s", *ObjectName.ToString());
         return Obj;
     }
 

@@ -41,7 +41,7 @@ int32 UEditorEngine::Init(HWND hwnd)
     
     FWorldContext EditorContext;
     EditorContext.WorldType = EWorldType::Editor;
-    EditorContext.thisCurrentWorld = std::shared_ptr<UWorld>(FObjectFactory::ConstructObject<UWorld>());
+    EditorContext.thisCurrentWorld = std::shared_ptr<UWorld>(FObjectFactory::ConstructObject<UWorld>(this));
     std::shared_ptr<UWorld> EditWorld  =EditorContext.thisCurrentWorld;
     EditWorld->InitWorld();
     EditWorld->WorldType = EWorldType::Editor;

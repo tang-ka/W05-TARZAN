@@ -189,3 +189,23 @@ void USceneComponent::GetProperties(TMap<FString, FString>& OutProperties) const
     
     return;
 }
+
+void USceneComponent::SetProperties(const TMap<FString, FString>& Properties)
+{
+    Super::SetProperties(Properties);
+
+    // const FString* TempStr = nullptr;
+    //
+    // // --- SceneComponent 자체의 상태 복원 ---
+    //
+    // // 예시: 가시성(Visibility) 상태 복원
+    // // (GetProperties에서 "bVisible" 키로 저장했다고 가정)
+    // TempStr = Properties.Find(TEXT("bVisible"));
+    // if (TempStr)
+    // {
+    //     // SetVisibility 함수는 bVisible 멤버 변수 설정 및
+    //     // 렌더링 상태 업데이트 등의 추가 작업을 수행할 수 있음.
+    //     //SetVisibility(TempStr->ToBool()); // FString::ToBool() 사용 가정
+    //     
+    // }
+}

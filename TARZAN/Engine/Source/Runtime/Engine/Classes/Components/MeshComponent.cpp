@@ -70,7 +70,7 @@ UObject* UMeshComponent::Duplicate() const
 
 void UMeshComponent::DuplicateSubObjects(const UObject* Source)
 {
-    UPrimitiveComponent::DuplicateSubObjects(Source);
+    Super::DuplicateSubObjects(Source);
     // OverrideMaterials는 복사 생성자에서 복제됨
 }
 
@@ -79,7 +79,12 @@ void UMeshComponent::PostDuplicate() {}
 void UMeshComponent::GetProperties(TMap<FString, FString>& OutProperties) const
 {
     
-    UPrimitiveComponent::GetProperties(OutProperties);
+    Super::GetProperties(OutProperties);
 
     
+}
+
+void UMeshComponent::SetProperties(const TMap<FString, FString>& InProperties)
+{
+    Super::SetProperties(InProperties);
 }

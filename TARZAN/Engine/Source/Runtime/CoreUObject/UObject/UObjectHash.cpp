@@ -78,7 +78,7 @@ void RemoveFromClassMap(UObject* Object)
     TSet<UObject*>& ObjectSet = HashTable.ClassToObjectListMap.FindOrAdd(Object->GetClass());
     int32 NumRemoved = ObjectSet.Remove(Object);
 
-    if (NumRemoved == 0)
+    if (ObjectSet.Num() == 0)
     {
         HashTable.ClassToObjectListMap.Remove(Object->GetClass());
     }

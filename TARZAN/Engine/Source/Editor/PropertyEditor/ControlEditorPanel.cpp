@@ -100,6 +100,7 @@ void ControlEditorPanel::CreateMenuButton(ImVec2 ButtonSize, ImFont* IconFont)
         
         if (ImGui::MenuItem("New Scene"))
         {
+             GEngine->GetWorld()->NewScene();
             // TODO: New Scene
         }
 

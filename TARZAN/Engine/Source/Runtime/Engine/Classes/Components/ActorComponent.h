@@ -81,6 +81,9 @@ public:
  */
     virtual void GetProperties(TMap<FString, FString>& OutProperties) const;
 
+    /** 저장된 Properties 맵에서 컴포넌트의 상태를 복원합니다. */
+    virtual void SetProperties(const TMap<FString, FString>& Properties);
+
 protected:
     /**월드에 등록되었을 때 호출되는 함수*/
     virtual void OnRegister();

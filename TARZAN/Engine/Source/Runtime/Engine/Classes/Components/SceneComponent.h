@@ -61,6 +61,10 @@ public:
 
     void GetProperties(TMap<FString, FString>& OutProperties) const override;
 
+    /** 저장된 Properties 맵에서 컴포넌트의 상태를 복원합니다. */
+    void SetProperties(const TMap<FString, FString>& InProperties) override;
+
+
 private:
     
 

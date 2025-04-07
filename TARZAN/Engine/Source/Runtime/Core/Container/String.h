@@ -171,6 +171,45 @@ public:
      */
     static FString Printf(const ElementType* Format, ...);
 
+    /**
+ * 문자열 내용을 기반으로 bool 값을 반환합니다.
+ */
+    bool ToBool() const
+    {
+        // 빈 문자열은 false로 처리
+        if (IsEmpty())
+        {
+            return false;
+        }
+
+        // 가장 일반적인 경우: "true" 또는 "1" (대소문자 무관)
+        // Equals 함수가 이미 대소문자 무시 비교를 지원하므로 활용합니다.
+        if (Equals(TEXT("true"), ESearchCase::IgnoreCase))
+        {
+            return true;
+        }
+        if (Equals(TEXT("1"))) // "1"은 대소문자 구분이 의미 없음
+        {
+            return true;
+        }
+
+        // 그 외: "false" 또는 "0" (대소문자 무관)
+        // 이 경우들도 명시적으로 false를 반환하는 것이 안전합니다.
+        if (Equals(TEXT("false"), ESearchCase::IgnoreCase))
+        {
+            return false;
+        }
+        if (Equals(TEXT("0"))) // "0"도 대소문자 구분이 의미 없음
+        {
+            return false;
+        }
+
+        // 위 조건에 해당하지 않는 모든 다른 문자열은 false로 처리합니다.
+        // (예: "Yes", "No", "On", "Off" 등을 추가로 지원하고 싶다면 여기에 조건을 추가할 수 있습니다.)
+        // UE_LOG(LogTemp, Warning, TEXT("FString::ToBool() : Unrecognized string '%s' treated as false."), **this); // 필요시 경고 로그
+        return false;
+    }
+
 public:
     FORCEINLINE int32 Len() const;
     FORCEINLINE bool IsEmpty() const;

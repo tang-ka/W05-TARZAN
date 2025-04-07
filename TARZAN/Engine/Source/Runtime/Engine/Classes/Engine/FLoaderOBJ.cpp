@@ -8,7 +8,7 @@ UMaterial* FManagerOBJ::CreateMaterial(FObjMaterialInfo materialInfo)
     if (materialMap[materialInfo.MTLName] != nullptr)
         return materialMap[materialInfo.MTLName];
 
-    UMaterial* newMaterial = FObjectFactory::ConstructObject<UMaterial>();
+    UMaterial* newMaterial = FObjectFactory::ConstructObject<UMaterial>(nullptr);
     newMaterial->SetMaterialInfo(materialInfo);
     materialMap.Add(materialInfo.MTLName, newMaterial);
     return newMaterial;
@@ -31,7 +31,7 @@ UStaticMesh* FManagerOBJ::CreateStaticMesh(FString filePath)
         return staticMesh;
     }
 
-    staticMesh = FObjectFactory::ConstructObject<UStaticMesh>();
+    staticMesh = FObjectFactory::ConstructObject<UStaticMesh>(nullptr);
     staticMesh->SetData(staticMeshRenderData);
 
     staticMeshMap.Add(staticMeshRenderData->ObjectName, staticMesh);
