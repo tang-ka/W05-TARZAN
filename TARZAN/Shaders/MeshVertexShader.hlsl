@@ -21,6 +21,7 @@ struct VS_INPUT
 struct PS_INPUT
 {
     float4 Position : SV_POSITION; // 변환된 화면 좌표
+    float4 Color : COLOR; // 버텍스 컬러
     float3 Normal : NORMAL; // 정규화된 노멀 벡터
     float2 TexCoord : TEXCOORD1;
     float4 WorldPosition : POSITION; // 버텍스 위치
