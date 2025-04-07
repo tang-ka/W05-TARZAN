@@ -385,7 +385,7 @@ struct FFogConstants
 {
     float FogDensity = 0.5f;
     float FogHeightFalloff = 0.5f;
-    float StartDistance = 0.0f;
+    float FogStartDistance = 0.0f;
     float FogCutoffDistance = 1000.0f;
     float FogMaxOpacity = 1.0f;
     FVector padding;

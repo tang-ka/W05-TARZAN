@@ -2,46 +2,74 @@ cbuffer FogConstants : register(b0)
 {
     float FogDensity;
     float FogHeightFalloff;
-    float StartDistance;
+    float FogStartDistance;
     float FogCutoffDistance;
     float FogMaxOpacity;
-    float3 padding; 
-    float4 FogInscatteringColor;
+    float3 FogPad0; 
+    float4 FogColor;
     float3 CameraPosition;
-    float padding1; 
+    float FogHeight; 
 };
 
-Texture2D SceneColor : register(t0);
-Texture2D SceneDepth : register(t1);
+Texture2D LightColor : register(t0);
+Texture2D LightPos : register(t1);
 
-SamplerState SamplerColor : register(s0);
-SamplerState SamplerDepth : register(s1);
+SamplerState Sampler : register(s0);
 
-struct VS_OUTPUT
+struct PS_INPUT
 {
-    float4 PosH : SV_POSITION;
-    float2 UV   : TEXCOORD;
+    float4 Position : SV_POSITION;
+    float2 TexCoord : TEXCOORD;
 };
 
-float LinearizeDepth(float depth)
+struct PS_OUTPUT
 {
-    // Depth 값을 0~1에서 선형 공간으로 변환
-    float zNear = 0.1f;
-    float zFar = 1000.0f;
-    return (2.0 * zNear) / (zFar + zNear - depth * (zFar - zNear));
-}
+    float4 Color : SV_Target0;
+};
 
-float4 mainPS(VS_OUTPUT input) : SV_TARGET
+float ComputeFogFactor(float3 worldPos)
 {
-    float3 sceneColor = SceneColor.Sample(SamplerColor, input.UV).rgb;
-    float rawDepth = SceneDepth.Sample(SamplerDepth, input.UV).r;
+    float dist = distance(CameraPosition, worldPos);
 
-    float linearDepth = LinearizeDepth(rawDepth);
+    // 거리 기반
+    float fogRange = FogCutoffDistance - FogStartDistance;
+    float disFactor = saturate((dist - FogStartDistance) / fogRange); // 0~1  50일떄 0
 
-    // 안개 강도 계산
-    float fogFactor = saturate((linearDepth - StartDistance) * FogDensity);
+    // 높이 기반 (지수 감쇠)
+    float heightDiff = worldPos.z - FogHeight;
+    heightDiff = max(heightDiff, 0.0);
+    float heightFactor = saturate(exp(-heightDiff * FogHeightFalloff * FogDensity)); // 0~1
+    
+    float fogFactor = heightFactor * disFactor;
+
+    // 최대 불투명도 제한
     fogFactor = min(fogFactor, FogMaxOpacity);
 
-    float3 finalColor = lerp(sceneColor, FogInscatteringColor.rgb, fogFactor);
-    return float4(finalColor, 1.0);
+    return fogFactor;
+}
+
+PS_OUTPUT mainPS(PS_INPUT input) : SV_TARGET
+{
+    PS_OUTPUT output;
+    
+    float4 color = LightColor.Sample(Sampler, input.TexCoord);
+    float4 worldPosTex = LightPos.Sample(Sampler, input.TexCoord);
+    float3 worldPos = worldPosTex.xyz;
+    float isValid = worldPosTex.w;
+    
+    float fogFactor;
+    
+    if (isValid == 0.5f)
+    {
+        fogFactor = ComputeFogFactor(worldPos);
+        float3 fogColor = lerp(FogColor.rgb, color.rgb, 1.0 - fogFactor);
+        output.Color = float4(fogColor, color.a);
+    }
+    else
+    {
+        output.Color = color;
+    }
+    
+    
+    return output;
 }

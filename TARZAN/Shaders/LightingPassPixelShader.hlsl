@@ -163,15 +163,16 @@ PS_OUTPUT main(PS_Input input)
     float3 PointLightColor;
     //float4 DirectionLightColor = ComputeDirectionalLight(normal, worldPos, albedo, ambient);
     //PointLightColor = ComputeFireballLighting(float4(worldPos, 1), normal);
+    output.WorldPos = float4(worldPos.xyz, 1);
     
     if (isValidGeometry == 0.5f)
     {
         DirectionLightColor = ComputeDirectionalLight(normal, worldPos, albedo, ambient);
         PointLightColor = ComputeFireballLighting(float4(worldPos, 1), normal);
+        output.WorldPos.w = 0.5f;
     }
     
     output.Color = DirectionLightColor + float4(PointLightColor.xyz, 1);
-    output.WorldPos = float4(worldPos.xyz, 1);
     
     return output;
 }
