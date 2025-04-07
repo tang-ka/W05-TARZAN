@@ -54,15 +54,17 @@ PS_OUTPUT main(PS_INPUT input)
     float2 uv = input.TexCoord;
     float4 textureColor = g_DiffuseMap.Sample(g_sampler0, uv);
     bool isInvalidTexture = all(abs(textureColor) < 1e-5f);
-    textureColor = isInvalidTexture ? float4(1, 0, 1, 1) : textureColor;
     
+    if (isInvalidTexture)
+        output.Albedo = float4(1.f, 0.f, 1.f, 1.f);
+    else
+    {
+        float4 diffuseColor = float4(Material.DiffuseColor, 1.0f);
     
+        // Light값에 영향을 받지 않는 색상 (Diffuse -> Albedo)
+        output.Albedo = diffuseColor * textureColor;   
+    }
     
-    float4 diffuseColor = float4(Material.DiffuseColor, 1.0f);
-    //float4 textureColor = g_DiffuseMap.Sample(g_sampler0, float2(uv.x, uv.y));
-    
-    // Light값에 영향을 받지 않는 색상 (Diffuse -> Albedo)
-    output.Albedo = diffuseColor * textureColor;
     output.Ambient = (Material.AmbientColor.xyz, 1.f);
     output.WorldPos = input.WorldPosition;
     

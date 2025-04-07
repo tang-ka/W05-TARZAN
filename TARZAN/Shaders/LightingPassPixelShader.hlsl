@@ -155,7 +155,7 @@ PS_OUTPUT main(PS_Input input)
         
     float3 normal = (normalTex.xyz - 0.5f) * 2.0f;    
     output.Color = ComputeDirectionalLight(normal, worldPos, albedo, ambient);
-    output.WorldPos = worldPos;
+    output.WorldPos = float4(worldPos.xyz, 1);
     
     return output;
 }
