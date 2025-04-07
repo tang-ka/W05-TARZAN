@@ -16,6 +16,7 @@
 #include "SpotLightComp.h"
 
 #include <Components/UParticleSubUVComp.h>
+#include <Components/Movement/MovementComponent.h>
 
 void PropertyEditorPanel::Render()
 {
