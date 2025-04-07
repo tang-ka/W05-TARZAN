@@ -60,6 +60,31 @@ void PropertyEditorPanel::Render()
                     if (SceneComp->GetAttachParent() == nullptr)
                     {
                         DrawSceneComponentTree(SceneComp, PickedComponent);
+                        ImGui::Separator(); 
+                    }
+                    
+                }
+                else
+                {
+                    FString Label = *Component->GetName();
+                    bool bSelected = (PickedComponent == Component);
+
+                    ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_OpenOnArrow;
+                    if (bSelected)
+                        nodeFlags |= ImGuiTreeNodeFlags_Selected;
+
+                    // 노드를 클릭 가능한 셀렉션으로 표시
+                    bool bOpened = ImGui::TreeNodeEx(*Label, nodeFlags);
+
+                    // 클릭되었을 때 선택 갱신
+                    if (ImGui::IsItemClicked())
+                    {
+                        PickedComponent = Component;
+                    }
+
+                    if (bOpened)
+                    {
+                        ImGui::TreePop();
                     }
                 }
             }
@@ -176,6 +201,41 @@ void PropertyEditorPanel::Render()
             {
                 player->AddCoordiMode();
             }
+            ImGui::TreePop(); // 트리 닫기
+        }
+        ImGui::PopStyleColor();
+        bFirstFrame = false;
+    }
+    
+    if (PickedActor && PickedComponent && PickedComponent->IsA<UMovementComponent>())
+    {
+        UMovementComponent* SceneComp = Cast<UMovementComponent>(PickedComponent);
+        ImGui::SetItemDefaultFocus();
+        // TreeNode 배경색을 변경 (기본 상태)
+        ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.1f, 0.1f, 0.1f, 1.0f));
+        if (ImGui::TreeNodeEx("Velocity", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen)) // 트리 노드 생성
+        {
+            if (PickedComponent != LastComponent)
+            {
+                LastComponent = PickedComponent;
+                bFirstFrame = true;
+                Velocity = SceneComp->GetVelocity();
+                Speed = SceneComp->GetSpeed();
+            }
+
+        
+            bool bChanged = false;
+            bChanged |= FImGuiWidget::DrawVec3Control("Velocity", Velocity, 0, 10);
+            ImGui::Spacing();
+            bChanged |= ImGui::DragFloat("Speed", &Speed, 0.1f, 0.f, 10.f);
+
+
+            if (bChanged && !bFirstFrame)
+            {
+                SceneComp->SetVelocity(Velocity);
+                SceneComp->SetSpeed(Speed);
+            }
+        
             ImGui::TreePop(); // 트리 닫기
         }
         ImGui::PopStyleColor();

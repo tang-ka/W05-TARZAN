@@ -68,6 +68,8 @@ void USceneComponent::AddLocation(FVector _added)
 void USceneComponent::AddRotation(FVector _added)
 {
 	RelativeRotation = RelativeRotation + _added;
+    
+    QuatRotation = JungleMath::EulerToQuaternion(RelativeRotation);
 
 }
 

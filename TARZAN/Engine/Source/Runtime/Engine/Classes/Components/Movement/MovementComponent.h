@@ -8,11 +8,24 @@ class UMovementComponent: public UActorComponent
     DECLARE_CLASS(UMovementComponent, UActorComponent)
     
 public:
+    UMovementComponent();
+    UMovementComponent(const UMovementComponent& Other);
+    
     UMovementComponent* Duplicate() const override;
     void DuplicateSubObjects(const UObject* Source) override;
     void PostDuplicate() override;
+
+    float GetSpeed() const { return Speed; }
+    void SetSpeed(float NewSpeed) { Speed = NewSpeed; }
+    void AddSpeed(float DeltaSpeed) { Speed += DeltaSpeed; }
     
-    UMovementComponent();
-    UMovementComponent(const UMovementComponent& Other);
+    FVector GetVelocity() const { return Velocity; }
+    void SetVelocity(const FVector& NewVelocity) { Velocity = NewVelocity; }
+    void AddVelocity(const FVector& DeltaVelocity) { Velocity = Velocity + DeltaVelocity; }
+
+
+protected:
+    float Speed = 1.f;
+    FVector Velocity = FVector(1.f, 0.f, 0.f); // 초기 속도 설정
     
 };

@@ -29,6 +29,8 @@ private:
     FVector Location = FVector(0, 0, 0);
     FVector Rotation = FVector(0, 0, 0);
     FVector Scale = FVector(0, 0, 0);
+    FVector Velocity = FVector(0, 0, 0);
+    float Speed = 0.f;
 
     /* Material Property */
     int SelectedMaterialIndex = -1;
