@@ -16,6 +16,7 @@
 #include "PropertyEditor/ShowFlags.h"
 #include "UnrealEd/SceneMgr.h"
 #include "UHeightFogComponent.h"
+#include "SpotLightComp.h"
 #include "FireballComp.h"
 #include "UEditorStateManager.h"
 
@@ -299,7 +300,7 @@ void ControlEditorPanel::CreateModifyButton(ImVec2 ButtonSize, ImFont* IconFont)
                 {
                     SpawnedActor = World->SpawnActor<AActor>();
                     SpawnedActor->SetActorLabel(TEXT("OBJ_SpotLight"));
-                    SpawnedActor->AddComponent<ULightComponentBase>();
+                    SpawnedActor->AddComponent<USpotLightComponent>();
                     UBillboardComponent* BillboardComponent = SpawnedActor->AddComponent<UBillboardComponent>();
                     BillboardComponent->SetTexture(L"Assets/Texture/spotLight.png");
                     break;
