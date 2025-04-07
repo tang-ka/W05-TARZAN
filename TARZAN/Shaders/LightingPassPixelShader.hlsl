@@ -98,14 +98,9 @@ PS_OUTPUT main(PS_Input input)
     float3 ambient = g_GBufferAmbient.Sample(g_sampler, uv).rgb;
     float3 worldPos = g_GBufferPosition.Sample(g_sampler, uv).xyz;
 
-    //if (length(worldPos) == 0)
-    //    output.color = float4(1,0,0, 1); //ComputeDirectionalLight(normal, worldPos, albedo, ambient);
-    //else
-    //    output.color = float4(0, 1, 0, 1);
+    //output.color = GlobalLight.Diffuse;
     
-    output.color = float4(albedo.xyz, 1);
-    
-    //output.color = float4(1, 1, 1, 1);
-    //output.color = float4(input.Position.xyz, 1);
+    output.color = ComputeDirectionalLight(normal, worldPos, albedo, ambient);
+
     return output;
 }

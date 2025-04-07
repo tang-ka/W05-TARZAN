@@ -47,7 +47,8 @@ PS_OUTPUT main(PS_INPUT input)
     PS_OUTPUT output;
     
     float3 normal = normalize(input.Normal);
-    output.Normal = float4(normal.xyz, 1); // TODO: WorldSpace에서의 Normal값으로 변경
+    //output.Normal = float4(normal.xyz, 1); // TODO: WorldSpace에서의 Normal값으로 변경
+    output.Normal = float4(normal * 0.5 + 0.5, 1.0); // Normal
     
     float2 uv = input.TexCoord/* + UVOffset*/;
     float4 diffuseColor = float4(Material.DiffuseColor, 1.0f);
@@ -55,10 +56,9 @@ PS_OUTPUT main(PS_INPUT input)
     
     // Light값에 영향을 받지 않는 색상 (Diffuse -> Albedo)
     output.Albedo = diffuseColor * textureColor;
-    output.Ambient = Material.AmbientColor;
+    output.Ambient = (Material.AmbientColor.xyz, 1.f);
     output.WorldPos = input.WorldPosition;
     
-    //output.Normal = float4(normalWS * 0.5 + 0.5, 1.0); // Normal
     //output.Albedo = float4(input.color.rgb, 1.0); // Albedo
     
     return output;
