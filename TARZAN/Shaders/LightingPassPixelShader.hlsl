@@ -24,9 +24,11 @@ struct FireballConstants
     float FireballIndensity;
     float radius;
     float RadiusFallOff;
-    float pad0;
-    float pad1;
+    float InnerAngle;
+    float OuterAngle;
     float4 FireballColor;
+    float3 Direction;
+    int LightType; // 0: Point, 1: Spot
 };
 
 //struct FMaterial
@@ -125,16 +127,27 @@ float3 ComputeFireballLighting(float4 worldPos, float3 normal)
         float attenuation = saturate(1.0 - pow(dist / Fireball[i].radius, Fireball[i].RadiusFallOff));
         attenuation *= Fireball[i].FireballIndensity;
 
+        float spotAttenuation = 1.0f;
+        if (Fireball[i].LightType == 1) // Spot light
+        {
+            float3 spotDir = normalize(Fireball[i].Direction);
+            float spotCos = dot(-L, spotDir);
+            float innerCos = cos(radians(Fireball[i].InnerAngle));
+            float outerCos = cos(radians(Fireball[i].OuterAngle));
+            spotAttenuation = saturate((spotCos - outerCos) / (innerCos - outerCos));
+        }
+
+        float finalAttenuation = attenuation * spotAttenuation;
+
         float diffuse = saturate(dot(N, L));
-        //float specular = pow(saturate(dot(N, H)), Material.SpecularScalar * 32) * Material.SpecularScalar;
+        float3 diffuseColor = diffuse * Fireball[i].FireballColor.rgb * finalAttenuation;
 
-        float3 diffuseColor = diffuse * Fireball[i].FireballColor.rgb * attenuation;
-        //float3 specularColor = specular * Material.SpecularColor * Fireball[i].FireballColor.rgb * attenuation;
-
-        totalLighting += diffuseColor /*+ specularColor*/;
+        totalLighting += diffuseColor;
     }
+
     return totalLighting;
 }
+
 
 PS_OUTPUT main(PS_Input input)
 {

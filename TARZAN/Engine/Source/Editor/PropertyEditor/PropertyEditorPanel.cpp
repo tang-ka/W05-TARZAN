@@ -13,6 +13,7 @@
 #include <Components/CubeComp.h>
 #include "FireballComp.h"
 #include "UHeightFogComponent.h"
+#include "SpotLightComp.h"
 #include <Components/UParticleSubUVComp.h>
 
 void PropertyEditorPanel::Render()
@@ -87,7 +88,7 @@ void PropertyEditorPanel::Render()
                 }
                 if (ImGui::Selectable("LightComponent"))
                 {
-                    ULightComponentBase* LightComponent = PickedActor->AddComponent<ULightComponentBase>();
+                    USpotLightComponent* LightComponent = PickedActor->AddComponent<USpotLightComponent>();
                     PickedComponent = LightComponent;
                 }
                 if (ImGui::Selectable("ParticleComponent"))

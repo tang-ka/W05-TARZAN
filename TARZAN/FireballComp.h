@@ -18,6 +18,8 @@ public:
     float GetIntensity() { return FireballInfo.Intensity; }
     float GetRadius() { return FireballInfo.Radius; }
     FLinearColor GetColor() { return FireballInfo.Color; }
+    int GetLightType() { return FireballInfo.Type; }
+    void SetLightType(LightType LightType) { FireballInfo.Type = LightType; }
     
     FFireballInfo GetFireballInfo() const { return FireballInfo; }
 private:

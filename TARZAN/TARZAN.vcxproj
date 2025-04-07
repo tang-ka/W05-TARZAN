@@ -344,6 +344,7 @@
     <ClCompile Include="Engine\Source\Runtime\Renderer\RenderResourceManager.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\ShaderManager.cpp" />
     <ClCompile Include="FireballComp.cpp" />
+    <ClCompile Include="SpotLightComp.cpp" />
     <ClCompile Include="UEditorStateManager.cpp" />
     <ClCompile Include="UHeightFogComponent.cpp" />
   </ItemGroup>
@@ -471,6 +472,7 @@
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\UTextUUID.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\World.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\RenderResourceManager.h" />
+    <ClInclude Include="SpotLightComp.h" />
     <ClInclude Include="UEditorStateManager.h" />
     <ClInclude Include="UHeightFogComponent.h" />
   </ItemGroup>

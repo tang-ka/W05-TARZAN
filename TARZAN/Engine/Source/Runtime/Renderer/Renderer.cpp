@@ -21,6 +21,7 @@
 #include "UObject/UObjectIterator.h"
 #include "Components/SkySphereComponent.h"
 #include "FireballComp.h"
+#include "SpotLightComp.h"
 #include "Renderer/Pass/GBufferPass.h"
 #include "Renderer/Pass/LightingPass.h"
 #include "Renderer/Pass/PostProcessPass.h"
@@ -766,7 +767,7 @@ void FRenderer::RenderLightPass(UWorld* World, std::shared_ptr<FEditorViewportCl
     RenderLight(World, ActiveViewport);
     // Directional Light
 
-    // Point Light
+    //  Light
     if (FireballObjs.Num() > 0) 
     {
         FFireballArrayInfo fireballArrayInfo;
@@ -781,6 +782,13 @@ void FRenderer::RenderLightPass(UWorld* World, std::shared_ptr<FEditorViewportCl
                 fireballArrayInfo.FireballConstants[i].Color = fireballInfo.Color;
                 fireballArrayInfo.FireballConstants[i].RadiusFallOff = fireballInfo.RadiusFallOff;
                 fireballArrayInfo.FireballConstants[i].Position = FireballObjs[i]->GetWorldLocation();
+                fireballArrayInfo.FireballConstants[i].LightType = fireballInfo.Type;
+                if (USpotLightComponent* spotLight = Cast<USpotLightComponent>(FireballObjs[i]))
+                {
+                    fireballArrayInfo.FireballConstants[i].InnerAngle = spotLight->GetInnerSpotAngle();
+                    fireballArrayInfo.FireballConstants[i].OuterAngle = spotLight->GetOuterSpotAngle();
+                    fireballArrayInfo.FireballConstants[i].Direction = spotLight->GetForwardVector();
+                }
                 fireballArrayInfo.FireballCount++;
             }
         }
