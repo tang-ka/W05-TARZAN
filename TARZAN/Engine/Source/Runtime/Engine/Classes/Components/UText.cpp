@@ -271,7 +271,6 @@ void UText::CreateTextTextureVertexBuffer(const TArray<FVertexTexture>& _vertex,
 
 }
 
-
 void UText::TextMVPRendering()
 {
     UEditorEngine::renderer.PrepareTextureShader();

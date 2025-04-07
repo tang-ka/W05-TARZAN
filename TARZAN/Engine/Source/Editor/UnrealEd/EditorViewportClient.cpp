@@ -291,6 +291,18 @@ void FEditorViewportClient::UpdateProjectionMatrix()
     }
 }
 
+FVector FEditorViewportClient::GetCameraLocation() const
+{
+    if (IsPerspective())
+    {
+        return ViewTransformPerspective.GetLocation();
+    }
+    else
+    {
+        return ViewTransformOrthographic.GetLocation();
+    }
+}
+
 bool FEditorViewportClient::IsOrtho() const
 {
     return !IsPerspective();
@@ -439,8 +451,7 @@ void FEditorViewportClient::SetCameraSpeedScalar(float value)
     CameraSpeedScalar = value;
 }
 
-
-FVector FViewportCameraTransform::GetForwardVector()
+FVector FViewportCameraTransform::GetForwardVector() 
 {
     FVector Forward = FVector(1.f, 0.f, 0.0f);
     Forward = JungleMath::FVectorRotate(Forward, ViewRotation);
@@ -453,7 +464,7 @@ FVector FViewportCameraTransform::GetRightVector()
 	return Right;
 }
 
-FVector FViewportCameraTransform::GetUpVector()
+FVector FViewportCameraTransform::GetUpVector() 
 {
     FVector Up = FVector(0.f, 0.f, 1.0f);
     Up = JungleMath::FVectorRotate(Up, ViewRotation);

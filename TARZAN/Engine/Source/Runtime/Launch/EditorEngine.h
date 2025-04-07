@@ -24,8 +24,8 @@ class UEditorEngine : public UEngine
 public:
     UEditorEngine();
     int32 Init(HWND hwnd);
-    void Render();
     void Tick(float deltaSeconds);
+    void Render();
     void Exit();
     float GetAspectRatio(IDXGISwapChain* swapChain) const;
     void Input();
@@ -55,6 +55,7 @@ private:
     
     bool bTestInput = false;
 public:
+    UImGuiManager* GetUIManager() const { return UIMgr; }
     std::shared_ptr<UWorld> GetWorld() const { return GWorld; }
     SLevelEditor* GetLevelEditor() const { return LevelEditor; }
     UnrealEd* GetUnrealEditor() const { return UnrealEditor; }

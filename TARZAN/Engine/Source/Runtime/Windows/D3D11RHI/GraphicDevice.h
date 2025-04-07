@@ -16,37 +16,65 @@ public:
     ID3D11Device* Device = nullptr;
     ID3D11DeviceContext* DeviceContext = nullptr;
     IDXGISwapChain* SwapChain = nullptr;
+    
     ID3D11Texture2D* FrameBuffer = nullptr;
     ID3D11Texture2D* UUIDFrameBuffer = nullptr;
+    
     ID3D11RenderTargetView* RTVs[2];
     ID3D11RenderTargetView* FrameBufferRTV = nullptr;
     ID3D11RenderTargetView* UUIDFrameBufferRTV = nullptr;
+
     ID3D11RasterizerState* RasterizerStateSOLID = nullptr;
     ID3D11RasterizerState* RasterizerStateWIREFRAME = nullptr;
     DXGI_SWAP_CHAIN_DESC SwapchainDesc;
 
+    // GBuffer(Normal, Albedo)
+    ID3D11Texture2D* GBufferTexture_Normal = nullptr;
+    ID3D11Texture2D* GBufferTexture_Albedo = nullptr;
+    ID3D11Texture2D* GBufferTexture_Ambient = nullptr;
+    ID3D11Texture2D* GBufferTexture_Position = nullptr;
+
+
+    ID3D11RenderTargetView* GBufferRTV_Normal = nullptr;
+    ID3D11RenderTargetView* GBufferRTV_Albedo = nullptr;
+    ID3D11RenderTargetView* GBufferRTV_Ambient = nullptr;
+    ID3D11RenderTargetView* GBufferRTV_Position = nullptr;
+
+    ID3D11ShaderResourceView* GBufferSRV_Normal = nullptr;
+    ID3D11ShaderResourceView* GBufferSRV_Albedo = nullptr;
+    ID3D11ShaderResourceView* GBufferSRV_Ambient = nullptr;
+    ID3D11ShaderResourceView* GBufferSRV_Position = nullptr;
+
+    ID3D11RenderTargetView* gbuffers[4];
+    // - 
     
     UINT screenWidth = 0;
     UINT screenHeight = 0;
     // Depth-Stencil 관련 변수
-    ID3D11Texture2D* DepthStencilBuffer = nullptr;  // 깊이/스텐실 텍스처
-    ID3D11DepthStencilView* DepthStencilView = nullptr;  // 깊이/스텐실 뷰
+    ID3D11Texture2D* DepthStencilBuffer = nullptr;  
+    ID3D11DepthStencilView* DepthStencilView = nullptr; 
+    ID3D11ShaderResourceView* DepthStencilSRV = nullptr;
     ID3D11DepthStencilState* DepthStencilState = nullptr;
     FLOAT ClearColor[4] = { 0.025f, 0.025f, 0.025f, 1.0f }; // 화면을 초기화(clear) 할 때 사용할 색상(RGBA)
 
     ID3D11DepthStencilState* DepthStateDisable = nullptr;
 
     void Initialize(HWND hWindow);
+
     void CreateDeviceAndSwapChain(HWND hWindow);
     void CreateDepthStencilBuffer(HWND hWindow);
     void CreateDepthStencilState();
     void CreateRasterizerState();
-    void ReleaseDeviceAndSwapChain();
+    void CreateGBuffer();
     void CreateFrameBuffer();
+    
+    void ReleaseDeviceAndSwapChain();
+    void ReleaseGBuffer();
     void ReleaseFrameBuffer();
     void ReleaseRasterizerState();
     void ReleaseDepthStencilResources();
     void Release();
+    
     void SwapBuffer();
     void Prepare();
     void Prepare(D3D11_VIEWPORT* viewport);

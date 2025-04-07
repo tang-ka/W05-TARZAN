@@ -11,6 +11,7 @@
 #include "RenderResourceManager.h"
 #include "ShaderManager.h"
 #include "ConstantBufferUpdater.h"
+#include "Pass/RenderPass.h"
 
 class ULightComponentBase;
 class UFireballComponent;
@@ -24,16 +25,39 @@ class UBillboardComponent;
 class UStaticMeshComponent;
 class UGizmoBaseComponent;
 class FRenderResourceManager;
+
 class FRenderer 
 {
-
+public:
+    //FRenderer() : UIMgr(nullptr) {}
+    ~FRenderer();
+    
+    void Render();
+private:
+    void RenderPass(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport);
+    void RenderImGui();
 private:
     float litFlag = 0;
 public:
     FGraphicsDevice* Graphics;
+
+    // Full Screen Vertex Shader
+    ID3D11VertexShader* FullScreenVS = nullptr;
+    ID3D11InputLayout* FullScreenInputLayout = nullptr;
+    
+    // GBuffer Shader
+    ID3D11VertexShader* GBufferVS= nullptr;
+    ID3D11PixelShader* GBufferPS = nullptr;
+    ID3D11InputLayout* GBufferInputLayout = nullptr;
+    
+    // Lighting Shader
+    ID3D11PixelShader* LightingPassPS = nullptr;
+
     ID3D11VertexShader* VertexShader = nullptr;
     ID3D11PixelShader* PixelShader = nullptr;
+    ID3D11PixelShader* PostProcessPixelShader = nullptr;
     ID3D11InputLayout* InputLayout = nullptr;
+
     ID3D11Buffer* ConstantBuffer = nullptr;
     ID3D11Buffer* LightingBuffer = nullptr;
     ID3D11Buffer* FlagBuffer = nullptr;
@@ -41,9 +65,14 @@ public:
     ID3D11Buffer* SubMeshConstantBuffer = nullptr;
     ID3D11Buffer* TextureConstantBuffer = nullptr;
     ID3D11Buffer* FireballConstantBuffer = nullptr;
-
+    ID3D11Buffer* LPLightConstantBuffer = nullptr;
+    ID3D11Buffer* LPMaterialConstantBuffer = nullptr;
+    ID3D11Buffer* FogConstantBuffer = nullptr;
 
     FLighting lightingData;
+    FFogConstants fogData;
+
+    uint32 FullScreenStride;
 
     uint32 Stride;
     uint32 Stride2;
@@ -74,6 +103,13 @@ public:
     // update
     void UpdateMaterial(const FObjMaterialInfo& MaterialInfo) const;
 
+private:
+#pragma region Render Pass
+    void RenderGBuffer(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport);
+    void RenderLightPass(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport);
+    void RenderPostProcessPass(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport);
+    void RenderOverlayPass(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport);
+#pragma endregion
 
 public://텍스쳐용 기능 추가
     ID3D11VertexShader* VertexTextureShader = nullptr;
@@ -89,6 +125,7 @@ public://텍스쳐용 기능 추가
     ID3D11Buffer* SubUVConstantBuffer = nullptr;
 
 public:
+    void PrepareLightShader() const;
     void PrepareTextureShader() const;
 
     void RenderTexturePrimitive(ID3D11Buffer* pVertexBuffer, UINT numVertices,
@@ -125,11 +162,14 @@ public: // line shader
     void RenderLight(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport);
     void RenderBillboards(UWorld* World,std::shared_ptr<FEditorViewportClient> ActiveViewport);
 private:
+    // GBuffer
     TArray<UStaticMeshComponent*> StaticMeshObjs;
-    TArray<UGizmoBaseComponent*> GizmoObjs;
     TArray<UBillboardComponent*> BillboardObjs;
+    // Lighting
     TArray<ULightComponentBase*> LightObjs;
     TArray<UFireballComponent*> FireballObjs;
+    // Overaly
+    TArray<UGizmoBaseComponent*> GizmoObjs;
 
 public:
     ID3D11VertexShader* VertexLineShader = nullptr;
@@ -140,15 +180,36 @@ public:
     ID3D11ShaderResourceView* pConeSRV = nullptr;
     ID3D11ShaderResourceView* pOBBSRV = nullptr;
 
-
 public:
     FRenderResourceManager& GetResourceManager() { return RenderResourceManager; }
     FShaderManager& GetShaderManager() { return ShaderManager; }
     FConstantBufferUpdater& GetConstantBufferUpdater() { return ConstantBufferUpdater; }
+    //UnrealEd* GetUnrealEditor() { return UnrealEditor; }
 
 private:
     FRenderResourceManager RenderResourceManager;
     FShaderManager ShaderManager;
     FConstantBufferUpdater ConstantBufferUpdater;
+
+    //UImGuiManager* UIMgr;
+    // TODO: 리펙토링 할 때 이거 EditorEngine에서 다 옮겨와야함.
+    //UnrealEd* UnrealEditor;
+    //FGraphicsDevice* graphicDevice;
+    //FResourceMgr* reourceMgr;
+    
+private:
+    ID3D11DeviceContext* Context;
+
+private:
+    // PostProcess용 Dummy Data (Todo : 추후 LightPass와 연결)
+    ID3D11Texture2D* DummyColorTexture = nullptr;
+    ID3D11ShaderResourceView* DummyColorSRV = nullptr;
+    void CreateDummyPostProcessResources();
+    
+    ID3D11ShaderResourceView* PostProcessColorSRV = nullptr; // t0
+    ID3D11ShaderResourceView* SceneDepthSRV = nullptr;       // t1
+
+    ID3D11SamplerState* PostProcessSampler = nullptr; // s0
+    ID3D11SamplerState* DepthSampler = nullptr;       // s1
 };
 

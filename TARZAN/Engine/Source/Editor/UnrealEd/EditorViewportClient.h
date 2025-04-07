@@ -151,6 +151,7 @@ public: //Camera Movement
     float GetNearClip() {return nearPlane;}
     void SetFarClip(float newFarClip) {farPlane = newFarClip;}
     float GetFarClip() {return farPlane;}
+    FVector GetCameraLocation() const;
     
     bool IsOrtho() const;
     bool IsPerspective() const;

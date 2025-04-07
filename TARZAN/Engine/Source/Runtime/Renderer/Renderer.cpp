@@ -21,6 +21,20 @@
 #include "UObject/UObjectIterator.h"
 #include "Components/SkySphereComponent.h"
 #include "FireballComp.h"
+#include "Renderer/Pass/GBufferPass.h"
+#include "Renderer/Pass/LightingPass.h"
+#include "Renderer/Pass/PostProcessPass.h"
+#include "Renderer/Pass/OverlayPass.h"
+
+#include "Editor/LevelEditor/SLevelEditor.h"
+#include "Runtime/Launch/ImGuiManager.h"
+#include "UnrealEd/UnrealEd.h"
+#include "UHeightFogComponent.h"
+#include "LevelEditor/SLevelEditor.h"
+
+extern UEditorEngine* GEngine;
+
+FRenderer::~FRenderer() {}
 
 void FRenderer::Initialize(FGraphicsDevice* graphics)
 {
@@ -32,6 +46,75 @@ void FRenderer::Initialize(FGraphicsDevice* graphics)
     CreateShader();
     CreateConstantBuffer();
     ConstantBufferUpdater.UpdateLitUnlitConstant(FlagBuffer, 1);
+
+    auto world = GEngine->GetWorld();
+
+    //UIMgr = new UImGuiManager;
+    //UIMgr->Initialize(hWnd, graphicDevice.Device, graphicDevice.DeviceContext);
+
+    // test
+    CreateDummyPostProcessResources();
+    SceneDepthSRV = Graphics->DepthStencilSRV;
+}
+
+void FRenderer::Render()
+{
+    //DeprecatedRender();
+
+    SLevelEditor* LevelEditor = GEngine->GetLevelEditor();
+    std::shared_ptr<UWorld> GWorld = GEngine->GetWorld();
+
+    Graphics->Prepare();
+    if (LevelEditor->IsMultiViewport())
+    {
+        std::shared_ptr<FEditorViewportClient> viewportClient = LevelEditor->GetActiveViewportClient();
+        for (int i = 0; i < 4; ++i)
+        {
+            LevelEditor->SetViewportClient(i);
+            PrepareRender();
+            RenderPass(GWorld.get(), LevelEditor->GetActiveViewportClient());
+        }
+        LevelEditor->SetViewportClient(viewportClient);
+    }
+    else
+    {
+        PrepareRender();
+        RenderPass(GWorld.get(), LevelEditor->GetActiveViewportClient());
+    }
+
+    ClearRenderArr();
+
+    RenderImGui();
+
+    GEngine->graphicDevice.SwapBuffer();
+}
+
+void FRenderer::RenderPass(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport)
+{
+    Graphics->DeviceContext->RSSetViewports(1, &ActiveViewport->GetD3DViewport());
+    Graphics->ChangeRasterizer(ActiveViewport->GetViewMode());
+    ChangeViewMode(ActiveViewport->GetViewMode());
+
+    RenderGBuffer(World, ActiveViewport);
+
+    RenderLightPass(World, ActiveViewport);
+
+    //RenderPostProcessPass(World, ActiveViewport);
+
+    //RenderOverlayPass(World, ActiveViewport);
+}
+
+void FRenderer::RenderImGui()
+{
+    UImGuiManager* UIMgr = GEngine->GetUIManager();
+    UnrealEd* UnrealEditor = GEngine->GetUnrealEditor();
+
+    UIMgr->BeginFrame();
+
+    UnrealEditor->Render();
+    Console::GetInstance().Draw();
+
+    UIMgr->EndFrame();
 }
 
 void FRenderer::Release()
@@ -43,6 +126,30 @@ void FRenderer::Release()
 #pragma region Shader
 void FRenderer::CreateShader()
 {
+    D3D11_INPUT_ELEMENT_DESC fullscreenLayout[] = {
+        { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+        { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+    };
+    ShaderManager.CreateVertexShader(
+        L"Shaders/FullScreenVertexShader.hlsl", "main", FullScreenVS,
+        fullscreenLayout, ARRAYSIZE(fullscreenLayout), &FullScreenInputLayout, &FullScreenStride, sizeof(FVertexTexture));
+
+    // GBuffer Shader Setting
+    D3D11_INPUT_ELEMENT_DESC GBufferLayout[] = {
+        {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"MATERIAL_INDEX", 0, DXGI_FORMAT_R32_UINT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0}
+    };
+
+    ShaderManager.CreateVertexShader(L"Shaders/MeshVertexShader.hlsl", "main",
+        GBufferVS, GBufferLayout, ARRAYSIZE(GBufferLayout), &GBufferInputLayout, &Stride, sizeof(FVertexSimple));
+
+    ShaderManager.CreatePixelShader(L"Shaders/MeshPixelShader.hlsl", "main", GBufferPS);
+
+    ShaderManager.CreatePixelShader(L"Shaders/LightingPassPixelShader.hlsl", "main", LightingPassPS);
+
     // 기본 셰이더 설정
     D3D11_INPUT_ELEMENT_DESC layout[] = {
         {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
@@ -51,11 +158,9 @@ void FRenderer::CreateShader()
         {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 40, D3D11_INPUT_PER_VERTEX_DATA, 0},
         {"MATERIAL_INDEX", 0, DXGI_FORMAT_R32_UINT, 0, 48, D3D11_INPUT_PER_VERTEX_DATA, 0}
     };
-
     ShaderManager.CreateVertexShader(
         L"Shaders/StaticMeshVertexShader.hlsl", "mainVS",
         VertexShader, layout, ARRAYSIZE(layout), &InputLayout, &Stride, sizeof(FVertexSimple));
-
     ShaderManager.CreatePixelShader(
         L"Shaders/StaticMeshPixelShader.hlsl", "mainPS",
         PixelShader);
@@ -65,11 +170,9 @@ void FRenderer::CreateShader()
         {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
         {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0}
     };
-
     ShaderManager.CreateVertexShader(
         L"Shaders/VertexTextureShader.hlsl", "main",
         VertexTextureShader, textureLayout, ARRAYSIZE(textureLayout), &TextureInputLayout, &TextureStride, sizeof(FVertexTexture));
-
     ShaderManager.CreatePixelShader(
         L"Shaders/PixelTextureShader.hlsl", "main",
         PixelTextureShader);
@@ -78,10 +181,13 @@ void FRenderer::CreateShader()
     ShaderManager.CreateVertexShader(
         L"Shaders/ShaderLine.hlsl", "mainVS",
         VertexLineShader, nullptr, 0); // 라인 셰이더는 Layout 안 쓰면 nullptr 전달
-
     ShaderManager.CreatePixelShader(
         L"Shaders/ShaderLine.hlsl", "mainPS",
         PixelLineShader);
+
+    // fog 셰이더 설정
+    ShaderManager.CreatePixelShader(
+        L"Shaders/PostProcessPixelShader.hlsl", "mainPS", PostProcessPixelShader);
 }
 
 void FRenderer::ReleaseShader()
@@ -91,25 +197,43 @@ void FRenderer::ReleaseShader()
     ShaderManager.ReleaseShader(nullptr, VertexLineShader, PixelLineShader);
 }
 
-
 // Prepare
 void FRenderer::PrepareShader() const
 {
-    Graphics->DeviceContext->VSSetShader(VertexShader, nullptr, 0);
-    Graphics->DeviceContext->PSSetShader(PixelShader, nullptr, 0);
-    Graphics->DeviceContext->IASetInputLayout(InputLayout);
+    //Graphics->DeviceContext->VSSetShader(VertexShader, nullptr, 0);
+    //Graphics->DeviceContext->PSSetShader(PixelShader, nullptr, 0);
+    //Graphics->DeviceContext->IASetInputLayout(InputLayout);
+
+    Graphics->DeviceContext->VSSetShader(GBufferVS, nullptr, 0);
+    Graphics->DeviceContext->PSSetShader(GBufferPS, nullptr, 0);
+    Graphics->DeviceContext->IASetInputLayout(GBufferInputLayout);
 
     if (ConstantBuffer)
     {
         Graphics->DeviceContext->VSSetConstantBuffers(0, 1, &ConstantBuffer);
-        Graphics->DeviceContext->PSSetConstantBuffers(0, 1, &ConstantBuffer);
-        Graphics->DeviceContext->PSSetConstantBuffers(1, 1, &MaterialConstantBuffer);
-        Graphics->DeviceContext->PSSetConstantBuffers(2, 1, &LightingBuffer);
-        Graphics->DeviceContext->PSSetConstantBuffers(3, 1, &FlagBuffer);
-        Graphics->DeviceContext->PSSetConstantBuffers(4, 1, &SubMeshConstantBuffer);
-        Graphics->DeviceContext->PSSetConstantBuffers(5, 1, &TextureConstantBuffer);
-        Graphics->DeviceContext->PSSetConstantBuffers(6, 1, &FireballConstantBuffer);
+        Graphics->DeviceContext->PSSetConstantBuffers(0, 1, &MaterialConstantBuffer);
 
+        //Graphics->DeviceContext->PSSetConstantBuffers(0, 1, &ConstantBuffer);
+        //Graphics->DeviceContext->PSSetConstantBuffers(1, 1, &MaterialConstantBuffer);
+        //Graphics->DeviceContext->PSSetConstantBuffers(2, 1, &LightingBuffer);
+        //Graphics->DeviceContext->PSSetConstantBuffers(3, 1, &FlagBuffer);
+        //Graphics->DeviceContext->PSSetConstantBuffers(4, 1, &SubMeshConstantBuffer);
+        //Graphics->DeviceContext->PSSetConstantBuffers(5, 1, &TextureConstantBuffer);
+        //Graphics->DeviceContext->PSSetConstantBuffers(6, 1, &FireballConstantBuffer);
+    }
+}
+
+void FRenderer::PrepareLightShader() const
+{
+    Graphics->DeviceContext->VSSetShader(FullScreenVS, nullptr, 0);
+    Graphics->DeviceContext->PSSetShader(LightingPassPS, nullptr, 0);
+    Graphics->DeviceContext->IASetInputLayout(FullScreenInputLayout);
+
+    if (ConstantBuffer)
+    {
+        Graphics->DeviceContext->PSSetConstantBuffers(0, 1, &LPLightConstantBuffer);
+        Graphics->DeviceContext->PSSetConstantBuffers(1, 1, &FireballConstantBuffer);
+        //Graphics->DeviceContext->PSSetConstantBuffers(1, 1, &LPMaterialConstantBuffer);
     }
 }
 
@@ -154,21 +278,27 @@ void FRenderer::PrepareLineShader() const
 }
 #pragma endregion Shader
 
-
 #pragma region ConstantBuffer
 // ConstantBuffer
 void FRenderer::CreateConstantBuffer()
 {
-    ConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FConstants));
+    //ConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FConstants));
     SubUVConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FSubUVConstant));
     GridConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FGridParameters));
     LinePrimitiveBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FPrimitiveCounts));
-    MaterialConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FMaterialConstants));
+    //MaterialConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FMaterialConstants));
     SubMeshConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FSubMeshConstants));
     TextureConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FTextureConstants));
     LightingBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FLighting));
     FlagBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FLitUnlitConstants));
+
+    ConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FConstants));
+    MaterialConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FMaterialConstants));
+
+    LPLightConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FLightConstant));
     FireballConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FFireballArrayInfo));
+
+    FogConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FFogConstants));
 }
 
 void FRenderer::ReleaseConstantBuffer()
@@ -183,6 +313,9 @@ void FRenderer::ReleaseConstantBuffer()
     RenderResourceManager.ReleaseBuffer(LightingBuffer);
     RenderResourceManager.ReleaseBuffer(FlagBuffer);
     RenderResourceManager.ReleaseBuffer(FireballConstantBuffer);
+    RenderResourceManager.ReleaseBuffer(LPLightConstantBuffer);
+    RenderResourceManager.ReleaseBuffer(LPMaterialConstantBuffer);
+    RenderResourceManager.ReleaseBuffer(FogConstantBuffer);
 }
 #pragma endregion ConstantBuffer
 
@@ -203,28 +336,40 @@ void FRenderer::PrepareRender()
     {
         for (const auto iter : TObjectRange<USceneComponent>())
         {
-                UE_LOG(LogLevel::Display, "%d", GUObjectArray.GetObjectItemArrayUnsafe().Num());
-                if (UStaticMeshComponent* pStaticMeshComp = Cast<UStaticMeshComponent>(iter))
-                {
-                    if (!Cast<UGizmoBaseComponent>(iter))
-                        StaticMeshObjs.Add(pStaticMeshComp);
-                }
-                if (UGizmoBaseComponent* pGizmoComp = Cast<UGizmoBaseComponent>(iter))
-                {
-                    GizmoObjs.Add(pGizmoComp);
-                }
-                if (UBillboardComponent* pBillboardComp = Cast<UBillboardComponent>(iter))
-                {
-                    BillboardObjs.Add(pBillboardComp);
-                }
-                if (ULightComponentBase* pLightComp = Cast<ULightComponentBase>(iter))
-                {
-                    LightObjs.Add(pLightComp);
-                }
-                if (UFireballComponent* pFireComp = Cast<UFireballComponent>(iter))
-                {
-                    FireballObjs.Add(pFireComp);
-                }
+            UE_LOG(LogLevel::Display, "%d", GUObjectArray.GetObjectItemArrayUnsafe().Num());
+            if (UStaticMeshComponent* pStaticMeshComp = Cast<UStaticMeshComponent>(iter))
+            {
+                if (!Cast<UGizmoBaseComponent>(iter))
+                    StaticMeshObjs.Add(pStaticMeshComp);
+            }
+            if (UGizmoBaseComponent* pGizmoComp = Cast<UGizmoBaseComponent>(iter))
+            {
+                GizmoObjs.Add(pGizmoComp);
+            }
+            if (UBillboardComponent* pBillboardComp = Cast<UBillboardComponent>(iter))
+            {
+                BillboardObjs.Add(pBillboardComp);
+            }
+            if (ULightComponentBase* pLightComp = Cast<ULightComponentBase>(iter))
+            {
+                LightObjs.Add(pLightComp);
+            }
+            if (UFireballComponent* pFireComp = Cast<UFireballComponent>(iter))
+            {
+                FireballObjs.Add(pFireComp);
+            }
+            if (UHeightFogComponent* HeightFog = Cast<UHeightFogComponent>(iter))
+            {
+                fogData.FogDensity = HeightFog->GetFogDensity();
+                fogData.FogHeightFalloff = HeightFog->GetFogHeightFalloff();
+                fogData.StartDistance = HeightFog->GetStartDistance();
+                fogData.FogCutoffDistance = HeightFog->GetFogCutoffDistance();
+                fogData.FogMaxOpacity = HeightFog->GetFogMaxOpacity();
+                fogData.FogInscatteringColor = HeightFog->GetColor();
+                fogData.CameraPosition = GEngine->GetLevelEditor()->GetActiveViewportClient()->GetCameraLocation();
+                fogData.FogHeight = HeightFog->GetWorldLocation().z;
+                ConstantBufferUpdater.UpdateFogConstant(FogConstantBuffer, fogData);
+            }
         }
     }
     else if (GEngine->GetWorld()->WorldType == EWorldType::PIE)
@@ -232,7 +377,6 @@ void FRenderer::PrepareRender()
         // UE_LOG(LogLevel::Display, "%d", GEngine->GetWorld()->GetActors().Num() );
         for (const auto iter : GEngine->GetWorld()->GetActors())
         {
-            
             for (const auto iter2 : iter->GetComponents())
             {
                 if (UStaticMeshComponent* pStaticMeshComp = Cast<UStaticMeshComponent>(iter2))
@@ -257,42 +401,6 @@ void FRenderer::PrepareRender()
     }
 }
 
-void FRenderer::Render(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport)
-{
-    Graphics->DeviceContext->RSSetViewports(1, &ActiveViewport->GetD3DViewport());
-    Graphics->ChangeRasterizer(ActiveViewport->GetViewMode());
-    ChangeViewMode(ActiveViewport->GetViewMode());
-    ConstantBufferUpdater.UpdateLightConstant(LightingBuffer);
-    if (FireballObjs.Num() > 0) {
-        FFireballArrayInfo fireballArrayInfo;
-        fireballArrayInfo.FireballCount = 0;
-        for (int i = 0; i < FireballObjs.Num(); i++)
-        {
-            if (FireballObjs[i] != nullptr)
-            {
-                FFireballInfo fireballInfo = FireballObjs[i]->GetFireballInfo();
-                fireballArrayInfo.FireballConstants[i].Intensity = fireballInfo.Intensity;
-                fireballArrayInfo.FireballConstants[i].Radius = fireballInfo.Radius;
-                fireballArrayInfo.FireballConstants[i].Color = fireballInfo.Color;
-                fireballArrayInfo.FireballConstants[i].RadiusFallOff = fireballInfo.RadiusFallOff;
-                fireballArrayInfo.FireballConstants[i].Position = FireballObjs[i]->GetWorldLocation();
-                fireballArrayInfo.FireballCount++;
-            }
-        }
-        ConstantBufferUpdater.UpdateFireballConstant(FireballConstantBuffer, fireballArrayInfo);
-    }
-    UPrimitiveBatch::GetInstance().RenderBatch(ConstantBuffer, ActiveViewport->GetViewMatrix(), ActiveViewport->GetProjectionMatrix());
-
-    if (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_Primitives))
-        RenderStaticMeshes(World, ActiveViewport);
-    RenderGizmos(World, ActiveViewport);
-    if (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_BillboardText))
-        RenderBillboards(World, ActiveViewport);
-    RenderLight(World, ActiveViewport);
-
-    ClearRenderArr();
-}
-
 void FRenderer::RenderPrimitive(ID3D11Buffer* pBuffer, UINT numVertices) const
 {
     UINT offset = 0;
@@ -313,24 +421,27 @@ void FRenderer::RenderPrimitive(OBJ::FStaticMeshRenderData* renderData, TArray<F
 {
     UINT offset = 0;
     Graphics->DeviceContext->IASetVertexBuffers(0, 1, &renderData->VertexBuffer, &Stride, &offset);
-
     if (renderData->IndexBuffer)
         Graphics->DeviceContext->IASetIndexBuffer(renderData->IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
+    // submesh X
     if (renderData->MaterialSubsets.Num() == 0)
     {
-        // no submesh
         Graphics->DeviceContext->DrawIndexed(renderData->Indices.Num(), 0, 0);
     }
 
+    // submesh O
     for (int subMeshIndex = 0; subMeshIndex < renderData->MaterialSubsets.Num(); subMeshIndex++)
     {
         int materialIndex = renderData->MaterialSubsets[subMeshIndex].MaterialIndex;
 
-        subMeshIndex == selectedSubMeshIndex ? ConstantBufferUpdater.UpdateSubMeshConstant(SubMeshConstantBuffer, true) : ConstantBufferUpdater.UpdateSubMeshConstant(SubMeshConstantBuffer, false);
+        subMeshIndex == selectedSubMeshIndex ?
+            ConstantBufferUpdater.UpdateSubMeshConstant(SubMeshConstantBuffer, true)
+            : ConstantBufferUpdater.UpdateSubMeshConstant(SubMeshConstantBuffer, false);
 
         overrideMaterial[materialIndex] != nullptr ?
-            UpdateMaterial(overrideMaterial[materialIndex]->GetMaterialInfo()) : UpdateMaterial(materials[materialIndex]->Material->GetMaterialInfo());
+            UpdateMaterial(overrideMaterial[materialIndex]->GetMaterialInfo())
+            : UpdateMaterial(materials[materialIndex]->Material->GetMaterialInfo());
 
         if (renderData->IndexBuffer)
         {
@@ -414,26 +525,21 @@ void FRenderer::RenderStaticMeshes(UWorld* World, std::shared_ptr<FEditorViewpor
             StaticMeshComp->GetWorldRotation(),
             StaticMeshComp->GetWorldScale()
         );
-        // 최종 MVP 행렬
         FMatrix MVP = Model * ActiveViewport->GetViewMatrix() * ActiveViewport->GetProjectionMatrix();
-        // 노말 회전시 필요 행렬
         FMatrix NormalMatrix = FMatrix::Transpose(FMatrix::Inverse(Model));
         FVector4 UUIDColor = StaticMeshComp->EncodeUUID() / 255.0f;
-        if (World->GetSelectedActor() == StaticMeshComp->GetOwner())
-        {
-            ConstantBufferUpdater.UpdateConstant(ConstantBuffer, MVP,Model, NormalMatrix, UUIDColor, true);
-        }
-        else
-            ConstantBufferUpdater.UpdateConstant(ConstantBuffer, MVP, Model, NormalMatrix, UUIDColor, false);
 
-        if (USkySphereComponent* skysphere = Cast<USkySphereComponent>(StaticMeshComp))
-        {
-            ConstantBufferUpdater.UpdateTextureConstant(TextureConstantBuffer, skysphere->UOffset, skysphere->VOffset);
-        }
-        else
-        {
-            ConstantBufferUpdater.UpdateTextureConstant(TextureConstantBuffer, 0, 0);
-        }
+        bool isSelected = World->GetSelectedActor() == StaticMeshComp->GetOwner();
+        ConstantBufferUpdater.UpdateConstant(ConstantBuffer, MVP, Model, NormalMatrix, UUIDColor, isSelected);
+
+        //if (USkySphereComponent* skysphere = Cast<USkySphereComponent>(StaticMeshComp))
+        //{
+        //    ConstantBufferUpdater.UpdateTextureConstant(TextureConstantBuffer, skysphere->UOffset, skysphere->VOffset);
+        //}
+        //else
+        //{
+        //    ConstantBufferUpdater.UpdateTextureConstant(TextureConstantBuffer, 0, 0);
+        //}
 
         if (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_AABB))
         {
@@ -443,7 +549,6 @@ void FRenderer::RenderStaticMeshes(UWorld* World, std::shared_ptr<FEditorViewpor
                 Model
             );
         }
-
 
         if (!StaticMeshComp->GetStaticMesh()) continue;
 
@@ -538,7 +643,7 @@ void FRenderer::RenderBillboards(UWorld* World, std::shared_ptr<FEditorViewportC
 
         if (UParticleSubUVComp* SubUVParticle = Cast<UParticleSubUVComp>(BillboardComp))
         {
-            
+
             const FQuadRenderData& QuadRenderData = UEditorEngine::resourceMgr.GetQuadRenderData();
             RenderTexturePrimitive(
                 SubUVParticle->vertexSubUVBuffer, SubUVParticle->numTextVertices,
@@ -555,7 +660,7 @@ void FRenderer::RenderBillboards(UWorld* World, std::shared_ptr<FEditorViewportC
         else
         {
             const FQuadRenderData& QuadRenderData = UEditorEngine::resourceMgr.GetQuadRenderData();
-            
+
             RenderTexturePrimitive(
                 QuadRenderData.VertexTextureBuffer, QuadRenderData.numVertices,
                 QuadRenderData.IndexTextureBuffer, QuadRenderData.numIndices, BillboardComp->Texture->TextureSRV, BillboardComp->Texture->SamplerState
@@ -618,15 +723,161 @@ void FRenderer::UpdateMaterial(const FObjMaterialInfo& MaterialInfo) const
     }
     else
     {
-        ID3D11ShaderResourceView* nullSRV[1] = {nullptr};
-        ID3D11SamplerState* nullSampler[1] = {nullptr};
+        ID3D11ShaderResourceView* nullSRV[1] = { nullptr };
+        ID3D11SamplerState* nullSampler[1] = { nullptr };
 
         Graphics->DeviceContext->PSSetShaderResources(0, 1, nullSRV);
         Graphics->DeviceContext->PSSetSamplers(0, 1, nullSampler);
     }
 }
 
+void FRenderer::RenderGBuffer(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport)
+{
+    // StaticMesh
+    if (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_Primitives))
+        RenderStaticMeshes(World, ActiveViewport);
 
+    // Billboard
+    //if (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_BillboardText))
+    //    RenderBillboards(World, ActiveViewport);
+}
+
+void FRenderer::RenderLightPass(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport)
+{
+    PrepareLightShader();
+
+    //ID3D11RenderTargetView* rtv = Graphics->FrameBufferRTV;
+    //Graphics->DeviceContext->OMSetRenderTargets(1, &rtv, Graphics->DepthStencilView);
+
+    FLightConstant GlobalLight = {
+        .Ambient = FVector4(0.1f, 0.1f, 0.1f, 1.f),
+        .Diffuse = FVector4(1.0f, 1.0f, 1.0f, 1.0f),
+        .Specular = FVector4(1.0f, 1.0f, 1.0f, 1.0f),
+        .Emissive = FVector(1.0f, 1.0f, 1.0f),
+        .Padding1 = 0,
+        .Direction = FVector(1.0f, -1.0f, -1.0f),
+        .Padding2 = 0,
+        .CameraPosition = ActiveViewport->GetCameraLocation(),
+        .Padding = 0
+    };
+
+    ConstantBufferUpdater.UpdateGlobalLightConstant(LPLightConstantBuffer, GlobalLight);
+
+    RenderLight(World, ActiveViewport);
+    // Directional Light
+
+    // Point Light
+    if (FireballObjs.Num() > 0) 
+    {
+        FFireballArrayInfo fireballArrayInfo;
+        fireballArrayInfo.FireballCount = 0;
+        for (int i = 0; i < FireballObjs.Num(); i++)
+        {
+            if (FireballObjs[i] != nullptr)
+            {
+                FFireballInfo fireballInfo = FireballObjs[i]->GetFireballInfo();
+                fireballArrayInfo.FireballConstants[i].Intensity = fireballInfo.Intensity;
+                fireballArrayInfo.FireballConstants[i].Radius = fireballInfo.Radius;
+                fireballArrayInfo.FireballConstants[i].Color = fireballInfo.Color;
+                fireballArrayInfo.FireballConstants[i].RadiusFallOff = fireballInfo.RadiusFallOff;
+                fireballArrayInfo.FireballConstants[i].Position = FireballObjs[i]->GetWorldLocation();
+                fireballArrayInfo.FireballCount++;
+            }
+        }
+        ConstantBufferUpdater.UpdateFireballConstant(FireballConstantBuffer, fireballArrayInfo);
+    }
+
+    // Spot Light
+
+#pragma region d
+
+    // 1. RenderTarget: 조명 결과를 화면에 출력 (FrameBufferRTV 등)
+    ID3D11RenderTargetView* rtv = Graphics->FrameBufferRTV;
+    Graphics->DeviceContext->OMSetRenderTargets(1, &rtv, Graphics->DepthStencilView);
+
+    // 5. GBuffer에서 SRV 연결 (Normal, Albedo, Position)
+    ID3D11ShaderResourceView* SRVs[] = {
+        Graphics->GBufferSRV_Normal,
+        Graphics->GBufferSRV_Albedo,
+        Graphics->GBufferSRV_Ambient,
+        Graphics->GBufferSRV_Position
+    };
+    Graphics->DeviceContext->PSSetShaderResources(0, 4, SRVs);
+
+    ID3D11SamplerState* SamplerState;
+    D3D11_SAMPLER_DESC samplerDesc = {};
+    samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    samplerDesc.MinLOD = 0;
+    samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+    Graphics->Device->CreateSamplerState(&samplerDesc, &SamplerState);
+    Graphics->DeviceContext->PSSetSamplers(0, 1, &SamplerState);
+
+    // 6. Fullscreen Quad 렌더링
+    const FQuadRenderData& quad = UEditorEngine::resourceMgr.GetQuadRenderData();
+    UINT stride = FullScreenStride;
+    UINT offset = 0;
+
+    Graphics->DeviceContext->IASetVertexBuffers(0, 1, &quad.VertexTextureBuffer, &stride, &offset);
+    Graphics->DeviceContext->IASetIndexBuffer(quad.IndexTextureBuffer, DXGI_FORMAT_R32_UINT, 0);
+
+    Graphics->DeviceContext->DrawIndexed(quad.numIndices, 0, 0);
+
+    // 7. SRV 언바인딩 (다음 Pass에서 충돌 방지)
+    ID3D11ShaderResourceView* nullSRVs[4] = { nullptr, nullptr, nullptr, nullptr };
+    Graphics->DeviceContext->PSSetShaderResources(0, 4, nullSRVs);
+#pragma endregion
+}
+
+void FRenderer::RenderPostProcessPass(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport)
+{
+    // Fog
+    if (!PostProcessColorSRV || !SceneDepthSRV || !PostProcessSampler || !DepthSampler || !FogConstantBuffer)
+        return;
+
+    // 1. Topology 설정
+    Graphics->DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+
+    // 2. 셰이더 바인딩 (VS, PS)
+    Graphics->DeviceContext->VSSetShader(VertexTextureShader, nullptr, 0);
+    Graphics->DeviceContext->PSSetShader(PostProcessPixelShader, nullptr, 0);
+
+    // 3. Input Layout 설정
+    Graphics->DeviceContext->IASetInputLayout(TextureInputLayout);
+
+    // 4. 정점/인덱스 버퍼 설정 (풀스크린 Quad)
+    const FQuadRenderData& QuadData = UEditorEngine::resourceMgr.GetQuadRenderData();
+    UINT offset = 0;
+    Graphics->DeviceContext->IASetVertexBuffers(0, 1, &QuadData.VertexTextureBuffer, &TextureStride, &offset);
+    Graphics->DeviceContext->IASetIndexBuffer(QuadData.IndexTextureBuffer, DXGI_FORMAT_R32_UINT, 0);
+
+    // 5. ShaderResourceView 바인딩 (t0: color, t1: depth)
+    ID3D11ShaderResourceView* SRVs[2] = { PostProcessColorSRV, SceneDepthSRV };
+    Graphics->DeviceContext->PSSetShaderResources(0, 2, SRVs);
+
+    // 6. SamplerState 바인딩 (s0: color, s1: depth)
+    ID3D11SamplerState* Samplers[2] = { PostProcessSampler, DepthSampler };
+    Graphics->DeviceContext->PSSetSamplers(0, 2, Samplers);
+
+    // 7. Fog 상수 버퍼 바인딩 (b0)
+    Graphics->DeviceContext->PSSetConstantBuffers(0, 1, &FogConstantBuffer);
+
+    // 8. 풀스크린 Quad 드로우
+    Graphics->DeviceContext->DrawIndexed(QuadData.numIndices, 0, 0);
+}
+
+void FRenderer::RenderOverlayPass(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport)
+{
+    // Line
+    UPrimitiveBatch::GetInstance().RenderBatch(ConstantBuffer, ActiveViewport->GetViewMatrix(), ActiveViewport->GetProjectionMatrix());
+
+    // Gizmo
+    RenderGizmos(World, ActiveViewport);
+}
 
 ID3D11ShaderResourceView* FRenderer::CreateBoundingBoxSRV(ID3D11Buffer* pBoundingBoxBuffer, UINT numBoundingBoxes)
 {
@@ -639,9 +890,7 @@ ID3D11ShaderResourceView* FRenderer::CreateBoundingBoxSRV(ID3D11Buffer* pBoundin
 
     Graphics->Device->CreateShaderResourceView(pBoundingBoxBuffer, &srvDesc, &pBBSRV);
     return pBBSRV;
-
-    
-}
+}     
 
 ID3D11ShaderResourceView* FRenderer::CreateOBBSRV(ID3D11Buffer* pBoundingBoxBuffer, UINT numBoundingBoxes)
 {
@@ -657,7 +906,7 @@ ID3D11ShaderResourceView* FRenderer::CreateOBBSRV(ID3D11Buffer* pBoundingBoxBuff
 ID3D11ShaderResourceView* FRenderer::CreateConeSRV(ID3D11Buffer* pConeBuffer, UINT numCones)
 {
     D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
-    srvDesc.Format = DXGI_FORMAT_UNKNOWN; 
+    srvDesc.Format = DXGI_FORMAT_UNKNOWN;
     srvDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
     srvDesc.Buffer.ElementOffset = 0;
     srvDesc.Buffer.NumElements = numCones;
@@ -729,4 +978,36 @@ void FRenderer::UpdateLinePrimitveCountBuffer(int numBoundingBoxes, int numCones
     pData->BoundingBoxCount = numBoundingBoxes;
     pData->ConeCount = numCones;
     Graphics->DeviceContext->Unmap(LinePrimitiveBuffer, 0);
+}
+
+
+void FRenderer::CreateDummyPostProcessResources()
+{
+    const int width = 512;
+    const int height = 512;
+
+    // ----------- COLOR 텍스처 생성 (연보라색) -----------
+    std::vector<UINT> colorData(width * height, 0xFF6060FF);
+    for (int i = 0; i < width * height; ++i)
+        colorData[i] = 0xFF6060FF;
+
+    D3D11_TEXTURE2D_DESC colorDesc = {};
+    colorDesc.Width = width;
+    colorDesc.Height = height;
+    colorDesc.MipLevels = 1;
+    colorDesc.ArraySize = 1;
+    colorDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    colorDesc.SampleDesc.Count = 1;
+    colorDesc.Usage = D3D11_USAGE_DEFAULT;
+    colorDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+
+    D3D11_SUBRESOURCE_DATA colorInitData = {};
+    colorInitData.pSysMem = colorData.data();
+    colorInitData.SysMemPitch = width * 4;
+
+    Graphics->Device->CreateTexture2D(&colorDesc, &colorInitData, &DummyColorTexture);
+    Graphics->Device->CreateShaderResourceView(DummyColorTexture, nullptr, &DummyColorSRV);
+
+    // ----------- SRV 연결 (PostProcessPass에서 사용할 것들) -----------
+    PostProcessColorSRV = DummyColorSRV;
 }

@@ -64,6 +64,23 @@ void FConstantBufferUpdater::UpdateLightConstant(ID3D11Buffer* LightingBuffer) c
     DeviceContext->Unmap(LightingBuffer, 0);
 }
 
+void FConstantBufferUpdater::UpdateGlobalLightConstant(ID3D11Buffer* GlobalLightBuffer, FLightConstant GlobalLight) const
+{
+    if (!GlobalLightBuffer) return;
+    D3D11_MAPPED_SUBRESOURCE mappedResource;
+    DeviceContext->Map(GlobalLightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+    {
+        FLightConstant* constants = static_cast<FLightConstant*>(mappedResource.pData);
+        constants->Ambient = GlobalLight.Ambient;
+        constants->Diffuse = GlobalLight.Diffuse;
+        constants->Specular = GlobalLight.Specular;
+        constants->Emissive = GlobalLight.Emissive;
+        constants->Direction = GlobalLight.Direction;
+        constants->CameraPosition = GlobalLight.CameraPosition;
+    }
+    DeviceContext->Unmap(GlobalLightBuffer, 0);
+}
+
 
 void FConstantBufferUpdater::UpdateLitUnlitConstant(ID3D11Buffer* FlagBuffer, int isLit) const
 {
@@ -133,5 +150,16 @@ void FConstantBufferUpdater::UpdateFireballConstant(ID3D11Buffer* FireballConsta
         DeviceContext->Map(FireballConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &ConstantBufferMSR); // update constant buffer every frame
         memcpy(ConstantBufferMSR.pData, &FireballInfo, sizeof(FFireballArrayInfo));
         DeviceContext->Unmap(FireballConstantBuffer, 0);
+    }
+}
+
+void FConstantBufferUpdater::UpdateFogConstant(ID3D11Buffer* FogConstantBuffer, const FFogConstants& FogConstants) const
+{
+    if (FogConstantBuffer)
+    {
+        D3D11_MAPPED_SUBRESOURCE ConstantBufferMSR;
+        DeviceContext->Map(FogConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &ConstantBufferMSR); // update constant buffer every frame
+        memcpy(ConstantBufferMSR.pData, &FogConstants, sizeof(FFogConstants));
+        DeviceContext->Unmap(FogConstantBuffer, 0);
     }
 }

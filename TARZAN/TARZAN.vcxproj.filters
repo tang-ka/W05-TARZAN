@@ -431,6 +431,14 @@
     <ClInclude Include="FireballComp.h">
       <Filter>Engine\Source\Runtime\Engine\Classes\Components</Filter>
     </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Renderer\Pass\GBufferPass.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\Pass\LightingPass.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\Pass\OverlayPass.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\Pass\PostProcessPass.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\Pass\RenderPass.h" />
+    <ClInclude Include="UHeightFogComponent.h">
+      <Filter>Engine\Source\Runtime\Engine\Classes\Components</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\Source\ThirdParty\DirectXTK\Include\DDSTextureLoader.h" />
@@ -508,12 +516,8 @@
     <FxCompile Include="Shaders\VertexTextureShader.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="Shaders\StaticMeshVertexShader.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\StaticMeshPixelShader.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
+    <FxCompile Include="Shaders\PostProcessPixelShader.hlsl" />
+    <FxCompile Include="Shaders\StaticMeshPixelShader.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="TARZAN.natvis" />
@@ -530,6 +534,15 @@
     <ClCompile Include="Engine\Source\Runtime\Renderer\RenderResourceManager.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\ShaderManager.cpp" />
     <ClCompile Include="FireballComp.cpp">
+      <Filter>Engine\Source\Runtime\Engine\Classes\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Engine\Texture.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Renderer\Pass\GBufferPass.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Renderer\Pass\LightingPass.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Renderer\Pass\OverlayPass.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Renderer\Pass\PostProcessPass.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Renderer\Pass\RenderPass.cpp" />
+    <ClCompile Include="UHeightFogComponent.cpp">
       <Filter>Engine\Source\Runtime\Engine\Classes\Components</Filter>
     </ClCompile>
   </ItemGroup>

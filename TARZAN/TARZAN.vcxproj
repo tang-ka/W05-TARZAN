@@ -202,12 +202,14 @@
       <RuntimeLibrary>MultiThreadedDebugDll</RuntimeLibrary>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <Optimization>Disabled</Optimization>
-      <SupportJustMyCode>true</SupportJustMyCode>
+      <SupportJustMyCode>false</SupportJustMyCode>
       <AssemblerOutput>NoListing</AssemblerOutput>
-      <AssemblerListingLocation>C:\Users\Jungle\Documents\GitHub\W04-PIETime\Intermediate\Build\x64\Debug\</AssemblerListingLocation>
+      <AssemblerListingLocation>
+      </AssemblerListingLocation>
       <UndefineAllPreprocessorDefinitions>false</UndefineAllPreprocessorDefinitions>
       <BrowseInformation>false</BrowseInformation>
-      <BrowseInformationFile>C:\Users\Jungle\Documents\GitHub\W04-PIETime\Intermediate\Build\x64\Debug\</BrowseInformationFile>
+      <BrowseInformationFile>
+      </BrowseInformationFile>
       <CompileAs>Default</CompileAs>
       <ConformanceMode>true</ConformanceMode>
       <DiagnosticsFormat>Column</DiagnosticsFormat>
@@ -230,37 +232,37 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>Default</LanguageStandard_C>
       <MinimalRebuild>false</MinimalRebuild>
-      <ModuleDependenciesFile>C:\Users\Jungle\Documents\GitHub\W04-PIETime\Intermediate\Build\x64\Debug\</ModuleDependenciesFile>
-      <ModuleOutputFile>C:\Users\Jungle\Documents\GitHub\W04-PIETime\Intermediate\Build\x64\Debug\</ModuleOutputFile>
+      <ModuleDependenciesFile>$(IntDir)</ModuleDependenciesFile>
+      <ModuleOutputFile>$(IntDir)</ModuleOutputFile>
       <OmitDefaultLibName>false</OmitDefaultLibName>
       <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
       <WholeProgramOptimization>false</WholeProgramOptimization>
-      <ObjectFileName>C:\Users\Jungle\Documents\GitHub\W04-PIETime\Intermediate\Build\x64\Debug\</ObjectFileName>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
       <CallingConvention>Cdecl</CallingConvention>
-      <ProgramDataBaseFileName>C:\Users\Jungle\Documents\GitHub\W04-PIETime\Intermediate\Build\x64\Debug\vc143.pdb</ProgramDataBaseFileName>
+      <ProgramDataBaseFileName>$(IntDir)vc143.pdb</ProgramDataBaseFileName>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
-      <PrecompiledHeaderOutputFile>C:\Users\Jungle\Documents\GitHub\W04-PIETime\Intermediate\Build\x64\Debug\Week4PIETime.pch</PrecompiledHeaderOutputFile>
+      <PrecompiledHeaderOutputFile>$(IntDir)Week4PIETime.pch</PrecompiledHeaderOutputFile>
       <PreprocessToFile>false</PreprocessToFile>
       <PreprocessKeepComments>false</PreprocessKeepComments>
       <PreprocessSuppressLineNumbers>false</PreprocessSuppressLineNumbers>
       <RemoveUnreferencedCodeData>true</RemoveUnreferencedCodeData>
       <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
       <ShowIncludes>false</ShowIncludes>
-      <SourceDependenciesFile>C:\Users\Jungle\Documents\GitHub\W04-PIETime\Intermediate\Build\x64\Debug\</SourceDependenciesFile>
+      <SourceDependenciesFile>$(IntDir)</SourceDependenciesFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <BufferSecurityCheck>true</BufferSecurityCheck>
       <SmallerTypeCheck>false</SmallerTypeCheck>
       <SpectreMitigation>false</SpectreMitigation>
       <StructMemberAlignment>Default</StructMemberAlignment>
-      <TrackerLogDirectory>C:\Users\Jungle\Documents\GitHub\W04-PIETime\Intermediate\Build\x64\Debug\Week4PIETime.tlog\</TrackerLogDirectory>
+      <TrackerLogDirectory>$(IntDir)Week4PIETime.tlog\</TrackerLogDirectory>
       <TranslateIncludes>false</TranslateIncludes>
       <MinimalRebuildFromTracking>true</MinimalRebuildFromTracking>
       <TreatWarningAsError>false</TreatWarningAsError>
       <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
       <UseFullPaths>true</UseFullPaths>
       <WarningLevel>Level3</WarningLevel>
-      <XMLDocumentationFileName>C:\Users\Jungle\Documents\GitHub\W04-PIETime\Intermediate\Build\x64\Debug\</XMLDocumentationFileName>
+      <XMLDocumentationFileName>$(IntDir)</XMLDocumentationFileName>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <IntelJCCErratum>false</IntelJCCErratum>
       <BuildStlModules>false</BuildStlModules>
@@ -293,6 +295,11 @@
     </ClCompile>
     <ClCompile Include="Engine\Source\Runtime\Engine\UnrealEngine.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Launch\LaunchEngineLoop.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Renderer\Pass\GBufferPass.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Renderer\Pass\LightingPass.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Renderer\Pass\OverlayPass.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Renderer\Pass\PostProcessPass.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Renderer\Pass\RenderPass.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Slate\Widgets\Layout\SSplitter.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Engine\ResourceMgr.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\UnrealClient.cpp" />
@@ -338,6 +345,7 @@
     <ClCompile Include="Engine\Source\Runtime\Renderer\ShaderManager.cpp" />
     <ClCompile Include="FireballComp.cpp" />
     <ClCompile Include="UEditorStateManager.cpp" />
+    <ClCompile Include="UHeightFogComponent.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Color.h" />
@@ -393,6 +401,11 @@
     <ClInclude Include="Engine\Source\Runtime\Launch\EditorEngine.h" />
     <ClInclude Include="Engine\Source\Runtime\Launch\ImGuiManager.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\ConstantBufferUpdater.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\Pass\GBufferPass.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\Pass\LightingPass.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\Pass\OverlayPass.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\Pass\PostProcessPass.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\Pass\RenderPass.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\ShaderManager.h" />
     <ClInclude Include="Engine\Source\Runtime\Launch\LaunchEngineLoop.h" />
     <ClInclude Include="Engine\Source\Runtime\SlateCore\Widgets\SWindow.h" />
@@ -459,8 +472,20 @@
     <ClInclude Include="Engine\Source\Runtime\Engine\World.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\RenderResourceManager.h" />
     <ClInclude Include="UEditorStateManager.h" />
+    <ClInclude Include="UHeightFogComponent.h" />
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="Shaders\PostProcessPixelShader.hlsl">
+      <ObjectFileOutput>$(OutDir)%(Filename).cso</ObjectFileOutput>
+      <TrackerLogDirectory>$(IntDir)TARZAN.tlog\</TrackerLogDirectory>
+      <EntryPointName>main</EntryPointName>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <ShaderModel>4.0_level_9_3</ShaderModel>
+      <MinimalRebuildFromTracking>true</MinimalRebuildFromTracking>
+      <DisableOptimizations>true</DisableOptimizations>
+      <EnableDebuggingInformation>true</EnableDebuggingInformation>
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </FxCompile>
     <FxCompile Include="Shaders\StaticMeshPixelShader.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
@@ -487,15 +512,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </FxCompile>
-    <FxCompile Include="Shaders\StaticMeshVertexShader.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">mainVS</EntryPointName>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">mainVS</EntryPointName>
     </FxCompile>
     <FxCompile Include="Shaders\VertexTextureShader.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
