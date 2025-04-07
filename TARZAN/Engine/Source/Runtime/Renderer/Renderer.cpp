@@ -232,6 +232,7 @@ void FRenderer::PrepareLightShader() const
     if (ConstantBuffer)
     {
         Graphics->DeviceContext->PSSetConstantBuffers(0, 1, &LPLightConstantBuffer);
+        Graphics->DeviceContext->PSSetConstantBuffers(1, 1, &FireballConstantBuffer);
         //Graphics->DeviceContext->PSSetConstantBuffers(1, 1, &LPMaterialConstantBuffer);
     }
 }
@@ -281,19 +282,22 @@ void FRenderer::PrepareLineShader() const
 // ConstantBuffer
 void FRenderer::CreateConstantBuffer()
 {
-    ConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FConstants));
+    //ConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FConstants));
     SubUVConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FSubUVConstant));
     GridConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FGridParameters));
     LinePrimitiveBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FPrimitiveCounts));
-    MaterialConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FMaterialConstants));
+    //MaterialConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FMaterialConstants));
     SubMeshConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FSubMeshConstants));
     TextureConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FTextureConstants));
     LightingBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FLighting));
     FlagBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FLitUnlitConstants));
-    FireballConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FFireballArrayInfo));
+
+    ConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FConstants));
+    MaterialConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FMaterialConstants));
 
     LPLightConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FLightConstant));
-    LPMaterialConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FMaterial));
+    FireballConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FFireballArrayInfo));
+
     FogConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FFogConstants));
 }
 
@@ -746,12 +750,12 @@ void FRenderer::RenderLightPass(UWorld* World, std::shared_ptr<FEditorViewportCl
     //Graphics->DeviceContext->OMSetRenderTargets(1, &rtv, Graphics->DepthStencilView);
 
     FLightConstant GlobalLight = {
-        .Ambient = FVector4(1.0f, 1.0f, 1.0f, 1.0f),
+        .Ambient = FVector4(0.1f, 0.1f, 0.1f, 1.f),
         .Diffuse = FVector4(1.0f, 1.0f, 1.0f, 1.0f),
         .Specular = FVector4(1.0f, 1.0f, 1.0f, 1.0f),
         .Emissive = FVector(1.0f, 1.0f, 1.0f),
         .Padding1 = 0,
-        .Direction = FVector(1, -1, -1),
+        .Direction = FVector(1.0f, -1.0f, -1.0f),
         .Padding2 = 0,
         .CameraPosition = ActiveViewport->GetCameraLocation(),
         .Padding = 0
@@ -763,7 +767,8 @@ void FRenderer::RenderLightPass(UWorld* World, std::shared_ptr<FEditorViewportCl
     // Directional Light
 
     // Point Light
-    if (FireballObjs.Num() > 0) {
+    if (FireballObjs.Num() > 0) 
+    {
         FFireballArrayInfo fireballArrayInfo;
         fireballArrayInfo.FireballCount = 0;
         for (int i = 0; i < FireballObjs.Num(); i++)

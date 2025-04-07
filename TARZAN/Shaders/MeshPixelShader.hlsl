@@ -66,7 +66,8 @@ PS_OUTPUT main(PS_INPUT input)
     }
     
     output.Ambient = (Material.AmbientColor.xyz, 1.f);
-    output.WorldPos = input.WorldPosition;
+    //output.WorldPos = input.WorldPosition;
+    output.WorldPos = float4(input.WorldPosition.xyz, 0.5f);
     
     //output.Albedo = float4(input.color.rgb, 1.0); // Albedo
     

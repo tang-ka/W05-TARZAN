@@ -32,7 +32,7 @@ PS_INPUT main(VS_INPUT input)
     PS_INPUT output;
     
     float4 worldPos = mul(float4(input.position.xyz, 1.0f), ModelMatrix);
-    output.WorldPosition = worldPos;
+    output.WorldPosition = float4(worldPos.xyz, 1.f); // w값에 유효 Geometry 정보 담아서 보냄
     output.Position = mul(float4(input.position.xyz, 1.0f), MVP);
     
     float3 worldNormal = mul(input.normal, (float3x3)MInverseTranspose);

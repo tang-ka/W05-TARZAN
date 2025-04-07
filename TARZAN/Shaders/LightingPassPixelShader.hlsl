@@ -1,4 +1,4 @@
-#define Max_Fireball 50
+#define Max_Fireball 300
 
 Texture2D g_GBufferNormal : register(t0);
 Texture2D g_GBufferAlbedo : register(t1);
@@ -45,12 +45,12 @@ cbuffer LightConstants : register(b0)
     float Padding;
 };
 
-//cbuffer FireballBuffer : register(b1)
-//{
-//    FireballConstants Fireball[Max_Fireball];
-//    int FierballCount;
-//    float3 padding;
-//}
+cbuffer FireballBuffer : register(b1)
+{
+    FireballConstants Fireball[Max_Fireball];
+    int FierballCount;
+    float3 padding;
+}
 
 //cbuffer FLitUnlitConstants : register(b2)
 //{
@@ -110,31 +110,31 @@ float4 ComputeDirectionalLight(float3 normal, float3 worldPosition, float3 albed
     //return ambientColor + diffuseColor + specularColor + emissiveColor;
 }
 
-//float3 ComputeFireballLighting(float4 worldPos, float3 normal)
-//{
-//    float3 N = normalize(normal);
-//    float3 V = float3(0, 0, 1);
-//    float3 totalLighting = float3(0, 0, 0);
+float3 ComputeFireballLighting(float4 worldPos, float3 normal)
+{
+    float3 N = normalize(normal);
+    float3 V = float3(0, 0, 1);
+    float3 totalLighting = float3(0, 0, 0);
 
-//    for (int i = 0; i < FierballCount; ++i)
-//    {
-//        float3 L = normalize(Fireball[i].FireballPosition - worldPos.xyz);
-//        float3 H = normalize(L + V);
+    for (int i = 0; i < FierballCount; ++i)
+    {
+        float3 L = normalize(Fireball[i].FireballPosition - worldPos.xyz);
+        float3 H = normalize(L + V);
 
-//        float dist = length(Fireball[i].FireballPosition - worldPos.xyz);
-//        float attenuation = saturate(1.0 - pow(dist / Fireball[i].radius, Fireball[i].RadiusFallOff));
-//        attenuation *= Fireball[i].FireballIndensity;
+        float dist = length(Fireball[i].FireballPosition - worldPos.xyz);
+        float attenuation = saturate(1.0 - pow(dist / Fireball[i].radius, Fireball[i].RadiusFallOff));
+        attenuation *= Fireball[i].FireballIndensity;
 
-//        float diffuse = saturate(dot(N, L));
-//        //float specular = pow(saturate(dot(N, H)), Material.SpecularScalar * 32) * Material.SpecularScalar;
+        float diffuse = saturate(dot(N, L));
+        //float specular = pow(saturate(dot(N, H)), Material.SpecularScalar * 32) * Material.SpecularScalar;
 
-//        float3 diffuseColor = diffuse * Fireball[i].FireballColor.rgb * attenuation;
-//        //float3 specularColor = specular * Material.SpecularColor * Fireball[i].FireballColor.rgb * attenuation;
+        float3 diffuseColor = diffuse * Fireball[i].FireballColor.rgb * attenuation;
+        //float3 specularColor = specular * Material.SpecularColor * Fireball[i].FireballColor.rgb * attenuation;
 
-//        totalLighting += diffuseColor /*+ specularColor*/;
-//    }
-//    return totalLighting;
-//}
+        totalLighting += diffuseColor /*+ specularColor*/;
+    }
+    return totalLighting;
+}
 
 PS_OUTPUT main(PS_Input input)
 {
@@ -145,16 +145,32 @@ PS_OUTPUT main(PS_Input input)
     float4 normalTex = g_GBufferNormal.Sample(g_sampler, uv);
     float3 albedo = g_GBufferAlbedo.Sample(g_sampler, uv).rgb;
     float3 ambient = g_GBufferAmbient.Sample(g_sampler, uv).rgb;
-    float3 worldPos = g_GBufferPosition.Sample(g_sampler, uv).xyz;
+    float4 worldPosTex = g_GBufferPosition.Sample(g_sampler, uv);
     
-    if (normalTex.a == 0)
-    {
-        output.Color = float4(albedo.xyz, 1);
-        return output;
-    }
+    float3 worldPos = worldPosTex.xyz;
+    float isValidGeometry = worldPosTex.w;
+    
+    
+    //if (normalTex.a == 0)
+    //{
+    //    output.Color = float4(albedo.xyz, 1);
+    //    return output;
+    //}
         
-    float3 normal = (normalTex.xyz - 0.5f) * 2.0f;    
-    output.Color = ComputeDirectionalLight(normal, worldPos, albedo, ambient);
+    float3 normal = (normalTex.xyz - 0.5f) * 2.0f;
+    
+    float4 DirectionLightColor;
+    float3 PointLightColor;
+    //float4 DirectionLightColor = ComputeDirectionalLight(normal, worldPos, albedo, ambient);
+    //PointLightColor = ComputeFireballLighting(float4(worldPos, 1), normal);
+    
+    if (isValidGeometry == 0.5f)
+    {
+        DirectionLightColor = ComputeDirectionalLight(normal, worldPos, albedo, ambient);
+        PointLightColor = ComputeFireballLighting(float4(worldPos, 1), normal);
+    }
+    
+    output.Color = DirectionLightColor + float4(PointLightColor.xyz, 1);
     output.WorldPos = float4(worldPos.xyz, 1);
     
     return output;

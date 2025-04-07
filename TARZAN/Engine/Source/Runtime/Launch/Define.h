@@ -306,6 +306,7 @@ struct FConstants {
     bool IsSelected;
     FVector pad;
 };
+
 struct FLitUnlitConstants {
     int isLit; // 1 = Lit, 0 = Unlit 
     FVector pad;
