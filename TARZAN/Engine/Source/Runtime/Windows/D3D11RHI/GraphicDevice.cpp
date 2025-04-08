@@ -143,13 +143,6 @@ void FGraphicsDevice::CreateDepthStencilState()
     depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;  // 깊이 버퍼에 쓰지 않음
     depthStencilDesc.DepthFunc = D3D11_COMPARISON_ALWAYS;  // 깊이 비교를 항상 통과
     Device->CreateDepthStencilState(&depthStencilDesc, &DepthStateDisable);
-
-    D3D11_DEPTH_STENCIL_DESC overlayDesc = {};
-    overlayDesc.DepthEnable = TRUE;                          // Depth Test 활성화
-    overlayDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;    // 깊이 버퍼 쓰기 허용
-    overlayDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;        // LessEqual: 깊이 값이 같아도 통과
-    overlayDesc.StencilEnable = FALSE;                        // 스텐실 테스트 비활성화
-    Device->CreateDepthStencilState(&overlayDesc, &pOverlayDepthStencilState);
 }
 
 void FGraphicsDevice::CreateRasterizerState()
@@ -403,12 +396,6 @@ void FGraphicsDevice::ReleaseDepthStencilResources()
     if (DepthStateDisable) {
         DepthStateDisable->Release();
         DepthStateDisable = nullptr;
-    }
-
-    if (pOverlayDepthStencilState)
-    {
-        pOverlayDepthStencilState->Release();
-        pOverlayDepthStencilState = nullptr;
     }
 }
 
