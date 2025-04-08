@@ -95,7 +95,7 @@ void FRenderer::RenderPass(UWorld* World, std::shared_ptr<FEditorViewportClient>
 
     RenderPostProcessPass(World, ActiveViewport);
 
-    //RenderOverlayPass(World, ActiveViewport);
+    RenderOverlayPass(World, ActiveViewport);
 }
 
 void FRenderer::RenderImGui()
@@ -572,7 +572,7 @@ void FRenderer::RenderGizmos(const UWorld* World, const std::shared_ptr<FEditorV
 #pragma region GizmoDepth
     ID3D11DepthStencilState* DepthStateDisable = Graphics->DepthStateDisable;
     Graphics->DeviceContext->OMSetDepthStencilState(DepthStateDisable, 0);
-#pragma endregion GizmoDepth
+#pragma endregion
 
     //  fill solid,  Wirframe 에서도 제대로 렌더링되기 위함
     Graphics->DeviceContext->RSSetState(UEditorEngine::graphicDevice.RasterizerStateSOLID);
@@ -622,7 +622,7 @@ void FRenderer::RenderGizmos(const UWorld* World, const std::shared_ptr<FEditorV
 #pragma region GizmoDepth
     ID3D11DepthStencilState* originalDepthState = Graphics->DepthStencilState;
     Graphics->DeviceContext->OMSetDepthStencilState(originalDepthState, 0);
-#pragma endregion GizmoDepth
+#pragma endregion 
 }
 
 void FRenderer::RenderBillboards(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport)
@@ -717,6 +717,9 @@ void FRenderer::RenderGBuffer(UWorld* World, std::shared_ptr<FEditorViewportClie
     if (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_Primitives))
         RenderStaticMeshes(World, ActiveViewport);
 
+    // Grid
+    //UPrimitiveBatch::GetInstance().RenderBatch(ConstantBuffer, ActiveViewport->GetViewMatrix(), ActiveViewport->GetProjectionMatrix());
+
     // Billboard
     //if (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_BillboardText))
     //    RenderBillboards(World, ActiveViewport);
@@ -766,7 +769,7 @@ void FRenderer::RenderLightPass(UWorld* World, std::shared_ptr<FEditorViewportCl
     // Spot Light
 
     // 1. RenderTarget 설정 (Color, Position)
-    Graphics->DeviceContext->OMSetRenderTargets(2, Graphics->LightPassRTVs, Graphics->DepthStencilView);
+    Graphics->DeviceContext->OMSetRenderTargets(2, Graphics->LightPassRTVs, nullptr);
 
     // 2. GBuffer에서 SRV 연결 (Normal, Albedo, Position)
     ID3D11ShaderResourceView* SRVs[] = {
@@ -822,7 +825,10 @@ void FRenderer::RenderPostProcessPass(UWorld* World, std::shared_ptr<FEditorView
 
 void FRenderer::RenderOverlayPass(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport)
 {
-    // Line
+    // Enable Depth Test
+    Graphics->DeviceContext->OMSetRenderTargets(1, &Graphics->FrameBufferRTV, Graphics->DepthStencilView);
+    
+    // Grid
     UPrimitiveBatch::GetInstance().RenderBatch(ConstantBuffer, ActiveViewport->GetViewMatrix(), ActiveViewport->GetProjectionMatrix());
 
     // Gizmo
