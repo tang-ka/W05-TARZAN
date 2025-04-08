@@ -1,6 +1,6 @@
 #include "ConstantBufferUpdater.h"
 #include <Engine/Texture.h>
-
+#include "EditorEngine.h"
 void FConstantBufferUpdater::Initialize(ID3D11DeviceContext* InDeviceContext)
 {
     DeviceContext = InDeviceContext;
@@ -20,6 +20,8 @@ void FConstantBufferUpdater::UpdateConstant(ID3D11Buffer* ConstantBuffer, const 
             constants->ModelMatrixInverseTranspose = NormalMatrix;
             constants->UUIDColor = UUIDColor;
             constants->IsSelected = IsSelected;
+            constants->ScreenSize = FVector2D(GEngine->graphicDevice.screenWidth, GEngine->graphicDevice.screenHeight);
+            constants->ViewportSize = FVector2D()// Assuming a fixed viewport size for simplicity
         }
         DeviceContext->Unmap(ConstantBuffer, 0);
     }
