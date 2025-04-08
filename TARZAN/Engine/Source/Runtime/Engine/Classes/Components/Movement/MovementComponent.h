@@ -23,9 +23,11 @@ public:
     void SetVelocity(const FVector& NewVelocity) { Velocity = NewVelocity; }
     void AddVelocity(const FVector& DeltaVelocity) { Velocity = Velocity + DeltaVelocity; }
 
+    
+  
+
 
 protected:
     float Speed = 1.f;
     FVector Velocity = FVector(1.f, 0.f, 0.f); // 초기 속도 설정
-    
 };

@@ -63,7 +63,7 @@ void FRenderer::Render()
     //DeprecatedRender();
 
     SLevelEditor* LevelEditor = GEngine->GetLevelEditor();
-    std::shared_ptr<UWorld> GWorld = GEngine->GetWorld();
+    UWorld* GWorld = GEngine->GetWorld();
 
     Graphics->Prepare();
     if (LevelEditor->IsMultiViewport())
@@ -73,14 +73,14 @@ void FRenderer::Render()
         {
             LevelEditor->SetViewportClient(i);
             PrepareRender();
-            RenderPass(GWorld.get(), LevelEditor->GetActiveViewportClient());
+            RenderPass(GWorld, LevelEditor->GetActiveViewportClient());
         }
         LevelEditor->SetViewportClient(viewportClient);
     }
     else
     {
         PrepareRender();
-        RenderPass(GWorld.get(), LevelEditor->GetActiveViewportClient());
+        RenderPass(GWorld, LevelEditor->GetActiveViewportClient());
     }
 
     ClearRenderArr();
@@ -393,9 +393,21 @@ void FRenderer::PrepareRender()
                 {
                     LightObjs.Add(pLightComp);
                 }
-                if (UFireballComponent* pFireComp = Cast<UFireballComponent>(iter))
+                if (UFireballComponent* pFireComp = Cast<UFireballComponent>(iter2))
                 {
                     FireballObjs.Add(pFireComp);
+                }
+                if (UHeightFogComponent* HeightFog = Cast<UHeightFogComponent>(iter2))
+                {
+                    fogData.FogDensity = HeightFog->GetFogDensity();
+                    fogData.FogHeightFalloff = HeightFog->GetFogHeightFalloff();
+                    fogData.StartDistance = HeightFog->GetStartDistance();
+                    fogData.FogCutoffDistance = HeightFog->GetFogCutoffDistance();
+                    fogData.FogMaxOpacity = HeightFog->GetFogMaxOpacity();
+                    fogData.FogInscatteringColor = HeightFog->GetColor();
+                    fogData.CameraPosition = GEngine->GetLevelEditor()->GetActiveViewportClient()->GetCameraLocation();
+                    fogData.FogHeight = HeightFog->GetWorldLocation().z;
+                    ConstantBufferUpdater.UpdateFogConstant(FogConstantBuffer, fogData);
                 }
             }
         }
@@ -768,10 +780,10 @@ void FRenderer::RenderLightPass(UWorld* World, std::shared_ptr<FEditorViewportCl
     // Directional Light
 
     //  Light
+    FFireballArrayInfo fireballArrayInfo;
+    fireballArrayInfo.FireballCount = 0;
     if (FireballObjs.Num() > 0) 
     {
-        FFireballArrayInfo fireballArrayInfo;
-        fireballArrayInfo.FireballCount = 0;
         for (int i = 0; i < FireballObjs.Num(); i++)
         {
             if (FireballObjs[i] != nullptr)
@@ -792,9 +804,8 @@ void FRenderer::RenderLightPass(UWorld* World, std::shared_ptr<FEditorViewportCl
                 fireballArrayInfo.FireballCount++;
             }
         }
-        ConstantBufferUpdater.UpdateFireballConstant(FireballConstantBuffer, fireballArrayInfo);
     }
-
+    ConstantBufferUpdater.UpdateFireballConstant(FireballConstantBuffer, fireballArrayInfo);
     // Spot Light
 
 #pragma region d

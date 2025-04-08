@@ -8,9 +8,16 @@ class UFireballComponent : public UPrimitiveComponent
 
 public:
     UFireballComponent();
+    UFireballComponent(const UFireballComponent& Other);
     virtual ~UFireballComponent() override;
     virtual void InitializeComponent() override;
     virtual void TickComponent(float DeltaTime) override;
+
+
+    virtual UObject* Duplicate() const override;
+    virtual void DuplicateSubObjects(const UObject* Source) override;
+    virtual void PostDuplicate() override;
+
 
     void SetColor(const FLinearColor & Color) { FireballInfo.Color = Color; }
     void SetRadius(float Radius) { FireballInfo.Radius = Radius; }

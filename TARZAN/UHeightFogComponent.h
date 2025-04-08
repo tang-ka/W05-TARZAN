@@ -7,9 +7,14 @@ class UHeightFogComponent :
 
 public:
     UHeightFogComponent();
+    UHeightFogComponent(const UHeightFogComponent& Other);
     virtual ~UHeightFogComponent() override;
     virtual void InitializeComponent() override;
     virtual void TickComponent(float DeltaTime) override;
+
+    virtual UObject* Duplicate() const override;
+    virtual void DuplicateSubObjects(const UObject* Source) override;
+    virtual void PostDuplicate() override;
     // Setters
     void SetFogDensity(float density) { FogDensity = density; }
     void SetFogHeightFalloff(float falloff) { FogHeightFalloff = falloff; }

@@ -156,5 +156,5 @@ void UPrimitiveComponent::SetProperties(const TMap<FString, FString>& InProperti
 
     
     const FString* AABBmaxStr = InProperties.Find(TEXT("AABB_max"));
-    if (AABBmaxStr) AABB.min.InitFromString(*AABBmaxStr); 
+    if (AABBmaxStr) AABB.max.InitFromString(*AABBmaxStr); 
 }
