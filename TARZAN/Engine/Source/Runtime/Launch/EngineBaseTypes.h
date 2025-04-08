@@ -5,6 +5,9 @@ enum EViewModeIndex
     VMI_Lit,
     VMI_Unlit,
     VMI_Wireframe,
+    VMI_BaseColor,
+    VMI_Normal,
+    VMI_Depth,
 };
 
 enum ELevelTick
