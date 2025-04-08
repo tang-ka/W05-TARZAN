@@ -9,6 +9,8 @@ cbuffer FogConstants : register(b0)
     float4 FogColor;
     float3 CameraPosition;
     float FogHeight; 
+    row_major float4x4 InverseView;
+    row_major float4x4 InverseProjection;
 };
 
 Texture2D LightColor : register(t0);
@@ -26,6 +28,22 @@ struct PS_OUTPUT
 {
     float4 Color : SV_Target0;
 };
+
+float3 ReconstructWorldPos(float2 UV, float Depth)
+{
+    float4 NDC;
+    NDC.xy = UV * 2.0 - 1.0; // [0,1] → [-1,1]
+    NDC.y *= -1;
+    NDC.z = Depth;
+    NDC.w = 1.0;
+
+    float4 WorldPos = mul(NDC, InverseProjection);
+    WorldPos /= WorldPos.w;
+
+    WorldPos = mul(WorldPos, InverseView);
+
+    return WorldPos.xyz;
+}
 
 float ComputeFogFactor(float3 worldPos)
 {
@@ -51,25 +69,30 @@ float ComputeFogFactor(float3 worldPos)
 PS_OUTPUT mainPS(PS_INPUT input) : SV_TARGET
 {
     PS_OUTPUT output;
-    
+
     float4 color = LightColor.Sample(Sampler, input.TexCoord);
     float4 worldPosTex = LightPos.Sample(Sampler, input.TexCoord);
     float3 worldPos = worldPosTex.xyz;
     float isValid = worldPosTex.w;
-    
+
     float fogFactor;
-    
+
     if (isValid == 0.5f)
     {
+        // 지오메트리 존재할 경우
         fogFactor = ComputeFogFactor(worldPos);
         float3 fogColor = lerp(FogColor.rgb, color.rgb, 1.0 - fogFactor);
         output.Color = float4(fogColor, color.a);
     }
     else
     {
-        output.Color = color;
+        float3 worldPosH = ReconstructWorldPos(input.TexCoord, 1);
+
+        fogFactor = ComputeFogFactor(worldPosH.xyz);
+        float3 fogColor = lerp(FogColor.rgb, color.rgb, 1.0 - fogFactor);
+        output.Color = float4(fogColor, color.a);
     }
-    
-    
+
     return output;
 }
+

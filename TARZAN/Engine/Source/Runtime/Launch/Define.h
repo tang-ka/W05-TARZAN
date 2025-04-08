@@ -392,4 +392,6 @@ struct FFogConstants
     FLinearColor FogInscatteringColor = FLinearColor(1.0f, 1.0f, 1.0f, 1.0f);
     FVector CameraPosition;
     float FogHeight;
+    FMatrix InverseView;
+    FMatrix InverseProjection;
 };

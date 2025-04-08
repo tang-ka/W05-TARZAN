@@ -372,6 +372,8 @@ void FRenderer::PrepareRender()
                 FogData.FogInscatteringColor = HeightFog->GetColor();
                 FogData.CameraPosition = GEngine->GetLevelEditor()->GetActiveViewportClient()->GetCameraLocation();
                 FogData.FogHeight = HeightFog->GetWorldLocation().z;
+                FogData.InverseView = FMatrix::Inverse(GEngine->GetLevelEditor()->GetActiveViewportClient()->GetViewMatrix());
+                FogData.InverseProjection = FMatrix::Inverse(GEngine->GetLevelEditor()->GetActiveViewportClient()->GetProjectionMatrix());
             }
         }
     }
