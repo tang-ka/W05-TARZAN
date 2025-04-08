@@ -1,6 +1,8 @@
 #pragma once
 
 #include <string>
+#include <vector>
+
 #include "CString.h"
 #include "ContainerAllocator.h"
 #include "Core/HAL/PlatformType.h"
@@ -87,6 +89,29 @@ public:
 public:
     FString(const std::string& InString) : PrivateString(InString) {}
     FString(const ANSICHAR* InString) : PrivateString(InString) {}
+    FString(const WIDECHAR* InString)
+    {
+        if (!InString) // Null 체크
+        {
+            PrivateString = "";
+            return;
+        }
+
+        // Wide 문자열을 UTF-8 기반의 narrow 문자열로 변환
+        int sizeNeeded = WideCharToMultiByte(CP_UTF8, 0, InString, -1, nullptr, 0, nullptr, nullptr);
+        if (sizeNeeded <= 0) // 변환 실패 또는 빈 문자열
+        {
+            PrivateString = "";
+            return;
+        }
+
+        // sizeNeeded는 널 종료 문자를 포함한 길이입니다.
+        std::string narrowStr(sizeNeeded - 1, 0); // 널 문자 제외한 크기로 할당
+        WideCharToMultiByte(CP_UTF8, 0, InString, -1, &narrowStr[0], sizeNeeded, nullptr, nullptr);
+
+        PrivateString = narrowStr; // 변환된 문자열로 내부 데이터 초기화
+    }
+    
 #endif
 
 #if USE_WIDECHAR
@@ -136,6 +161,54 @@ public:
     static FString SanitizeFloat(float InFloat);
 
 	static float ToFloat(const FString& InString);
+
+    // --- Printf 함수 ---
+    /**
+     * @brief 가변 인자를 사용하여 포맷팅된 FString을 생성합니다. printf와 유사하게 동작합니다.
+     * @param Format 포맷 문자열 (TCHAR*).
+     * @param ... 포맷 문자열에 대응하는 가변 인자.
+     * @return 포맷팅된 새로운 FString 객체.
+     */
+    static FString Printf(const ElementType* Format, ...);
+
+    /**
+ * 문자열 내용을 기반으로 bool 값을 반환합니다.
+ */
+    bool ToBool() const
+    {
+        // 빈 문자열은 false로 처리
+        if (IsEmpty())
+        {
+            return false;
+        }
+
+        // 가장 일반적인 경우: "true" 또는 "1" (대소문자 무관)
+        // Equals 함수가 이미 대소문자 무시 비교를 지원하므로 활용합니다.
+        if (Equals(TEXT("true"), ESearchCase::IgnoreCase))
+        {
+            return true;
+        }
+        if (Equals(TEXT("1"))) // "1"은 대소문자 구분이 의미 없음
+        {
+            return true;
+        }
+
+        // 그 외: "false" 또는 "0" (대소문자 무관)
+        // 이 경우들도 명시적으로 false를 반환하는 것이 안전합니다.
+        if (Equals(TEXT("false"), ESearchCase::IgnoreCase))
+        {
+            return false;
+        }
+        if (Equals(TEXT("0"))) // "0"도 대소문자 구분이 의미 없음
+        {
+            return false;
+        }
+
+        // 위 조건에 해당하지 않는 모든 다른 문자열은 false로 처리합니다.
+        // (예: "Yes", "No", "On", "Off" 등을 추가로 지원하고 싶다면 여기에 조건을 추가할 수 있습니다.)
+        // UE_LOG(LogTemp, Warning, TEXT("FString::ToBool() : Unrecognized string '%s' treated as false."), **this); // 필요시 경고 로그
+        return false;
+    }
 
 public:
     FORCEINLINE int32 Len() const;
@@ -261,3 +334,95 @@ inline const FString::ElementType* GetData(const FString& String)
     return String.PrivateString.data();
 }
 
+// Printf 함수 구현
+inline FString FString::Printf(const ElementType* Format, ...)
+{
+    if (!Format) // 포맷 문자열 null 체크
+    {
+        return FString();
+    }
+
+    // 첫 번째 시도: 스택에 작은 버퍼를 할당 (일반적인 경우를 빠르게 처리)
+    ElementType StaticBuffer[512];
+    va_list ArgPtr;
+    va_start(ArgPtr, Format);
+
+    int32 Result = -1;
+#if USE_WIDECHAR
+    #ifdef _WIN32
+        // _vsnwprintf는 널 종료를 보장하지 않을 수 있으며, 성공 시 문자 수(널 제외) 또는 버퍼가 작으면 -1 반환
+        Result = _vsnwprintf(StaticBuffer, sizeof(StaticBuffer) / sizeof(ElementType), Format, ArgPtr);
+    #else
+        // vswprintf는 C99 표준부터 버퍼 크기를 받고 널 종료를 보장. 성공 시 문자 수(널 제외), 오류 시 음수 반환.
+        Result = vswprintf(StaticBuffer, sizeof(StaticBuffer) / sizeof(ElementType), Format, ArgPtr);
+    #endif
+#else
+    // vsnprintf는 C99 표준부터 버퍼 크기를 받고 널 종료를 보장. 성공 시 문자 수(널 제외), 오류 시 음수 반환.
+    Result = vsnprintf(StaticBuffer, sizeof(StaticBuffer) / sizeof(ElementType), Format, ArgPtr);
+#endif
+    va_end(ArgPtr);
+
+    // 작은 버퍼로 충분했고 오류가 없었다면 바로 반환
+    if (Result >= 0 && Result < static_cast<int32>(sizeof(StaticBuffer) / sizeof(ElementType)))
+    {
+        // StaticBuffer[Result] = 0; // _vsnwprintf는 널 종료 보장 안할 수 있으나, vsnprintf/vswprintf C99는 함. 안전하게 추가 가능.
+        return FString(BaseStringType(StaticBuffer));
+    }
+    else // 버퍼가 너무 작거나 오류 발생
+    {
+        // 두 번째 시도: 필요한 크기를 계산하여 동적 할당
+        int32 RequiredSize = -1;
+        va_list ArgPtr2;
+        va_start(ArgPtr2, Format);
+#if USE_WIDECHAR
+    #ifdef _WIN32
+        // _vsnwprintf에 null 버퍼와 0 크기를 전달하면 필요한 크기(널 포함 안함) 반환
+        RequiredSize = _vsnwprintf(nullptr, 0, Format, ArgPtr2);
+    #else
+        // C99 vswprintf 동작은 구현에 따라 다를 수 있음. 일반적으로 비슷하게 동작.
+        RequiredSize = vswprintf(nullptr, 0, Format, ArgPtr2); // 이 방식이 표준은 아닐 수 있음. 대안 필요시 다른 라이브러리 사용.
+        // 임시 버퍼를 크게 잡고 시도하는 방법도 있음.
+        // 또는 C++20 std::format 사용 고려.
+    #endif
+#else
+        // C99 vsnprintf에 null 버퍼와 0 크기를 전달하면 필요한 크기(널 포함 안함) 반환
+        RequiredSize = vsnprintf(nullptr, 0, Format, ArgPtr2);
+#endif
+        va_end(ArgPtr2);
+
+        if (RequiredSize < 0) // 크기 계산 실패 (오류)
+        {
+            // 오류 로그 출력 가능
+            return FString(); // 빈 문자열 반환
+        }
+
+        // 필요한 크기 + 널 종료 문자 공간 할당
+        std::vector<ElementType> DynamicBuffer(RequiredSize + 1);
+
+        // 다시 포맷팅 수행
+        va_list ArgPtr3;
+        va_start(ArgPtr3, Format);
+#if USE_WIDECHAR
+    #ifdef _WIN32
+        Result = _vsnwprintf(DynamicBuffer.data(), DynamicBuffer.size(), Format, ArgPtr3);
+    #else
+        Result = vswprintf(DynamicBuffer.data(), DynamicBuffer.size(), Format, ArgPtr3);
+    #endif
+#else
+        Result = vsnprintf(DynamicBuffer.data(), DynamicBuffer.size(), Format, ArgPtr3);
+#endif
+        va_end(ArgPtr3);
+
+        if (Result >= 0 && Result < static_cast<int32>(DynamicBuffer.size()))
+        {
+            // DynamicBuffer[Result] = 0; // 널 종료 보장됨 (C99)
+            return FString(BaseStringType(DynamicBuffer.data()));
+        }
+        else
+        {
+            // 최종 포맷팅 실패 (이론상 발생하기 어려움)
+            // 오류 로그 출력 가능
+            return FString(); // 빈 문자열 반환
+        }
+    }
+}

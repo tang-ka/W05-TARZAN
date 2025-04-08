@@ -23,3 +23,6 @@ public:
 
     bool operator==(const FName& Other) const;
 };
+
+extern const FName NAME_None;
+

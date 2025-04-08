@@ -46,6 +46,9 @@ public:
     void SetRotation(FQuat _newRot) { QuatRotation = _newRot; }
     void SetScale(FVector _newScale) { RelativeScale3D = _newScale; }
     void SetupAttachment(USceneComponent* InParent);
+
+
+    
 public:
 
     USceneComponent* GetAttachParent() const;
@@ -56,8 +59,14 @@ public:
     virtual void PostDuplicate();
 
 
+    void GetProperties(TMap<FString, FString>& OutProperties) const override;
+
+    /** 저장된 Properties 맵에서 컴포넌트의 상태를 복원합니다. */
+    void SetProperties(const TMap<FString, FString>& InProperties) override;
+
+
 private:
-    class UTextUUID* uuidText = nullptr;
+    
 
 public:
 };

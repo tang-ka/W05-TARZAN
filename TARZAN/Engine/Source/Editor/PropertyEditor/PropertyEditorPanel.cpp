@@ -13,7 +13,14 @@
 #include <Components/CubeComp.h>
 #include "FireballComp.h"
 #include "UHeightFogComponent.h"
+#include "SpotLightComp.h"
+
 #include <Components/UParticleSubUVComp.h>
+#include <Components/Movement/MovementComponent.h>
+
+#include "Components/Movement/ProjectileMovementComponent.h"
+#include "Components/Movement/RotatingMovementComponent.h"
+
 
 void PropertyEditorPanel::Render()
 {
@@ -58,6 +65,31 @@ void PropertyEditorPanel::Render()
                     if (SceneComp->GetAttachParent() == nullptr)
                     {
                         DrawSceneComponentTree(SceneComp, PickedComponent);
+                        ImGui::Separator(); 
+                    }
+                    
+                }
+                else
+                {
+                    FString Label = *Component->GetName();
+                    bool bSelected = (PickedComponent == Component);
+
+                    ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_OpenOnArrow;
+                    if (bSelected)
+                        nodeFlags |= ImGuiTreeNodeFlags_Selected;
+
+                    // 노드를 클릭 가능한 셀렉션으로 표시
+                    bool bOpened = ImGui::TreeNodeEx(*Label, nodeFlags);
+
+                    // 클릭되었을 때 선택 갱신
+                    if (ImGui::IsItemClicked())
+                    {
+                        PickedComponent = Component;
+                    }
+
+                    if (bOpened)
+                    {
+                        ImGui::TreePop();
                     }
                 }
             }
@@ -87,7 +119,7 @@ void PropertyEditorPanel::Render()
                 }
                 if (ImGui::Selectable("LightComponent"))
                 {
-                    ULightComponentBase* LightComponent = PickedActor->AddComponent<ULightComponentBase>();
+                    USpotLightComponent* LightComponent = PickedActor->AddComponent<USpotLightComponent>();
                     PickedComponent = LightComponent;
                 }
                 if (ImGui::Selectable("ParticleComponent"))
@@ -116,6 +148,16 @@ void PropertyEditorPanel::Render()
                     UFireballComponent* FireballComponent = PickedActor->AddComponent<UFireballComponent>();
                     PickedComponent = FireballComponent;
                 }
+                if (ImGui::Selectable("ProjectileMovementComponent"))
+                {
+                    UProjectileMovementComponent* ProjectileComponent = PickedActor->AddComponent<UProjectileMovementComponent>();
+                    PickedComponent = ProjectileComponent;
+                }
+                if (ImGui::Selectable("RotatingMovementComponent"))
+                {
+                    URotatingMovementComponent* RotatingComponent = PickedActor->AddComponent<URotatingMovementComponent>();
+                    PickedComponent = RotatingComponent;
+                }
                 if (ImGui::Selectable("HeightFogComponent"))
                 {
                     UHeightFogComponent* HeightFogComponent = PickedActor->AddComponent<UHeightFogComponent>();
@@ -141,9 +183,9 @@ void PropertyEditorPanel::Render()
             {
                 LastComponent = PickedComponent;
                 bFirstFrame = true;
-                Location = SceneComp->GetWorldLocation();
-                Rotation = SceneComp->GetWorldRotation();
-                Scale = SceneComp->GetWorldScale();
+                Location = SceneComp->GetLocalLocation();
+                Rotation = SceneComp->GetLocalRotation();
+                Scale = SceneComp->GetLocalScale();
             }
 
             bool bChanged = false;
@@ -179,19 +221,50 @@ void PropertyEditorPanel::Render()
         ImGui::PopStyleColor();
         bFirstFrame = false;
     }
-
-    if (PickedActor && PickedComponent && (PickedComponent->IsA<ULightComponentBase>()||PickedComponent->IsA<UFireballComponent>()))
+    
+    if (PickedActor && PickedComponent && PickedComponent->IsA<UMovementComponent>())
     {
-        ULightComponentBase* lightObj = Cast<ULightComponentBase>(PickedComponent);
+        UMovementComponent* SceneComp = Cast<UMovementComponent>(PickedComponent);
+        ImGui::SetItemDefaultFocus();
+        // TreeNode 배경색을 변경 (기본 상태)
+        ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.1f, 0.1f, 0.1f, 1.0f));
+        if (ImGui::TreeNodeEx("Velocity", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen)) // 트리 노드 생성
+        {
+            if (PickedComponent != LastComponent)
+            {
+                LastComponent = PickedComponent;
+                bFirstFrame = true;
+                Velocity = SceneComp->GetVelocity();
+                Speed = SceneComp->GetSpeed();
+            }
+
+        
+            bool bChanged = false;
+            bChanged |= FImGuiWidget::DrawVec3Control("Velocity", Velocity, 0, 10);
+            ImGui::Spacing();
+            bChanged |= ImGui::DragFloat("Speed", &Speed, 0.1f, 0.f, 10.f);
+
+
+            if (bChanged && !bFirstFrame)
+            {
+                SceneComp->SetVelocity(Velocity);
+                SceneComp->SetSpeed(Speed);
+            }
+        
+            ImGui::TreePop(); // 트리 닫기
+        }
+        ImGui::PopStyleColor();
+        bFirstFrame = false;
+    }
+
+    if (PickedActor && PickedComponent && PickedComponent->IsA<UFireballComponent>())
+    {
         UFireballComponent* fireballObj = Cast<UFireballComponent>(PickedComponent);
         ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.1f, 0.1f, 0.1f, 1.0f));
         if (ImGui::TreeNodeEx("SpotLight Component", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen)) // 트리 노드 생성
         {
             FLinearColor currColor;
-            if(lightObj)
-                currColor = lightObj->GetColor();
-            else if (fireballObj)
-               currColor = fireballObj->GetColor();
+            currColor = fireballObj->GetColor();
 
 
             float r = currColor.R;
@@ -213,14 +286,9 @@ void PropertyEditorPanel::Render()
                 g = lightColor[1];
                 b = lightColor[2];
                 a = lightColor[3];
-                if (fireballObj)
-                {
-                    fireballObj->SetColor(FLinearColor(r, g, b, a));
-                }
-                else if (lightObj)
-                {
-                    lightObj->SetColor(FLinearColor(r, g, b, a));
-                }
+                fireballObj->SetColor(FLinearColor(r, g, b, a));
+                
+               
                
             }
             RGBToHSV(r, g, b, h, s, v);
@@ -250,62 +318,67 @@ void PropertyEditorPanel::Render()
             {
                 // RGB -> HSV
                 RGBToHSV(r, g, b, h, s, v);
-                if (fireballObj)
-                {
+                
                     fireballObj->SetColor(FLinearColor(r, g, b, a));
-                }
-                else if (lightObj)
-                {
-                    lightObj->SetColor(FLinearColor(r, g, b, a));
-                }
+                
+                
             }
             else if (changedHSV && !changedRGB)
             {
                 // HSV -> RGB
                 HSVToRGB(h, s, v, r, g, b);
-                if (fireballObj)
-                {
+                
                     fireballObj->SetColor(FLinearColor(r, g, b, a));
-                }
-                else if (lightObj)
-                {
-                    lightObj->SetColor(FLinearColor(r, g, b, a));
-                }
+                
+               
             }
 
             // Light Radius
             float radiusVal;
-            if (lightObj)
-            {
-                radiusVal = lightObj->GetRadius();
-            }
-            else if (fireballObj)
-            {
+           
                 radiusVal = fireballObj->GetRadius();
-            }
+            
             if (ImGui::SliderFloat("Radius", &radiusVal, 1.0f, 100.0f))
             {
-                if (lightObj)
-                {
-                    lightObj->SetRadius(radiusVal);
-                }
+                
+                
+                    fireballObj->SetRadius(radiusVal);
+               
+            }
+            float IntensityVal = fireballObj->GetIntensity();
+            if (ImGui::SliderFloat("Intensity", &IntensityVal, 1.0f, 100.0f))
+            {
                 if (fireballObj)
                 {
-                    fireballObj->SetRadius(radiusVal);
+                    fireballObj->SetIntensity(IntensityVal);
                 }
             }
-
-            if (fireballObj)
+            if (USpotLightComponent* SpotLight= Cast<USpotLightComponent>(fireballObj))
             {
-                float IntensityVal = fireballObj->GetIntensity();
-                if (ImGui::SliderFloat("Intensity", &IntensityVal, 1.0f, 100.0f))
+                float InnerAngle = SpotLight->GetInnerSpotAngle();
+                float OuterAngle = SpotLight->GetOuterSpotAngle();
+                float prevInner = InnerAngle;
+                float prevOuter = OuterAngle;
+
+                if (ImGui::SliderFloat("InnerAngle", &InnerAngle, 1.0f, 90.0f))
                 {
-                    if (fireballObj)
-                    {
-                        fireballObj->SetIntensity(IntensityVal);
-                    }
+                    if (InnerAngle > OuterAngle)
+                        OuterAngle = InnerAngle;
+
+                    SpotLight->SetInnerSpotAngle(InnerAngle);
+                    SpotLight->SetOuterSpotAngle(OuterAngle);
                 }
-            }
+
+                if (ImGui::SliderFloat("OuterAngle", &OuterAngle, 1.0f, 90.0f))
+                {
+                    if (OuterAngle < InnerAngle)
+                        InnerAngle = OuterAngle;
+
+                    SpotLight->SetOuterSpotAngle(OuterAngle);
+                    SpotLight->SetInnerSpotAngle(InnerAngle);
+                }
+
+          }
             ImGui::TreePop();
         }
         ImGui::PopStyleColor();
