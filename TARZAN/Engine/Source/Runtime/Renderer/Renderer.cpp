@@ -63,7 +63,7 @@ void FRenderer::Render()
     //DeprecatedRender();
 
     SLevelEditor* LevelEditor = GEngine->GetLevelEditor();
-    std::shared_ptr<UWorld> GWorld = GEngine->GetWorld();
+    UWorld* GWorld = GEngine->GetWorld();
 
     Graphics->Prepare();
     if (LevelEditor->IsMultiViewport())
@@ -73,14 +73,14 @@ void FRenderer::Render()
         {
             LevelEditor->SetViewportClient(i);
             PrepareRender();
-            RenderPass(GWorld.get(), LevelEditor->GetActiveViewportClient());
+            RenderPass(GWorld, LevelEditor->GetActiveViewportClient());
         }
         LevelEditor->SetViewportClient(viewportClient);
     }
     else
     {
         PrepareRender();
-        RenderPass(GWorld.get(), LevelEditor->GetActiveViewportClient());
+        RenderPass(GWorld, LevelEditor->GetActiveViewportClient());
     }
 
     ClearRenderArr();
