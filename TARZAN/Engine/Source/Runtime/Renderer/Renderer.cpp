@@ -109,6 +109,8 @@ void FRenderer::RenderPass(UWorld* World, std::shared_ptr<FEditorViewportClient>
 
     RenderGBuffer(World, ActiveViewport);
 
+    Graphics->ChangeRasterizer(EViewModeIndex::VMI_Unlit);
+
     RenderLightPass(World, ActiveViewport);
 
     //RenderPostProcessPass(World, ActiveViewport);
