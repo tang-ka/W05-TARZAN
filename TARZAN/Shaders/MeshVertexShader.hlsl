@@ -7,6 +7,8 @@ cbuffer MatrixConstants : register(b0)
     float4 UUID;
     bool isSelected;
     float3 MatrixPad0;
+    float2 ViewPortSize;
+    float2 ScreenSize;
 };
 
 struct VS_INPUT
