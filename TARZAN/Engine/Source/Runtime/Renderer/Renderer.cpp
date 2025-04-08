@@ -780,10 +780,10 @@ void FRenderer::RenderLightPass(UWorld* World, std::shared_ptr<FEditorViewportCl
     // Directional Light
 
     //  Light
+    FFireballArrayInfo fireballArrayInfo;
+    fireballArrayInfo.FireballCount = 0;
     if (FireballObjs.Num() > 0) 
     {
-        FFireballArrayInfo fireballArrayInfo;
-        fireballArrayInfo.FireballCount = 0;
         for (int i = 0; i < FireballObjs.Num(); i++)
         {
             if (FireballObjs[i] != nullptr)
@@ -804,9 +804,8 @@ void FRenderer::RenderLightPass(UWorld* World, std::shared_ptr<FEditorViewportCl
                 fireballArrayInfo.FireballCount++;
             }
         }
-        ConstantBufferUpdater.UpdateFireballConstant(FireballConstantBuffer, fireballArrayInfo);
     }
-
+    ConstantBufferUpdater.UpdateFireballConstant(FireballConstantBuffer, fireballArrayInfo);
     // Spot Light
 
 #pragma region d
