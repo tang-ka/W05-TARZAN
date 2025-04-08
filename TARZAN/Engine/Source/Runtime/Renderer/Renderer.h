@@ -77,6 +77,8 @@ public:
     uint32 Stride;
     uint32 Stride2;
 
+    ID3D11SamplerState* LPSamplerState;
+
 public:
     void Initialize(FGraphicsDevice* graphics);
    

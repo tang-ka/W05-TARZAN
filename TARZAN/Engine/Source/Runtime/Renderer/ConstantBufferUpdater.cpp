@@ -25,6 +25,27 @@ void FConstantBufferUpdater::UpdateConstant(ID3D11Buffer* ConstantBuffer, const 
     }
 }
 
+void FConstantBufferUpdater::UpdateConstantWithCamPos(ID3D11Buffer* ConstantBuffer, 
+    const FMatrix& MVP, const FMatrix& Model, const FMatrix& NormalMatrix, FVector4 UUIDColor, bool IsSelected, FVector CamPos) const
+{
+    if (ConstantBuffer)
+    {
+        D3D11_MAPPED_SUBRESOURCE ConstantBufferMSR;
+
+        DeviceContext->Map(ConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &ConstantBufferMSR); // update constant buffer every frame
+        {
+            FConstants* constants = static_cast<FConstants*>(ConstantBufferMSR.pData);
+            constants->MVP = MVP;
+            constants->ModelMatrix = Model;
+            constants->ModelMatrixInverseTranspose = NormalMatrix;
+            constants->UUIDColor = UUIDColor;
+            constants->IsSelected = IsSelected;
+            constants->CameraPosition = CamPos;
+        }
+        DeviceContext->Unmap(ConstantBuffer, 0);
+    }
+}
+
 void FConstantBufferUpdater::UpdateMaterialConstant(ID3D11Buffer* MaterialConstantBuffer, const FObjMaterialInfo& MaterialInfo) const
 {
     if (MaterialConstantBuffer)
@@ -77,6 +98,7 @@ void FConstantBufferUpdater::UpdateGlobalLightConstant(ID3D11Buffer* GlobalLight
         constants->Emissive = GlobalLight.Emissive;
         constants->Direction = GlobalLight.Direction;
         constants->CameraPosition = GlobalLight.CameraPosition;
+        constants->Padding = GlobalLight.Padding;
     }
     DeviceContext->Unmap(GlobalLightBuffer, 0);
 }

@@ -56,6 +56,17 @@ void FRenderer::Initialize(FGraphicsDevice* graphics)
     // test
     CreateDummyPostProcessResources();
     SceneDepthSRV = Graphics->DepthStencilSRV;
+
+    D3D11_SAMPLER_DESC samplerDesc = {};
+    samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    samplerDesc.MinLOD = 0;
+    samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+    Graphics->Device->CreateSamplerState(&samplerDesc, &LPSamplerState);
 }
 
 void FRenderer::Render()
@@ -531,7 +542,8 @@ void FRenderer::RenderStaticMeshes(UWorld* World, std::shared_ptr<FEditorViewpor
         FVector4 UUIDColor = StaticMeshComp->EncodeUUID() / 255.0f;
 
         bool isSelected = World->GetSelectedActor() == StaticMeshComp->GetOwner();
-        ConstantBufferUpdater.UpdateConstant(ConstantBuffer, MVP, Model, NormalMatrix, UUIDColor, isSelected);
+        ConstantBufferUpdater.UpdateConstantWithCamPos(ConstantBuffer, 
+            MVP, Model, NormalMatrix, UUIDColor, isSelected, ActiveViewport->GetCameraLocation());
 
         //if (USkySphereComponent* skysphere = Cast<USkySphereComponent>(StaticMeshComp))
         //{
@@ -739,8 +751,8 @@ void FRenderer::RenderGBuffer(UWorld* World, std::shared_ptr<FEditorViewportClie
         RenderStaticMeshes(World, ActiveViewport);
 
     // Billboard
-    //if (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_BillboardText))
-    //    RenderBillboards(World, ActiveViewport);
+    if (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_BillboardText))
+        RenderBillboards(World, ActiveViewport);
 }
 
 void FRenderer::RenderLightPass(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport)
@@ -749,6 +761,7 @@ void FRenderer::RenderLightPass(UWorld* World, std::shared_ptr<FEditorViewportCl
 
     //ID3D11RenderTargetView* rtv = Graphics->FrameBufferRTV;
     //Graphics->DeviceContext->OMSetRenderTargets(1, &rtv, Graphics->DepthStencilView);
+    int mode = ActiveViewport->GetViewMode();
 
     FLightConstant GlobalLight = {
         .Ambient = FVector4(0.1f, 0.1f, 0.1f, 1.f),
@@ -759,7 +772,7 @@ void FRenderer::RenderLightPass(UWorld* World, std::shared_ptr<FEditorViewportCl
         .Direction = FVector(1.0f, -1.0f, -1.0f),
         .Padding2 = 0,
         .CameraPosition = ActiveViewport->GetCameraLocation(),
-        .Padding = 0
+        .Padding = (float)ActiveViewport->GetViewMode(),
     };
 
     ConstantBufferUpdater.UpdateGlobalLightConstant(LPLightConstantBuffer, GlobalLight);
@@ -812,18 +825,7 @@ void FRenderer::RenderLightPass(UWorld* World, std::shared_ptr<FEditorViewportCl
     };
     Graphics->DeviceContext->PSSetShaderResources(0, 4, SRVs);
 
-    ID3D11SamplerState* SamplerState;
-    D3D11_SAMPLER_DESC samplerDesc = {};
-    samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-    samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-    samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-    samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-    samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-    samplerDesc.MinLOD = 0;
-    samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
-
-    Graphics->Device->CreateSamplerState(&samplerDesc, &SamplerState);
-    Graphics->DeviceContext->PSSetSamplers(0, 1, &SamplerState);
+    Graphics->DeviceContext->PSSetSamplers(0, 1, &LPSamplerState);
 
     // 6. Fullscreen Quad 렌더링
     const FQuadRenderData& quad = UEditorEngine::resourceMgr.GetQuadRenderData();

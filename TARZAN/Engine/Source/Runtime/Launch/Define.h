@@ -304,7 +304,7 @@ struct FConstants {
     FMatrix ModelMatrixInverseTranspose; // normal 변환을 위한 행렬
     FVector4 UUIDColor;
     bool IsSelected;
-    FVector pad;
+    FVector CameraPosition;
 };
 
 struct FLitUnlitConstants {
@@ -352,6 +352,12 @@ struct FMaterial
     FVector Emissive;
     float Roughness;
 };
+
+//struct FViewModeConstatnt
+//{
+//    int ViewMode;
+//    FVector Padding;
+//};
 #pragma endregion
 
 struct FFireballConstant

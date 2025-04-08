@@ -2,12 +2,13 @@
 
 enum EViewModeIndex
 {
-    VMI_Lit,
-    VMI_Unlit,
-    VMI_Wireframe,
-    VMI_BaseColor,
-    VMI_Normal,
-    VMI_Depth,
+    VMI_Lit = 0,
+    VMI_Unlit = 1,
+    VMI_Wireframe = 2,
+    VMI_BaseColor = 3,
+    VMI_Normal = 4,
+    VMI_Depth = 5,
+    VMI_WorldPos = 6,
 };
 
 enum ELevelTick
