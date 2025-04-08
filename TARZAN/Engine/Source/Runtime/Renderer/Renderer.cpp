@@ -393,9 +393,21 @@ void FRenderer::PrepareRender()
                 {
                     LightObjs.Add(pLightComp);
                 }
-                if (UFireballComponent* pFireComp = Cast<UFireballComponent>(iter))
+                if (UFireballComponent* pFireComp = Cast<UFireballComponent>(iter2))
                 {
                     FireballObjs.Add(pFireComp);
+                }
+                if (UHeightFogComponent* HeightFog = Cast<UHeightFogComponent>(iter2))
+                {
+                    fogData.FogDensity = HeightFog->GetFogDensity();
+                    fogData.FogHeightFalloff = HeightFog->GetFogHeightFalloff();
+                    fogData.StartDistance = HeightFog->GetStartDistance();
+                    fogData.FogCutoffDistance = HeightFog->GetFogCutoffDistance();
+                    fogData.FogMaxOpacity = HeightFog->GetFogMaxOpacity();
+                    fogData.FogInscatteringColor = HeightFog->GetColor();
+                    fogData.CameraPosition = GEngine->GetLevelEditor()->GetActiveViewportClient()->GetCameraLocation();
+                    fogData.FogHeight = HeightFog->GetWorldLocation().z;
+                    ConstantBufferUpdater.UpdateFogConstant(FogConstantBuffer, fogData);
                 }
             }
         }
