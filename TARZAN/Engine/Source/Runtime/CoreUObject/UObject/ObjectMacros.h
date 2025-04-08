@@ -16,11 +16,30 @@ private: \
 public: \
     using Super = TSuperClass; \
     using ThisClass = TClass; \
+    /* 1. 정적 생성자 헬퍼 함수 정의 */ \
+    static UObject* Construct_##TClass(UObject* Outer, FName Name) \
+    { \
+        /* 실제 객체 생성 (new 사용) */ \
+        TClass* Obj = new TClass(); \
+        return Obj; \
+    } \
+\
     static UClass* StaticClass() { \
         static UClass ClassInfo{ TEXT(#TClass), static_cast<uint32>(sizeof(TClass)), static_cast<uint32>(alignof(TClass)), TSuperClass::StaticClass() }; \
+                    /* !!! 중요: 생성자 함수 포인터 연결 !!! */ \
+        ClassInfo.ObjectConstructor = &Construct_##TClass; \
         return &ClassInfo; \
-    }
-
+    } \
+struct FAutoRegister##TClass { \
+    FAutoRegister##TClass() { \
+    GetGlobalClassRegistry().Add(FName(TEXT(#TClass)), &TClass::StaticClass); \
+        } \
+    }; \
+friend struct FAutoRegister##TClass;\
+/* 자동 등록용 구조체 정의 (private 내부) */ \
+private: \
+inline static FAutoRegister##TClass AutoRegister##TClass##Instance; \
+public: \
 
 // #define PROPERTY(Type, VarName, DefaultValue) \
 // private: \

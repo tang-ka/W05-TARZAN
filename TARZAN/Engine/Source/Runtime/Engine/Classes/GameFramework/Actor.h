@@ -53,6 +53,8 @@ public:
         requires std::derived_from<T, UActorComponent>
     T* AddComponent(FName Name = NAME_None);
 
+    UActorComponent* AddComponent(UClass* ComponentClass, FName Name = NAME_None);
+
     void AddComponent(UActorComponent* Component);
     /** Actor가 가지고 있는 Component를 제거합니다. */
     void RemoveOwnedComponent(UActorComponent* Component);

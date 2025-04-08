@@ -8,7 +8,15 @@
 UClass* UObject::StaticClass()
 {
     static UClass ClassInfo{TEXT("UObject"), sizeof(UObject), alignof(UObject), nullptr};
+    ClassInfo.ObjectConstructor = &Construct_UObject; \
     return &ClassInfo;
+}
+
+UObject::FAutoRegisterUObject::FAutoRegisterUObject()
+{
+    {
+        GetGlobalClassRegistry().Add(FName(TEXT("UObject")), &UObject::StaticClass);
+    } 
 }
 
 UObject::UObject()
@@ -30,4 +38,5 @@ bool UObject::IsA(const UClass* SomeBase) const
     return ThisClass->IsChildOf(SomeBase);
 }
 
+UObject::FAutoRegisterUObject UObject::AutoRegisterUObjectInstance;
 
