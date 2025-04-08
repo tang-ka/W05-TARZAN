@@ -23,6 +23,12 @@ public:
     void SetVelocity(const FVector& NewVelocity) { Velocity = NewVelocity; }
     void AddVelocity(const FVector& DeltaVelocity) { Velocity = Velocity + DeltaVelocity; }
 
+    
+    //save
+    void GetProperties(TMap<FString, FString>& OutProperties) const override;
+
+    void SetProperties(const TMap<FString, FString>& InProperties) override;
+
 
 protected:
     float Speed = 1.f;
