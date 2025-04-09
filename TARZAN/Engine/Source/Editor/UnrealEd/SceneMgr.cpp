@@ -274,7 +274,10 @@ bool FSceneMgr::LoadSceneFromData(const FSceneData& sceneData, UWorld* targetWor
         {
             UClass* ComponentClass = FindClassByName(FName(componentData.ComponentClass));
 
-
+            if (componentData.ComponentID == "USpotLightComponent_156")
+            {
+                int a= 0;
+            }
             // 컴포넌트 생성 (액터를 Outer로 지정, 저장된 ID를 이름으로)
             UActorComponent* TargetComponent = nullptr; // 최종적으로 사용할 컴포넌트 포인터
 
@@ -293,6 +296,21 @@ bool FSceneMgr::LoadSceneFromData(const FSceneData& sceneData, UWorld* targetWor
             if (TargetComponent == nullptr)
             {
                 TargetComponent = SpawnedActor->AddComponent(ComponentClass, FName(componentData.ComponentID));
+
+                
+                if (!actorData.RootComponentID.IsEmpty())
+                {
+                    if (componentData.ComponentID != actorData.RootComponentID)
+                    {
+                        // 임시로 RootComponent 가 아니면 떼어줌
+                        USceneComponent* SceneComp = Cast<USceneComponent>(TargetComponent);
+                        if (SceneComp)
+                        {
+                            SpawnedActor->SetRootComponent(nullptr);
+                        }
+                    }
+                }
+                
                 // if (componentData.ComponentClass == UStaticMesh::StaticClass()->GetName())
                 // {
                 //     TargetComponent = SpawnedActor->AddComponent<UStaticMeshComponent>();
@@ -317,7 +335,10 @@ bool FSceneMgr::LoadSceneFromData(const FSceneData& sceneData, UWorld* targetWor
                 continue;
             }
 
-
+            if (componentData.ComponentID == "USpotLightComponent_156")
+            {
+                int a= 0;
+            }
 
             // --- 이제 TargetComponent는 유효한 기존 컴포넌트 또는 새로 생성된 컴포넌트 ---
             if (TargetComponent)
@@ -352,6 +373,11 @@ bool FSceneMgr::LoadSceneFromData(const FSceneData& sceneData, UWorld* targetWor
         for (const FComponentSaveData& componentData : actorData.Components) // 다시 컴포넌트 데이터 순회
         {
             UActorComponent** FoundCompPtr = ActorComponentsMap.Find(componentData.ComponentID);
+            if (componentData.ComponentID == "USpotLightComponent_156")
+            {
+                int a= 0;
+            }
+            
             if (FoundCompPtr == nullptr || *FoundCompPtr == nullptr) continue; // 위에서 생성/찾기 실패한 경우
 
             USceneComponent* CurrentSceneComp = Cast<USceneComponent>(*FoundCompPtr);

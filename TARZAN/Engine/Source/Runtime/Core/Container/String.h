@@ -214,6 +214,13 @@ public:
         return false;
     }
 
+    /**
+ * 이 문자열의 시작 부분에서 Count개의 문자를 제외한 나머지를 복사하여 반환합니다.
+ * @param Count 제거할 앞부분 문자의 개수.
+ * @return 시작 부분이 제거된 새로운 FString 객체. Count가 0보다 작거나 같으면 원본 복사본을,
+ *         Count가 문자열 길이보다 크거나 같으면 빈 문자열을 반환합니다.
+ */
+    FString RightChop(int32 Count) const;
 public:
     FORCEINLINE int32 Len() const;
     FORCEINLINE bool IsEmpty() const;
