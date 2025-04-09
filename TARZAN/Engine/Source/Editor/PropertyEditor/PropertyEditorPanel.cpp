@@ -149,6 +149,31 @@ void PropertyEditorPanel::Render()
                     UCubeComp* CubeComponent = PickedActor->AddComponent<UCubeComp>();
                     PickedComponent = CubeComponent;
                 }
+                if (ImGui::Selectable("ConeComponent"))
+                {
+                    UConeComponent* CubeComponent = PickedActor->AddComponent<UConeComponent>();
+                    PickedComponent = CubeComponent;
+                }
+                if (ImGui::Selectable("CylinderComponent"))
+                {
+                    UCylinderComponent* CubeComponent = PickedActor->AddComponent<UCylinderComponent>();
+                    PickedComponent = CubeComponent;
+                }
+                if (ImGui::Selectable("PlaneComponent"))
+                {
+                    UPlaneComponent* CubeComponent = PickedActor->AddComponent<UPlaneComponent>();
+                    PickedComponent = CubeComponent;
+                }
+                if (ImGui::Selectable("SphereComponent"))
+                {
+                    USphereComponent* CubeComponent = PickedActor->AddComponent<USphereComponent>();
+                    PickedComponent = CubeComponent;
+                }
+                if (ImGui::Selectable("TorusComponent"))
+                {
+                    UTorusComponent* SkySphereComponent = PickedActor->AddComponent<UTorusComponent>();
+                    PickedComponent = SkySphereComponent;
+                }
                 if (ImGui::Selectable("FireballComponent"))
                 {
                     UFireballComponent* FireballComponent = PickedActor->AddComponent<UFireballComponent>();
