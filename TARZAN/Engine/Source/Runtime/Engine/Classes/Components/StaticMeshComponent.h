@@ -45,3 +45,66 @@ protected:
 private:
     float Timer = 0.0f;
 };
+
+class UCylinderComponent : public UStaticMeshComponent
+{
+    DECLARE_CLASS(UCylinderComponent, UStaticMeshComponent)
+
+public:
+    UCylinderComponent();
+    virtual ~UCylinderComponent() override;
+
+    virtual void InitializeComponent() override;
+    virtual void TickComponent(float DeltaTime) override;
+};
+
+
+class UConeComponent : public UStaticMeshComponent
+{
+    DECLARE_CLASS(UConeComponent, UStaticMeshComponent)
+
+public:
+    UConeComponent();
+    virtual ~UConeComponent() override;
+
+    virtual void InitializeComponent() override;
+    virtual void TickComponent(float DeltaTime) override;
+};
+
+class UPlaneComponent : public UStaticMeshComponent
+{
+    DECLARE_CLASS(UPlaneComponent, UStaticMeshComponent)
+
+public:
+    UPlaneComponent();
+    virtual ~UPlaneComponent() override;
+
+    virtual void InitializeComponent() override;
+    virtual void TickComponent(float DeltaTime) override;
+};
+
+
+class USphereComponent : public UStaticMeshComponent
+{
+    DECLARE_CLASS(USphereComponent, UStaticMeshComponent)
+
+public:
+    USphereComponent();
+    virtual ~USphereComponent() override;
+
+    virtual void InitializeComponent() override;
+    virtual void TickComponent(float DeltaTime) override;
+};
+
+
+class UTorusComponent : public UStaticMeshComponent
+{
+    DECLARE_CLASS(UTorusComponent, UStaticMeshComponent)
+
+public:
+    UTorusComponent();
+    virtual ~UTorusComponent() override;
+
+    virtual void InitializeComponent() override;
+    virtual void TickComponent(float DeltaTime) override;
+};

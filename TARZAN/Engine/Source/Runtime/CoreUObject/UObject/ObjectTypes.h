@@ -5,7 +5,12 @@ enum OBJECTS
 {
 	OBJ_SPHERE,
 	OBJ_CUBE,
+	OBJ_Cylinder,
+	OBJ_Cone,
+	OBJ_Torus,
+	OBJ_Plane,
 	OBJ_SpotLight,
+	OBJ_StaticMesh,
 	OBJ_PARTICLE,
 	OBJ_Text,
 	OBJ_TRIANGLE,

@@ -264,8 +264,13 @@ void ControlEditorPanel::CreateModifyButton(ImVec2 ButtonSize, ImFont* IconFont)
         };
 
         static const Primitive primitives[] = {
+            
+            { .label= "Sphere",      .obj= OBJ_SPHERE },
+            { .label= "Cone",        .obj= OBJ_Cone },
+            { .label= "Cylinder",    .obj= OBJ_Cylinder },
+            { .label= "Plane",       .obj= OBJ_Plane },
+            { .label= "Torus",       .obj= OBJ_Torus },
             { .label= "Cube",      .obj= OBJ_CUBE },
-            { .label= "Sphere",    .obj= OBJ_SPHERE },
             { .label= "SpotLight", .obj= OBJ_SpotLight },
             { .label= "Particle",  .obj= OBJ_PARTICLE },
             { .label= "Text",      .obj= OBJ_Text },
@@ -286,11 +291,56 @@ void ControlEditorPanel::CreateModifyButton(ImVec2 ButtonSize, ImFont* IconFont)
                 {
                 case OBJ_SPHERE:
                 {
-                    SpawnedActor = World->SpawnActor<AActor>();
-                    SpawnedActor->SetActorLabel(TEXT("OBJ_SPHERE"));
-                    SpawnedActor->AddComponent<USphereComp>();
+                    TempActor = World->SpawnActor<AStaticMeshActor>();
+                    TempActor->SetActorLabel(TEXT("OBJ_SPHERE"));
+                        UStaticMeshComponent* MeshComp = TempActor->GetStaticMeshComponent();
+                        FManagerOBJ::CreateStaticMesh("Assets/Sphere.obj");
+                    MeshComp->SetStaticMesh(FManagerOBJ::GetStaticMesh(L"Sphere.obj"));
                     break;
                 }
+                case OBJ_Cylinder:
+                {
+                    TempActor = World->SpawnActor<AStaticMeshActor>();
+                    TempActor->SetActorLabel(TEXT("OBJ_Cylinder"));
+                    UStaticMeshComponent* MeshComp = TempActor->GetStaticMeshComponent();
+                    FManagerOBJ::CreateStaticMesh("Assets/Cylinder.obj");
+                    MeshComp->SetStaticMesh(FManagerOBJ::GetStaticMesh(L"Cylinder.obj"));
+                    break;
+                }
+                    case OBJ_Cone:
+                    {
+                        TempActor = World->SpawnActor<AStaticMeshActor>();
+                        TempActor->SetActorLabel(TEXT("OBJ_Cone"));
+                        UStaticMeshComponent* MeshComp = TempActor->GetStaticMeshComponent();
+                        FManagerOBJ::CreateStaticMesh("Assets/Cone.obj");
+                        MeshComp->SetStaticMesh(FManagerOBJ::GetStaticMesh(L"Cone.obj"));
+                        break;
+                    }
+                case OBJ_Plane:
+                    {
+                        TempActor = World->SpawnActor<AStaticMeshActor>();
+                        TempActor->SetActorLabel(TEXT("OBJ_Plane"));
+                        UStaticMeshComponent* MeshComp = TempActor->GetStaticMeshComponent();
+                        FManagerOBJ::CreateStaticMesh("Assets/Plane.obj");
+                        MeshComp->SetStaticMesh(FManagerOBJ::GetStaticMesh(L"Plane.obj"));
+                        break;
+                    }
+                case OBJ_Torus:
+                    {
+                        TempActor = World->SpawnActor<AStaticMeshActor>();
+                        TempActor->SetActorLabel(TEXT("OBJ_Torus"));
+                        UStaticMeshComponent* MeshComp = TempActor->GetStaticMeshComponent();
+                        FManagerOBJ::CreateStaticMesh("Assets/Torus.obj");
+                        MeshComp->SetStaticMesh(FManagerOBJ::GetStaticMesh(L"Torus.obj"));
+                        break;
+                    }
+                    
+
+                case OBJ_StaticMesh:
+                    {
+                        TempActor = World->SpawnActor<AStaticMeshActor>();
+                        break;
+                    }
                 case OBJ_CUBE:
                 {
                     TempActor = World->SpawnActor<AStaticMeshActor>();

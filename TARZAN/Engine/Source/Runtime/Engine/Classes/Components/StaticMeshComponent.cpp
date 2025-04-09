@@ -118,6 +118,7 @@ int UStaticMeshComponent::CheckRayIntersection(FVector& rayOrigin, FVector& rayD
     }
     return nIntersections;
 }
+
 UObject* UStaticMeshComponent::Duplicate() const
 {
     UStaticMeshComponent* NewComp = FObjectFactory::ConstructObjectFrom<UStaticMeshComponent>(this);
@@ -201,4 +202,116 @@ void UStaticMeshComponent::TickComponent(float DeltaTime)
 {
     //Timer += DeltaTime * 0.005f;
     //SetLocation(GetWorldLocation()+ (FVector(1.0f,1.0f, 1.0f) * sin(Timer)));
+}
+
+
+
+UCylinderComponent::UCylinderComponent()
+{
+    SetType(StaticClass()->GetName());
+}
+
+UCylinderComponent::~UCylinderComponent()
+{
+}
+
+void UCylinderComponent::InitializeComponent()
+{
+    Super::InitializeComponent();
+
+    FManagerOBJ::CreateStaticMesh("Assets/Cylinder.obj");
+    SetStaticMesh(FManagerOBJ::GetStaticMesh(L"Cylinder.obj"));
+}
+
+void UCylinderComponent::TickComponent(float DeltaTime)
+{
+    Super::TickComponent(DeltaTime);
+}
+
+UConeComponent::UConeComponent()
+{
+    SetType(StaticClass()->GetName());
+}
+
+UConeComponent::~UConeComponent()
+{
+}
+
+void UConeComponent::InitializeComponent()
+{
+    Super::InitializeComponent();
+
+    FManagerOBJ::CreateStaticMesh("Assets/Cone.obj");
+    SetStaticMesh(FManagerOBJ::GetStaticMesh(L"Cone.obj"));
+}
+
+void UConeComponent::TickComponent(float DeltaTime)
+{
+    Super::TickComponent(DeltaTime);
+}
+
+UPlaneComponent::UPlaneComponent()
+{
+    SetType(StaticClass()->GetName());
+}
+
+UPlaneComponent::~UPlaneComponent()
+{
+}
+
+void UPlaneComponent::InitializeComponent()
+{
+    Super::InitializeComponent();
+
+    FManagerOBJ::CreateStaticMesh("Assets/Plane.obj");
+    SetStaticMesh(FManagerOBJ::GetStaticMesh(L"Plane.obj"));
+}
+
+void UPlaneComponent::TickComponent(float DeltaTime)
+{
+    Super::TickComponent(DeltaTime);
+}
+
+USphereComponent::USphereComponent()
+{
+    SetType(StaticClass()->GetName());
+}
+
+USphereComponent::~USphereComponent()
+{
+}
+
+void USphereComponent::InitializeComponent()
+{
+    Super::InitializeComponent();
+
+    FManagerOBJ::CreateStaticMesh("Assets/Sphere.obj");
+    SetStaticMesh(FManagerOBJ::GetStaticMesh(L"Sphere.obj"));
+}
+
+void USphereComponent::TickComponent(float DeltaTime)
+{
+    Super::TickComponent(DeltaTime);
+}
+
+UTorusComponent::UTorusComponent()
+{
+    SetType(StaticClass()->GetName());
+}
+
+UTorusComponent::~UTorusComponent()
+{
+}
+
+void UTorusComponent::InitializeComponent()
+{
+    Super::InitializeComponent();
+
+    FManagerOBJ::CreateStaticMesh("Assets/Torus.obj");
+    SetStaticMesh(FManagerOBJ::GetStaticMesh(L"Torus.obj"));
+}
+
+void UTorusComponent::TickComponent(float DeltaTime)
+{
+    Super::TickComponent(DeltaTime);
 }
