@@ -33,7 +33,7 @@ void UPrimitiveBatch::GenerateGrid(float spacing, int gridCount)
     GridParam.gridOrigin = { 0,0,0 };
 }
 
-void UPrimitiveBatch::RenderBatch(ID3D11Buffer* ConstantBuffer, const FMatrix& View, const FMatrix& Projection)
+void UPrimitiveBatch::RenderBatch(ID3D11Buffer* ConstantBuffer, const FMatrix& View, const FMatrix& Projection, const FVector4 CamPos)
 {
     UEditorEngine::renderer.PrepareLineShader();
 
@@ -42,7 +42,7 @@ void UPrimitiveBatch::RenderBatch(ID3D11Buffer* ConstantBuffer, const FMatrix& V
     FMatrix Model = FMatrix::Identity;
     FMatrix MVP = Model * View * Projection;
     FMatrix NormalMatrix = FMatrix::Transpose(FMatrix::Inverse(Model));
-    UEditorEngine::renderer.GetConstantBufferUpdater().UpdateConstant(ConstantBuffer, MVP,Model, NormalMatrix, FVector4(0, 0, 0, 0), false);
+    UEditorEngine::renderer.GetConstantBufferUpdater().UpdateConstant(ConstantBuffer, MVP, Model, NormalMatrix, CamPos, false);
     UEditorEngine::renderer.UpdateGridConstantBuffer(GridParam);
 
     UpdateBoundingBoxResources();
