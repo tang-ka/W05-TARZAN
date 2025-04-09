@@ -332,7 +332,7 @@ float4 mainPS(PS_INPUT input) : SV_Target
     float dist = length(worldPos - camPos);
 
     // 지수 기반 페이드 아웃 - 더 자연스러운 안개 느낌
-    float startDist = 90;
+    float startDist = 80;
     float density = 0.02f; // 밀도 조절
     
     float fadeDist = max(0, dist - startDist);
