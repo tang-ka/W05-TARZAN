@@ -747,7 +747,6 @@ void FRenderer::RenderGBuffer()
 
 void FRenderer::RenderLightPass()
 {
-
     PrepareLightShader();
 
     //ID3D11RenderTargetView* rtv = Graphics->FrameBufferRTV;
@@ -770,33 +769,35 @@ void FRenderer::RenderLightPass()
 
     RenderLight(World, ActiveViewport);
 
-    //  Light
-    FFireballArrayInfo fireballArrayInfo;
-    fireballArrayInfo.FireballCount = 0;
+    // Point Light
+    std::unique_ptr<FFireballArrayInfo> fireballArrayInfo = std::make_unique<FFireballArrayInfo>();
+
     if (FireballObjs.Num() > 0) 
     {
+        fireballArrayInfo->FireballCount = 0;
+
         for (int i = 0; i < FireballObjs.Num(); i++)
         {
             if (FireballObjs[i] != nullptr)
             {
-                FFireballInfo fireballInfo = FireballObjs[i]->GetFireballInfo();
-                fireballArrayInfo.FireballConstants[i].Intensity = fireballInfo.Intensity;
-                fireballArrayInfo.FireballConstants[i].Radius = fireballInfo.Radius;
-                fireballArrayInfo.FireballConstants[i].Color = fireballInfo.Color;
-                fireballArrayInfo.FireballConstants[i].RadiusFallOff = fireballInfo.RadiusFallOff;
-                fireballArrayInfo.FireballConstants[i].Position = FireballObjs[i]->GetWorldLocation();
-                fireballArrayInfo.FireballConstants[i].LightType = fireballInfo.Type;
+                const FFireballInfo& fireballInfo = FireballObjs[i]->GetFireballInfo();
+                fireballArrayInfo->FireballConstants[i].Intensity = fireballInfo.Intensity;
+                fireballArrayInfo->FireballConstants[i].Radius = fireballInfo.Radius;
+                fireballArrayInfo->FireballConstants[i].Color = fireballInfo.Color;
+                fireballArrayInfo->FireballConstants[i].RadiusFallOff = fireballInfo.RadiusFallOff;
+                fireballArrayInfo->FireballConstants[i].Position = FireballObjs[i]->GetWorldLocation();
+                fireballArrayInfo->FireballConstants[i].LightType = fireballInfo.Type;
                 if (USpotLightComponent* spotLight = Cast<USpotLightComponent>(FireballObjs[i]))
                 {
-                    fireballArrayInfo.FireballConstants[i].InnerAngle = spotLight->GetInnerSpotAngle();
-                    fireballArrayInfo.FireballConstants[i].OuterAngle = spotLight->GetOuterSpotAngle();
-                    fireballArrayInfo.FireballConstants[i].Direction = spotLight->GetForwardVector();
+                    fireballArrayInfo->FireballConstants[i].InnerAngle = spotLight->GetInnerSpotAngle();
+                    fireballArrayInfo->FireballConstants[i].OuterAngle = spotLight->GetOuterSpotAngle();
+                    fireballArrayInfo->FireballConstants[i].Direction = spotLight->GetForwardVector();
                 }
-                fireballArrayInfo.FireballCount++;
+                fireballArrayInfo->FireballCount++;
             }
         }
     }
-    ConstantBufferUpdater.UpdateFireballConstant(FireballConstantBuffer, fireballArrayInfo);
+    ConstantBufferUpdater.UpdateFireballConstant(FireballConstantBuffer, *fireballArrayInfo);
     ConstantBufferUpdater.UpdateScreenConstant(ScreenConstantBuffer, ActiveViewport);
     // Spot Light
 
