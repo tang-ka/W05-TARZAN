@@ -214,11 +214,11 @@ void PropertyEditorPanel::Render()
             {
                 LastComponent = PickedComponent;
                 bFirstFrame = true;
-                Location = SceneComp->GetLocalLocation();
-                Rotation = SceneComp->GetLocalRotation();
-                Scale = SceneComp->GetLocalScale();
             }
 
+            Location = SceneComp->GetLocalLocation();
+            Rotation = SceneComp->GetLocalRotation();
+            Scale = SceneComp->GetLocalScale();
             bool bChanged = false;
 
             bChanged |= FImGuiWidget::DrawVec3Control("Location", Location, 0, 85);
@@ -265,10 +265,10 @@ void PropertyEditorPanel::Render()
             {
                 LastComponent = PickedComponent;
                 bFirstFrame = true;
-                Velocity = SceneComp->GetVelocity();
-                Speed = SceneComp->GetSpeed();
             }
 
+            Velocity = SceneComp->GetVelocity();
+            Speed = SceneComp->GetSpeed();
         
             bool bChanged = false;
             bChanged |= FImGuiWidget::DrawVec3Control("Velocity", Velocity, 0, 10);

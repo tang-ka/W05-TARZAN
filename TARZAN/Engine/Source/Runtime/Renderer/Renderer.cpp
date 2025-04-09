@@ -449,9 +449,11 @@ void FRenderer::RenderPrimitive(OBJ::FStaticMeshRenderData* renderData, TArray<F
             ConstantBufferUpdater.UpdateSubMeshConstant(SubMeshConstantBuffer, true)
             : ConstantBufferUpdater.UpdateSubMeshConstant(SubMeshConstantBuffer, false);
 
-        overrideMaterial[materialIndex] != nullptr ?
+      overrideMaterial[materialIndex] != nullptr ?
             UpdateMaterial(overrideMaterial[materialIndex]->GetMaterialInfo())
             : UpdateMaterial(materials[materialIndex]->Material->GetMaterialInfo());
+
+        //UpdateMaterial(materials[materialIndex]->Material->GetMaterialInfo());
 
         if (renderData->IndexBuffer)
         {

@@ -54,6 +54,10 @@ PS_OUTPUT main(PS_INPUT input)
     
     float2 uv = input.TexCoord;
     float4 textureColor = g_DiffuseMap.Sample(g_sampler0, uv);
+    if (textureColor.w == 0.0f)
+    {
+        clip(-1);
+    }
     float4 diffuseColor = float4(Material.DiffuseColor, 1.0f);
     
     bool isValidTexture = dot(textureColor, float4(1, 1, 1, 1)) > 1e-5f;

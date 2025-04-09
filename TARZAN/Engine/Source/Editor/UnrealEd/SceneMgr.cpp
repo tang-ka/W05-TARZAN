@@ -383,16 +383,16 @@ bool FSceneMgr::LoadSceneFromData(const FSceneData& sceneData, UWorld* targetWor
             const FString* LocStr = componentData.Properties.Find(TEXT("RelativeLocation"));
             if (LocStr) RelativeLocation.InitFromString(*LocStr); // 또는 직접 파싱
 
-            FQuat RelativeQuat;
-            const FString* QuatStr = componentData.Properties.Find(TEXT("QuatRotation")); // 쿼터니언 저장/로드 권장
-            if (QuatStr) RelativeQuat.InitFromString(*QuatStr);
+            FVector RelativeRotation;
+            const FString* RotatStr = componentData.Properties.Find(TEXT("RelativeRotation")); // 쿼터니언 저장/로드 권장
+            if (RotatStr) RelativeRotation.InitFromString(*RotatStr);
 
             FVector RelativeScale3D = FVector::OneVector;
             const FString* ScaleStr = componentData.Properties.Find(TEXT("RelativeScale")); // 스케일 키 이름 확인! (GetProperties와 일치해야 함)
             if (ScaleStr) RelativeScale3D.InitFromString(*ScaleStr);
 
             CurrentSceneComp->SetLocation(RelativeLocation);
-            CurrentSceneComp->SetRotation(RelativeQuat);
+            CurrentSceneComp->SetRotation(RelativeRotation);
             CurrentSceneComp->SetScale(RelativeScale3D);
         }
 
