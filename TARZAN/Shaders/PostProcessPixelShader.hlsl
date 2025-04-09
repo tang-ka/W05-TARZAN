@@ -94,7 +94,7 @@ PS_OUTPUT mainPS(PS_INPUT input) : SV_TARGET
         }
         else //배경
         {
-            float3 worldPosH = ReconstructWorldPos(uv, 1);
+            float3 worldPosH = ReconstructWorldPos(input.TexCoord, 1);
             fogFactor = ComputeFogFactor(worldPosH.xyz);
         }
          fogColor = lerp(FogColor.rgb, color.rgb, 1.0 - fogFactor);
