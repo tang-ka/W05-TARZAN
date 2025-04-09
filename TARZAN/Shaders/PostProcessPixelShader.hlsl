@@ -54,7 +54,7 @@ float ComputeFogFactor(float3 worldPos)
 
     // 거리 기반
     float fogRange = FogCutoffDistance - FogStartDistance;
-    float disFactor = saturate((dist - FogStartDistance) / fogRange); // 0~1  50일떄 0
+    float disFactor = saturate((dist - FogStartDistance) / fogRange * FogDensity); // 0~1  50일떄 0
 
     // 높이 기반 (지수 감쇠)
     float heightDiff = worldPos.z - FogHeight;
@@ -91,7 +91,7 @@ PS_OUTPUT mainPS(PS_INPUT input) : SV_TARGET
             float3 worldPosH = ReconstructWorldPos(input.TexCoord, 1);
             fogFactor = ComputeFogFactor(worldPosH.xyz);
         }
-         fogColor = lerp(FogColor.rgb, color.rgb, fogFactor);
+         fogColor = lerp(FogColor.rgb, color.rgb, 1.0 - fogFactor);
     }
     else
     {
