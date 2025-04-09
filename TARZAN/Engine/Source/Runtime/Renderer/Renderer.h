@@ -55,6 +55,9 @@ public:
     // PostProcess Shader
     ID3D11PixelShader* PostProcessPassPS = nullptr;
 
+    // Overlay Shader
+    ID3D11PixelShader* GizmoPixelShader = nullptr;
+
     ID3D11VertexShader* VertexShader = nullptr;
     ID3D11PixelShader* PixelShader = nullptr;
     ID3D11InputLayout* InputLayout = nullptr;
@@ -105,6 +108,7 @@ public:
     void PreparePostProcessShader() const;
     void PrepareTextureShader() const;
     void PrepareSubUVConstant() const;
+    void PrepareGizmoShader() const;
 
     // Sampler State
     void SetSampler();

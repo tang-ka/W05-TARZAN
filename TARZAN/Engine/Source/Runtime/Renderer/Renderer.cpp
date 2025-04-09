@@ -146,6 +146,8 @@ void FRenderer::CreateShader()
 
     ShaderManager.CreatePixelShader(L"Shaders/LightingPassPixelShader.hlsl", "main", LightingPassPS);
 
+    ShaderManager.CreatePixelShader(L"Shaders/GizmoPixelShader.hlsl", "main", GizmoPixelShader);
+
     // Texture Shader
     D3D11_INPUT_ELEMENT_DESC textureLayout[] = {
         {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
@@ -181,10 +183,6 @@ void FRenderer::ReleaseShader()
 // Prepare
 void FRenderer::PrepareShader() const
 {
-    //Graphics->DeviceContext->VSSetShader(VertexShader, nullptr, 0);
-    //Graphics->DeviceContext->PSSetShader(PixelShader, nullptr, 0);
-    //Graphics->DeviceContext->IASetInputLayout(InputLayout);
-
     Graphics->DeviceContext->VSSetShader(GBufferVS, nullptr, 0);
     Graphics->DeviceContext->PSSetShader(GBufferPS, nullptr, 0);
     Graphics->DeviceContext->IASetInputLayout(GBufferInputLayout);
@@ -193,14 +191,6 @@ void FRenderer::PrepareShader() const
     {
         Graphics->DeviceContext->VSSetConstantBuffers(0, 1, &ConstantBuffer);
         Graphics->DeviceContext->PSSetConstantBuffers(0, 1, &MaterialConstantBuffer);
-
-        //Graphics->DeviceContext->PSSetConstantBuffers(0, 1, &ConstantBuffer);
-        //Graphics->DeviceContext->PSSetConstantBuffers(1, 1, &MaterialConstantBuffer);
-        //Graphics->DeviceContext->PSSetConstantBuffers(2, 1, &LightingBuffer);
-        //Graphics->DeviceContext->PSSetConstantBuffers(3, 1, &FlagBuffer);
-        //Graphics->DeviceContext->PSSetConstantBuffers(4, 1, &SubMeshConstantBuffer);
-        //Graphics->DeviceContext->PSSetConstantBuffers(5, 1, &TextureConstantBuffer);
-        //Graphics->DeviceContext->PSSetConstantBuffers(6, 1, &FireballConstantBuffer);
     }
 }
 
@@ -221,9 +211,9 @@ void FRenderer::PrepareLightShader() const
 
 void FRenderer::PreparePostProcessShader() const
 {
-    Graphics->DeviceContext->VSSetShader(FullScreenVS, nullptr, 0);
+    //Graphics->DeviceContext->VSSetShader(FullScreenVS, nullptr, 0);
     Graphics->DeviceContext->PSSetShader(PostProcessPassPS, nullptr, 0);
-    Graphics->DeviceContext->IASetInputLayout(FullScreenInputLayout);
+    //Graphics->DeviceContext->IASetInputLayout(FullScreenInputLayout);
 
     if (FogConstantBuffer)
     {
@@ -249,6 +239,18 @@ void FRenderer::PrepareSubUVConstant() const
     {
         Graphics->DeviceContext->VSSetConstantBuffers(1, 1, &SubUVConstantBuffer);
         Graphics->DeviceContext->PSSetConstantBuffers(1, 1, &SubUVConstantBuffer);
+    }
+}
+
+void FRenderer::PrepareGizmoShader() const
+{
+    Graphics->DeviceContext->VSSetShader(GBufferVS, nullptr, 0);
+    Graphics->DeviceContext->PSSetShader(GizmoPixelShader, nullptr, 0);
+
+    if (ConstantBuffer)
+    {
+        Graphics->DeviceContext->VSSetConstantBuffers(0, 1, &ConstantBuffer);
+        Graphics->DeviceContext->PSSetConstantBuffers(0, 1, &MaterialConstantBuffer);
     }
 }
 
@@ -574,7 +576,7 @@ void FRenderer::RenderGizmos(const UWorld* World, const std::shared_ptr<FEditorV
         return;
     }
 
-    PrepareShader();
+    PrepareGizmoShader();
 
 #pragma region GizmoDepth
     ID3D11DepthStencilState* DepthStateDisable = Graphics->DepthStateDisable;
@@ -863,11 +865,12 @@ void FRenderer::RenderOverlayPass()
     // Enable Depth Test
     Graphics->DeviceContext->OMSetRenderTargets(1, &Graphics->FrameBufferRTV, Graphics->DepthStencilView);
     
-    // Grid
-    UPrimitiveBatch::GetInstance().RenderBatch(ConstantBuffer, ActiveViewport->GetViewMatrix(), ActiveViewport->GetProjectionMatrix());
-
+    // Pixel Shader를 OveralayGizmoPixelShader로 변경
     // Gizmo
     RenderGizmos(World, ActiveViewport);
+
+    // Grid
+    UPrimitiveBatch::GetInstance().RenderBatch(ConstantBuffer, ActiveViewport->GetViewMatrix(), ActiveViewport->GetProjectionMatrix());
 }
 #pragma endregion MultiPass
 
