@@ -1,9 +1,43 @@
 {
     "Actors": [
         {
+            "ActorClass": "AActor",
+            "ActorID": "AActor_63",
+            "ActorLabel": "OBJ_Fog_62",
+            "Components": [
+                {
+                    "ComponentClass": "UHeightFogComponent",
+                    "ComponentID": "UHeightFogComponent_65",
+                    "Properties": {
+                        "AttachParentID": "nullptr",
+                        "ComponentClass": "UHeightFogComponent",
+                        "ComponentName": "UHeightFogComponent_65",
+                        "ComponentOwner": "AActor_63",
+                        "ComponentOwnerClass": "AActor",
+                        "DisableFog": "0.000000",
+                        "FogCutoffDistance": "280.350006",
+                        "FogDensity": "1.000000",
+                        "FogHeightFalloff": "0.162000",
+                        "FogInscatteringColor": "X=0.600000 Y=0.100000 Z=0.100000 A=1.000000",
+                        "FogMaxOpacity": "1.000000",
+                        "QuatRotation": "X=0.000000 Y=0.000000 Z=0.000000",
+                        "RelativeLocation": "X=0.000000 Y=0.000000 Z=0.000000",
+                        "RelativeRotation": "X=0.000000 Y=0.000000 Z=0.000000",
+                        "RelativeScale": "X=1.000000 Y=1.000000 Z=1.000000",
+                        "StartDistance": "5.000000",
+                        "bAutoActive": "false",
+                        "bCanEverTick": "false",
+                        "bIsActive": "false",
+                        "bTickEnabled": "true"
+                    }
+                }
+            ],
+            "RootComponentID": "UHeightFogComponent_65"
+        },
+        {
             "ActorClass": "AStaticMeshActor",
-            "ActorID": "AStaticMeshActor_63",
-            "ActorLabel": "OBJ_CUBE_62",
+            "ActorID": "AStaticMeshActor_67",
+            "ActorLabel": "OBJ_CUBE_66",
             "Components": [
                 {
                     "ComponentClass": "UStaticMeshComponent",
@@ -14,12 +48,12 @@
                         "AttachParentID": "nullptr",
                         "ComponentClass": "UStaticMeshComponent",
                         "ComponentName": "StaticMeshComponent_0",
-                        "ComponentOwner": "AStaticMeshActor_63",
+                        "ComponentOwner": "AStaticMeshActor_67",
                         "ComponentOwnerClass": "AStaticMeshActor",
-                        "QuatRotation": "X=0.000000 Y=0.000000 Z=0.000000",
-                        "RelativeLocation": "X=0.000000 Y=0.000000 Z=0.000000",
-                        "RelativeRotation": "X=0.000000 Y=0.000000 Z=0.000000",
-                        "RelativeScale": "X=1.000000 Y=1.000000 Z=1.000000",
+                        "QuatRotation": "X=0.000000 Y=0.137445 Z=0.000000",
+                        "RelativeLocation": "X=0.000000 Y=-0.900000 Z=0.000000",
+                        "RelativeRotation": "X=0.000000 Y=15.800000 Z=0.000000",
+                        "RelativeScale": "X=1.000000 Y=100.000000 Z=100.000000",
                         "StaticMeshPath": "Assets/Cube.obj",
                         "bAutoActive": "false",
                         "bCanEverTick": "false",

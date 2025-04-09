@@ -18,6 +18,7 @@
 #include "Engine/FLoaderOBJ.h"
 #include "LevelEditor/SLevelEditor.h"
 #include "UObject/UObjectGlobals.h"
+#include "Sound/SoundManager.h"
 using json = nlohmann::json;
 
 /**
@@ -188,15 +189,15 @@ void FSceneMgr::LoadSceneFromFile(const FString& filename, UWorld& world)
 
     inFile.close();
 
-    FSceneData SceneDate;
-    bool Result = ParseSceneData(j,SceneDate);
+    FSceneData SceneData;
+    bool Result = ParseSceneData(j,SceneData);
     if (!Result)
     {
         UE_LOG(LogLevel::Error, "Failed to parse scene data from file: %s", *filename);
         return ;
     }
 
-    LoadSceneFromData(SceneDate, &world);
+    LoadSceneFromData(SceneData, &world);
     
     
     int a = 0;
@@ -274,7 +275,10 @@ bool FSceneMgr::LoadSceneFromData(const FSceneData& sceneData, UWorld* targetWor
         {
             UClass* ComponentClass = FindClassByName(FName(componentData.ComponentClass));
 
-
+            if (componentData.ComponentID == "USpotLightComponent_156")
+            {
+                int a= 0;
+            }
             // 컴포넌트 생성 (액터를 Outer로 지정, 저장된 ID를 이름으로)
             UActorComponent* TargetComponent = nullptr; // 최종적으로 사용할 컴포넌트 포인터
 
@@ -293,6 +297,21 @@ bool FSceneMgr::LoadSceneFromData(const FSceneData& sceneData, UWorld* targetWor
             if (TargetComponent == nullptr)
             {
                 TargetComponent = SpawnedActor->AddComponent(ComponentClass, FName(componentData.ComponentID));
+
+                
+                if (!actorData.RootComponentID.IsEmpty())
+                {
+                    if (componentData.ComponentID != actorData.RootComponentID)
+                    {
+                        // 임시로 RootComponent 가 아니면 떼어줌
+                        USceneComponent* SceneComp = Cast<USceneComponent>(TargetComponent);
+                        if (SceneComp)
+                        {
+                            SpawnedActor->SetRootComponent(nullptr);
+                        }
+                    }
+                }
+                
                 // if (componentData.ComponentClass == UStaticMesh::StaticClass()->GetName())
                 // {
                 //     TargetComponent = SpawnedActor->AddComponent<UStaticMeshComponent>();
@@ -317,7 +336,10 @@ bool FSceneMgr::LoadSceneFromData(const FSceneData& sceneData, UWorld* targetWor
                 continue;
             }
 
-
+            if (componentData.ComponentID == "USpotLightComponent_156")
+            {
+                int a= 0;
+            }
 
             // --- 이제 TargetComponent는 유효한 기존 컴포넌트 또는 새로 생성된 컴포넌트 ---
             if (TargetComponent)
@@ -352,6 +374,11 @@ bool FSceneMgr::LoadSceneFromData(const FSceneData& sceneData, UWorld* targetWor
         for (const FComponentSaveData& componentData : actorData.Components) // 다시 컴포넌트 데이터 순회
         {
             UActorComponent** FoundCompPtr = ActorComponentsMap.Find(componentData.ComponentID);
+            if (componentData.ComponentID == "USpotLightComponent_156")
+            {
+                int a= 0;
+            }
+            
             if (FoundCompPtr == nullptr || *FoundCompPtr == nullptr) continue; // 위에서 생성/찾기 실패한 경우
 
             USceneComponent* CurrentSceneComp = Cast<USceneComponent>(*FoundCompPtr);
@@ -383,16 +410,16 @@ bool FSceneMgr::LoadSceneFromData(const FSceneData& sceneData, UWorld* targetWor
             const FString* LocStr = componentData.Properties.Find(TEXT("RelativeLocation"));
             if (LocStr) RelativeLocation.InitFromString(*LocStr); // 또는 직접 파싱
 
-            FQuat RelativeQuat;
-            const FString* QuatStr = componentData.Properties.Find(TEXT("QuatRotation")); // 쿼터니언 저장/로드 권장
-            if (QuatStr) RelativeQuat.InitFromString(*QuatStr);
+            FVector RelativeRotation;
+            const FString* RotatStr = componentData.Properties.Find(TEXT("RelativeRotation")); // 쿼터니언 저장/로드 권장
+            if (RotatStr) RelativeRotation.InitFromString(*RotatStr);
 
             FVector RelativeScale3D = FVector::OneVector;
             const FString* ScaleStr = componentData.Properties.Find(TEXT("RelativeScale")); // 스케일 키 이름 확인! (GetProperties와 일치해야 함)
             if (ScaleStr) RelativeScale3D.InitFromString(*ScaleStr);
 
             CurrentSceneComp->SetLocation(RelativeLocation);
-            CurrentSceneComp->SetRotation(RelativeQuat);
+            CurrentSceneComp->SetRotation(RelativeRotation);
             CurrentSceneComp->SetScale(RelativeScale3D);
         }
 

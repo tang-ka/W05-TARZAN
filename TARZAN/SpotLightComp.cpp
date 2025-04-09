@@ -33,6 +33,31 @@ void USpotLightComponent::PostDuplicate()
     //Super::PostDuplicate();
 }
 
+void USpotLightComponent::GetProperties(TMap<FString, FString>& OutProperties) const
+{
+    Super::GetProperties(OutProperties);
+
+    OutProperties.Add(TEXT("InnerSpotAngle"), FString::Printf(TEXT("%f"), InnerSpotAngle));
+    OutProperties.Add(TEXT("OuterSpotAngle"), FString::Printf(TEXT("%f"), OuterSpotAngle));
+}
+
+void USpotLightComponent::SetProperties(const TMap<FString, FString>& InProperties)
+{
+    Super::SetProperties(InProperties);
+
+    const FString* TempStr = nullptr;
+    TempStr = InProperties.Find(TEXT("InnerSpotAngle"));
+    if (TempStr)
+    {
+        InnerSpotAngle = FString::ToFloat(*TempStr);
+    }
+    TempStr = InProperties.Find(TEXT("OuterSpotAngle"));
+    if (TempStr)
+    {
+        OuterSpotAngle = FString::ToFloat(*TempStr);
+    }
+}
+
 void USpotLightComponent::DuplicateSubObjects(const UObject* Source)
 {
     Super::DuplicateSubObjects(Source);

@@ -42,6 +42,7 @@ void UMovementComponent::GetProperties(TMap<FString, FString>& OutProperties) co
     
     OutProperties.Add(TEXT("Speed"), FString::Printf(TEXT("%f"), Speed));
     OutProperties.Add(TEXT("Velocity"), FString::Printf(TEXT("%s"), *Velocity.ToString()));
+    
 }
 
 void UMovementComponent::SetProperties(const TMap<FString, FString>& InProperties)

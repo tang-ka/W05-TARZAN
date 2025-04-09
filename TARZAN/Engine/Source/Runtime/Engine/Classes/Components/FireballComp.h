@@ -17,6 +17,9 @@ public:
     virtual UObject* Duplicate() const override;
     virtual void DuplicateSubObjects(const UObject* Source) override;
     virtual void PostDuplicate() override;
+    
+    void GetProperties(TMap<FString, FString>& OutProperties) const override;
+    void SetProperties(const TMap<FString, FString>& InProperties) override;
 
 
     void SetColor(const FLinearColor & Color) { FireballInfo.Color = Color; }
@@ -27,6 +30,8 @@ public:
     FLinearColor GetColor() { return FireballInfo.Color; }
     int GetLightType() { return FireballInfo.Type; }
     void SetLightType(LightType LightType) { FireballInfo.Type = LightType; }
+    void SetRadiusFallOff(float RadiusFallOff) { FireballInfo.RadiusFallOff = RadiusFallOff; }
+    float GetRadiusFallOff() { return FireballInfo.RadiusFallOff; }
     
     FFireballInfo GetFireballInfo() const { return FireballInfo; }
 private:

@@ -214,11 +214,11 @@ void PropertyEditorPanel::Render()
             {
                 LastComponent = PickedComponent;
                 bFirstFrame = true;
-                Location = SceneComp->GetLocalLocation();
-                Rotation = SceneComp->GetLocalRotation();
-                Scale = SceneComp->GetLocalScale();
             }
 
+            Location = SceneComp->GetLocalLocation();
+            Rotation = SceneComp->GetLocalRotation();
+            Scale = SceneComp->GetLocalScale();
             bool bChanged = false;
 
             bChanged |= FImGuiWidget::DrawVec3Control("Location", Location, 0, 85);
@@ -265,10 +265,10 @@ void PropertyEditorPanel::Render()
             {
                 LastComponent = PickedComponent;
                 bFirstFrame = true;
-                Velocity = SceneComp->GetVelocity();
-                Speed = SceneComp->GetSpeed();
             }
 
+            Velocity = SceneComp->GetVelocity();
+            Speed = SceneComp->GetSpeed();
         
             bool bChanged = false;
             bChanged |= FImGuiWidget::DrawVec3Control("Velocity", Velocity, 0, 10);
@@ -369,7 +369,7 @@ void PropertyEditorPanel::Render()
            
                 radiusVal = fireballObj->GetRadius();
             
-            if (ImGui::SliderFloat("Radius", &radiusVal, 1.0f, 100.0f))
+            if (ImGui::SliderFloat("Radius", &radiusVal, 1.0f, 1000.0f))
             {
                 
                 
@@ -382,6 +382,14 @@ void PropertyEditorPanel::Render()
                 if (fireballObj)
                 {
                     fireballObj->SetIntensity(IntensityVal);
+                }
+            }
+            float RadiusFallOffVal = fireballObj->GetRadiusFallOff();
+            if (ImGui::SliderFloat("RadiusFallOff", &RadiusFallOffVal, 0.0f, 10.0f))
+            {
+                if (fireballObj)
+                {
+                    fireballObj->SetRadiusFallOff(RadiusFallOffVal);
                 }
             }
             if (USpotLightComponent* SpotLight= Cast<USpotLightComponent>(fireballObj))
@@ -495,7 +503,7 @@ void PropertyEditorPanel::Render()
             }
             float FogHeightFalloff;
             FogHeightFalloff = FogObj->GetFogHeightFalloff();
-            if (ImGui::SliderFloat("HeightFalloff", &FogHeightFalloff, 0.0f, 1.0f))
+            if (ImGui::SliderFloat("HeightFalloff", &FogHeightFalloff, 0.0f, 0.1f))
             {
                 FogObj->SetFogHeightFalloff(FogHeightFalloff);
             }

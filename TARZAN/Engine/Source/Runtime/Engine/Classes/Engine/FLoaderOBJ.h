@@ -50,8 +50,21 @@ struct FLoaderOBJ
 
             if (Token == "mtllib")
             {
-                LineStream >> Line;
-                OutObjInfo.MatName = Line;
+                // --- 수정된 부분 ---
+                // "mtllib" 다음의 나머지 문자열을 모두 읽음
+
+                // 1. 스트림에서 현재 위치 뒤의 첫 번째 비공백 문자 찾기 (선택적이지만 권장)
+                LineStream >> std::ws; // 선행 공백 스킵
+
+                // 2. 스트림의 나머지 내용을 std::string으로 읽어오기
+                std::string RemainingLine;
+                std::getline(LineStream, RemainingLine); // 공백 포함하여 끝까지 읽음
+
+                // 3. 읽어온 문자열을 MatName에 저장
+                OutObjInfo.MatName = RemainingLine; // std::string 타입이라고 가정
+                
+                //LineStream >> Line;
+                //OutObjInfo.MatName = Line;
                 continue;
             }
 
@@ -295,12 +308,34 @@ struct FLoaderOBJ
 
             if (Token == "map_Kd")
             {
-                LineStream >> Line;
-                OutFStaticMesh.Materials[MaterialIndex].DiffuseTextureName = Line;
+                // "map_Kd" 다음의 나머지 문자열(텍스처 파일 경로)을 모두 읽음
 
-                FWString TexturePath = OutObjInfo.PathName + OutFStaticMesh.Materials[MaterialIndex].DiffuseTextureName.ToWideString();
-                OutFStaticMesh.Materials[MaterialIndex].DiffuseTexturePath = TexturePath;
+                // 1. 스트림에서 현재 위치 뒤의 첫 번째 비공백 문자 찾기 (선택적)
+                LineStream >> std::ws; // 선행 공백 스킵
+
+                // 2. 스트림의 나머지 내용을 std::string으로 읽어오기
+                std::string TextureFileName;
+                std::getline(LineStream, TextureFileName); // 공백 포함하여 끝까지 읽음
+
+                // 3. 읽어온 파일 이름을 Material 정보에 저장
+                // OutFStaticMesh.Materials[MaterialIndex].DiffuseTextureName 이 FString 타입이라고 가정
+                OutFStaticMesh.Materials[MaterialIndex].DiffuseTextureName = FString((TextureFileName.c_str()));
+
+                // 4. 전체 경로 생성
+                // OutObjInfo.PathName이 std::wstring이라고 가정
+                // DiffuseTextureName이 FString이므로 ToWideString() 필요
+                std::wstring FullTexturePathW = OutObjInfo.PathName + OutFStaticMesh.Materials[MaterialIndex].DiffuseTextureName.ToWideString();
+
+                // 5. 전체 경로를 FString으로 저장 (DiffuseTexturePath가 FString이라고 가정)
+                OutFStaticMesh.Materials[MaterialIndex].DiffuseTexturePath = FullTexturePathW;
                 OutFStaticMesh.Materials[MaterialIndex].bHasTexture = true;
+                
+                // LineStream >> Line;
+                // OutFStaticMesh.Materials[MaterialIndex].DiffuseTextureName = Line;
+                //
+                // FWString TexturePath = OutObjInfo.PathName + OutFStaticMesh.Materials[MaterialIndex].DiffuseTextureName.ToWideString();
+                // OutFStaticMesh.Materials[MaterialIndex].DiffuseTexturePath = TexturePath;
+                // OutFStaticMesh.Materials[MaterialIndex].bHasTexture = true;
 
                 CreateTextureFromFile(OutFStaticMesh.Materials[MaterialIndex].DiffuseTexturePath);
             }

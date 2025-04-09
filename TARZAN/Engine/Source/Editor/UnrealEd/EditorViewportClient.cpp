@@ -343,29 +343,29 @@ void FEditorViewportClient::UpdateOrthoCameraLoc()
     switch (ViewportType)
     {
     case LVT_OrthoXY: // Top
-        ViewTransformOrthographic.SetLocation(Pivot + FVector::UpVector*100000.0f);
+        ViewTransformOrthographic.SetLocation(Pivot + FVector::UpVector*10000.0f);
         ViewTransformOrthographic.SetRotation(FVector(0.0f, 90.0f, -90.0f));
         break;
     case LVT_OrthoXZ: // Front
-        ViewTransformOrthographic.SetLocation(Pivot + FVector::ForwardVector*100000.0f);
+        ViewTransformOrthographic.SetLocation(Pivot + FVector::ForwardVector*10000.0f);
         ViewTransformOrthographic.SetRotation(FVector(0.0f, 0.0f, 180.0f));
         break;
     case LVT_OrthoYZ: // Left
-        ViewTransformOrthographic.SetLocation(Pivot + FVector::RightVector*100000.0f);
+        ViewTransformOrthographic.SetLocation(Pivot + FVector::RightVector*10000.0f);
         ViewTransformOrthographic.SetRotation(FVector(0.0f, 0.0f, 270.0f));
         break;
     case LVT_Perspective:
         break;
     case LVT_OrthoNegativeXY: // Bottom
-        ViewTransformOrthographic.SetLocation(Pivot + FVector::UpVector * -1.0f*100000.0f);
+        ViewTransformOrthographic.SetLocation(Pivot + FVector::UpVector * -1.0f*10000.0f);
         ViewTransformOrthographic.SetRotation(FVector(0.0f, -90.0f, 90.0f));
         break;
     case LVT_OrthoNegativeXZ: // Back
-        ViewTransformOrthographic.SetLocation(Pivot + FVector::ForwardVector * -1.0f*100000.0f);
+        ViewTransformOrthographic.SetLocation(Pivot + FVector::ForwardVector * -1.0f*10000.0f);
         ViewTransformOrthographic.SetRotation(FVector(0.0f, 0.0f, 0.0f));
         break;
     case LVT_OrthoNegativeYZ: // Right
-        ViewTransformOrthographic.SetLocation(Pivot + FVector::RightVector * -1.0f*100000.0f);
+        ViewTransformOrthographic.SetLocation(Pivot + FVector::RightVector * -1.0f*10000.0f);
         ViewTransformOrthographic.SetRotation(FVector(0.0f, 0.0f, 90.0f));
         break;
     case LVT_MAX:

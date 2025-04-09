@@ -346,6 +346,7 @@ void FRenderer::ClearRenderArr()
 
 void FRenderer::PrepareRender()
 {
+    bool bHasFog = false;
     if (GEngine->GetWorld()->WorldType == EWorldType::Editor)
     {
         for (const auto iter : TObjectRange<USceneComponent>())
@@ -375,7 +376,12 @@ void FRenderer::PrepareRender()
             if (UHeightFogComponent* HeightFog = Cast<UHeightFogComponent>(iter))
             {
                 SubscribeToFogUpdates(HeightFog);
+                bHasFog = true;
             }
+        }
+        if (!bHasFog)
+        {
+            ResetFogUpdates();
         }
     }
     else if (GEngine->GetWorld()->WorldType == EWorldType::PIE)
@@ -405,8 +411,13 @@ void FRenderer::PrepareRender()
                 if (UHeightFogComponent* HeightFog = Cast<UHeightFogComponent>(iter2))
                 {
                     SubscribeToFogUpdates(HeightFog);
+                    bHasFog = true;
                 }
             }
+        }
+        if (!bHasFog)
+        {
+            ResetFogUpdates();
         }
     }
 }
@@ -452,6 +463,8 @@ void FRenderer::RenderPrimitive(OBJ::FStaticMeshRenderData* renderData, TArray<F
         overrideMaterial[materialIndex] != nullptr ?
             UpdateMaterial(overrideMaterial[materialIndex]->GetMaterialInfo())
             : UpdateMaterial(materials[materialIndex]->Material->GetMaterialInfo());
+
+        //UpdateMaterial(materials[materialIndex]->Material->GetMaterialInfo());
 
         if (renderData->IndexBuffer)
         {
@@ -710,13 +723,33 @@ void FRenderer::SubscribeToFogUpdates(UHeightFogComponent* HeightFog)
     FogData.DisableFog = HeightFog->GetDisableFog();
 }
 
+void FRenderer::ResetFogUpdates()
+{
+    FogData.FogDensity = 0.0f;
+    FogData.FogHeightFalloff = 0.0f;
+    FogData.FogStartDistance = 0.0f;
+    FogData.FogCutoffDistance = 0.0f;
+    FogData.FogMaxOpacity = 0.0f;
+    FogData.FogInscatteringColor = FLinearColor(1.0f, 1.0f, 1.0f, 0.0f);
+    FogData.CameraPosition = FVector(0.0f, 0.0f, 0.0f);
+    FogData.FogHeight = 0.0f;
+}
+
 void FRenderer::RenderLight()
 {
-    for (auto Light : LightObjs)
+    for (auto Light : FireballObjs)
     {
-        FMatrix Model = JungleMath::CreateModelMatrix(Light->GetWorldLocation(), Light->GetWorldRotation(), { 1, 1, 1 });
-        UPrimitiveBatch::GetInstance().AddCone(Light->GetWorldLocation(), Light->GetRadius(), 15, 140, Light->GetColor(), Model);
-        UPrimitiveBatch::GetInstance().RenderOBB(Light->GetBoundingBox(), Light->GetWorldLocation(), Model);
+        if (Light->GetLightType() == LightType::SpotLight)
+        {
+            USpotLightComponent* SpotLight = Cast<USpotLightComponent>(Light);
+            if (SpotLight)
+            {
+                if (GEngine->GetWorld()->WorldType == EWorldType::PIE) continue;
+                FMatrix Model = JungleMath::CreateModelMatrix(Light->GetWorldLocation(), Light->GetWorldRotation(), { 1, 1, 1 });
+                UPrimitiveBatch::GetInstance().AddCone(Light->GetWorldLocation(), Light->GetRadius() * tan(SpotLight->GetOuterSpotAngle() / 2 * 3.14 / 180.0f), Light->GetRadius(), 140, Light->GetColor(), Model);
+                UPrimitiveBatch::GetInstance().RenderOBB(Light->GetBoundingBox(), Light->GetWorldLocation(), Model);
+            }
+        }
     }
 }
 

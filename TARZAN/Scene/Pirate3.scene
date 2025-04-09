@@ -1,0 +1,133 @@
+{
+    "Actors": [
+        {
+            "ActorClass": "AStaticMeshActor",
+            "ActorID": "AStaticMeshActor_220",
+            "ActorLabel": "OBJ_CUBE_219_276",
+            "Components": [
+                {
+                    "ComponentClass": "UStaticMeshComponent",
+                    "ComponentID": "StaticMeshComponent_0",
+                    "Properties": {
+                        "AABB_max": "X=1.000000 Y=1.000000 Z=1.000000",
+                        "AABB_min": "X=-1.000000 Y=-1.000000 Z=-1.000000",
+                        "AttachParentID": "nullptr",
+                        "ComponentClass": "UStaticMeshComponent",
+                        "ComponentName": "StaticMeshComponent_0",
+                        "ComponentOwner": "AStaticMeshActor_220",
+                        "ComponentOwnerClass": "AStaticMeshActor",
+                        "QuatRotation": "X=0.000000 Y=0.000000 Z=0.000000",
+                        "RelativeLocation": "X=0.000000 Y=0.000000 Z=0.000000",
+                        "RelativeRotation": "X=0.000000 Y=0.000000 Z=0.000000",
+                        "RelativeScale": "X=1.000000 Y=1.000000 Z=1.000000",
+                        "StaticMeshPath": "Assets/Cube.obj",
+                        "bAutoActive": "false",
+                        "bCanEverTick": "false",
+                        "bIsActive": "false",
+                        "bTickEnabled": "true",
+                        "m_Type": ""
+                    }
+                }
+            ],
+            "RootComponentID": "StaticMeshComponent_0"
+        },
+        {
+            "ActorClass": "AStaticMeshActor",
+            "ActorID": "AStaticMeshActor_213",
+            "ActorLabel": "OBJ_CUBE_212_274",
+            "Components": [
+                {
+                    "ComponentClass": "UStaticMeshComponent",
+                    "ComponentID": "StaticMeshComponent_0",
+                    "Properties": {
+                        "AABB_max": "X=48.597214 Y=136.425522 Z=47.676689",
+                        "AABB_min": "X=-60.623859 Y=-1.788101 Z=-41.648537",
+                        "AttachParentID": "nullptr",
+                        "ComponentClass": "UStaticMeshComponent",
+                        "ComponentName": "StaticMeshComponent_0",
+                        "ComponentOwner": "AStaticMeshActor_213",
+                        "ComponentOwnerClass": "AStaticMeshActor",
+                        "QuatRotation": "X=0.257430 Y=0.658577 Z=0.571702",
+                        "RelativeLocation": "X=-100.000000 Y=-88.939026 Z=0.000000",
+                        "RelativeRotation": "X=89.999359 Y=14.699944 Z=122.599998",
+                        "RelativeScale": "X=1.000000 Y=1.000000 Z=1.000000",
+                        "StaticMeshPath": "C:\\Project\\week05\\W05-TARZAN\\TARZAN\\Assets\\Contents\\AVLSuitJerry.obj",
+                        "bAutoActive": "false",
+                        "bCanEverTick": "false",
+                        "bIsActive": "false",
+                        "bTickEnabled": "true",
+                        "m_Type": ""
+                    }
+                }
+            ],
+            "RootComponentID": "StaticMeshComponent_0"
+        },
+        {
+            "ActorClass": "AActor",
+            "ActorID": "AActor_82",
+            "ActorLabel": "OBJ_Fog_81_210_270",
+            "Components": [
+                {
+                    "ComponentClass": "UHeightFogComponent",
+                    "ComponentID": "UHeightFogComponent_84",
+                    "Properties": {
+                        "AttachParentID": "nullptr",
+                        "ComponentClass": "UHeightFogComponent",
+                        "ComponentName": "UHeightFogComponent_84",
+                        "ComponentOwner": "AActor_82",
+                        "ComponentOwnerClass": "AActor",
+                        "DisableFog": "0.000000",
+                        "FogCutoffDistance": "800.000000",
+                        "FogDensity": "1.000000",
+                        "FogHeightFalloff": "0.022000",
+                        "FogInscatteringColor": "X=0.309524 Y=0.309524 Z=0.309524 A=1.000000",
+                        "FogMaxOpacity": "1.000000",
+                        "QuatRotation": "X=0.000000 Y=0.000000 Z=0.000000",
+                        "RelativeLocation": "X=0.000000 Y=0.000000 Z=68.501007",
+                        "RelativeRotation": "X=0.000000 Y=0.000000 Z=0.000000",
+                        "RelativeScale": "X=1.000000 Y=1.000000 Z=1.000000",
+                        "StartDistance": "5.000000",
+                        "bAutoActive": "false",
+                        "bCanEverTick": "false",
+                        "bIsActive": "false",
+                        "bTickEnabled": "true"
+                    }
+                }
+            ],
+            "RootComponentID": "UHeightFogComponent_84"
+        },
+        {
+            "ActorClass": "AStaticMeshActor",
+            "ActorID": "AStaticMeshActor_75",
+            "ActorLabel": "OBJ_CUBE_74_208_272",
+            "Components": [
+                {
+                    "ComponentClass": "UStaticMeshComponent",
+                    "ComponentID": "StaticMeshComponent_0",
+                    "Properties": {
+                        "AABB_max": "X=247.077103 Y=333.199005 Z=253.708893",
+                        "AABB_min": "X=-372.101013 Y=-2.287200 Z=-220.679901",
+                        "AttachParentID": "nullptr",
+                        "ComponentClass": "UStaticMeshComponent",
+                        "ComponentName": "StaticMeshComponent_0",
+                        "ComponentOwner": "AStaticMeshActor_75",
+                        "ComponentOwnerClass": "AStaticMeshActor",
+                        "QuatRotation": "X=0.707107 Y=0.000000 Z=0.000000",
+                        "RelativeLocation": "X=0.000000 Y=-10.598695 Z=-2.685457",
+                        "RelativeRotation": "X=89.999977 Y=0.000000 Z=0.000000",
+                        "RelativeScale": "X=1.000000 Y=1.000000 Z=1.000000",
+                        "StaticMeshPath": "C:\\Project\\week05\\W05-TARZAN\\TARZAN\\Assets\\Contents\\pirate.obj",
+                        "bAutoActive": "false",
+                        "bCanEverTick": "false",
+                        "bIsActive": "false",
+                        "bTickEnabled": "true",
+                        "m_Type": ""
+                    }
+                }
+            ],
+            "RootComponentID": "StaticMeshComponent_0"
+        }
+    ],
+    "NextUUID": 0,
+    "Version": 1
+}

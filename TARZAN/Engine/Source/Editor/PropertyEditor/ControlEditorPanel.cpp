@@ -392,8 +392,8 @@ void ControlEditorPanel::CreateModifyButton(ImVec2 ButtonSize, ImFont* IconFont)
                     TempActor = World->SpawnActor<AStaticMeshActor>();
                     TempActor->SetActorLabel(TEXT("OBJ_Fireball"));
                     UStaticMeshComponent* MeshComp = TempActor->GetStaticMeshComponent();
-                    FManagerOBJ::CreateStaticMesh("Assets/Cube.obj");
-                    MeshComp->SetStaticMesh(FManagerOBJ::GetStaticMesh(L"Cube.obj"));
+                    FManagerOBJ::CreateStaticMesh("Assets/FireBall.obj");
+                    MeshComp->SetStaticMesh(FManagerOBJ::GetStaticMesh(L"FireBall.obj"));
                     TempActor->AddComponent<UFireballComponent>();
                     break;
                 }

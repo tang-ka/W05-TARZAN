@@ -148,6 +148,7 @@ void UStaticMeshComponent::GetProperties(TMap<FString, FString>& OutProperties) 
 
         // 2. std::wstring을 FString으로 변환
         FString PathFString(PathWString.c_str()); // c_str()로 const wchar_t* 얻어서 FString 생성
+        PathFString = CurrentMesh->ConvertToRelativePathFromAssets(PathFString);
         
         OutProperties.Add(TEXT("StaticMeshPath"), PathFString);
     } else

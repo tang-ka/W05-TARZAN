@@ -36,6 +36,32 @@ int FString::ToInt(const FString& InString)
     return std::stoi(*InString);
 }
 
+FString FString::RightChop(int32 Count) const
+{
+    const int32 MyLen = Len(); // 현재 문자열 길이
+
+    // Count가 0 이하이면 원본 문자열의 복사본을 반환
+    if (Count <= 0)
+    {
+        return *this; // 복사본 반환
+    }
+
+    // Count가 문자열 길이 이상이면 빈 문자열 반환
+    if (Count >= MyLen)
+    {
+        return FString(); // 기본 생성된 빈 FString 반환
+    }
+
+    // std::basic_string::substr(pos)는 위치 pos부터 끝까지의 부분 문자열을 반환합니다.
+    // Count는 제거할 문자의 개수이므로, 부분 문자열은 Count 인덱스부터 시작합니다.
+    // static_cast<size_t>는 substr이 size_t를 인자로 받기 때문에 필요합니다.
+    BaseStringType Substring = PrivateString.substr(static_cast<size_t>(Count));
+
+    // 추출된 부분 문자열로 새로운 FString 객체를 생성하여 반환
+    // std::move를 사용하면 불필요한 복사를 피할 수 있습니다 (C++11 이상).
+    return FString(std::move(Substring));
+}
+
 void FString::Empty()
 {
     PrivateString.clear();

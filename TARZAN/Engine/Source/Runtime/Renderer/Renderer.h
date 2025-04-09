@@ -222,5 +222,6 @@ private:
     UWorld* World;
 
     void SubscribeToFogUpdates(UHeightFogComponent* HeightFog);
+    void ResetFogUpdates();
 };
 
