@@ -524,7 +524,7 @@ void FRenderer::RenderTexturedModelPrimitive(
     Graphics->DeviceContext->DrawIndexed(numIndices, 0, 0);
 }
 
-void FRenderer::RenderStaticMeshes(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport)
+void FRenderer::RenderStaticMeshes()
 {
     PrepareShader();
     for (UStaticMeshComponent* StaticMeshComp : StaticMeshObjs)
@@ -569,7 +569,7 @@ void FRenderer::RenderStaticMeshes(UWorld* World, std::shared_ptr<FEditorViewpor
     }
 }
 
-void FRenderer::RenderGizmos(const UWorld* World, const std::shared_ptr<FEditorViewportClient>& ActiveViewport)
+void FRenderer::RenderGizmos()
 {
     if (!World->GetSelectedActor())
     {
@@ -634,7 +634,7 @@ void FRenderer::RenderGizmos(const UWorld* World, const std::shared_ptr<FEditorV
 #pragma endregion 
 }
 
-void FRenderer::RenderBillboards(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport)
+void FRenderer::RenderBillboards()
 {
     PrepareTextureShader();
     PrepareSubUVConstant();
@@ -709,7 +709,7 @@ void FRenderer::SubscribeToFogUpdates(UHeightFogComponent* HeightFog)
             FogData.DisableFog = HeightFog->GetDisableFog(); 
 }
 
-void FRenderer::RenderLight(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport)
+void FRenderer::RenderLight()
 {
     for (auto Light : LightObjs)
     {
@@ -742,11 +742,11 @@ void FRenderer::RenderGBuffer()
    Graphics -> DeviceContext->OMSetRenderTargets(4, Graphics->GBufferRTVs, Graphics->DepthStencilView);
 
     if (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_Primitives))
-        RenderStaticMeshes(World, ActiveViewport);
+        RenderStaticMeshes();
 
     // Billboard
     if (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_BillboardText))
-        RenderBillboards(World, ActiveViewport);
+        RenderBillboards();
 }
 
 void FRenderer::RenderLightPass()
@@ -771,7 +771,7 @@ void FRenderer::RenderLightPass()
     };
     ConstantBufferUpdater.UpdateGlobalLightConstant(LPLightConstantBuffer, GlobalLight);
 
-    RenderLight(World, ActiveViewport);
+    RenderLight();
 
     // Point Light
     std::unique_ptr<FFireballArrayInfo> fireballArrayInfo = std::make_unique<FFireballArrayInfo>();
@@ -867,7 +867,7 @@ void FRenderer::RenderOverlayPass()
     
     // Pixel Shader를 OveralayGizmoPixelShader로 변경
     // Gizmo
-    RenderGizmos(World, ActiveViewport);
+    RenderGizmos();
 
     // Grid
     UPrimitiveBatch::GetInstance().RenderBatch(ConstantBuffer, ActiveViewport->GetViewMatrix(), ActiveViewport->GetProjectionMatrix());
