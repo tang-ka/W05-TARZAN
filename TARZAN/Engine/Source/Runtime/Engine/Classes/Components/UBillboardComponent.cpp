@@ -60,14 +60,14 @@ int UBillboardComponent::CheckRayIntersection(FVector& rayOrigin, FVector& rayDi
 }
 
 
-void UBillboardComponent::SetTexture(FWString _fileName)
+void UBillboardComponent::SetTexture(const FWString&  _fileName)
 {
-	Texture = UEditorEngine::resourceMgr.GetTexture(_fileName);
+    TexturePath = _fileName;
+	Texture = UEditorEngine::resourceMgr.GetTexture(TexturePath);
 }
 
 void UBillboardComponent::SetUUIDParent(USceneComponent* _parent)
 {
-	m_parent = _parent;
 }
 
 
@@ -111,12 +111,45 @@ UObject* UBillboardComponent::Duplicate() const
 
 void UBillboardComponent::DuplicateSubObjects(const UObject* Source)
 {
-    UPrimitiveComponent::DuplicateSubObjects(Source);
+    Super::DuplicateSubObjects(Source);
 }
 
 void UBillboardComponent::PostDuplicate()
 {
-    UPrimitiveComponent::PostDuplicate();
+    Super::PostDuplicate();
+}
+
+void UBillboardComponent::GetProperties(TMap<FString, FString>& OutProperties) const
+{
+    Super::GetProperties(OutProperties);
+
+    
+    OutProperties.Add(TEXT("FinalIndexU"), FString::Printf(TEXT("%f"), finalIndexU));
+    OutProperties.Add(TEXT("FinalIndexV"), FString::Printf(TEXT("%f"), finalIndexV));
+    OutProperties.Add(TEXT("TexturePath"), FString(TexturePath.c_str()));
+    
+}
+
+void UBillboardComponent::SetProperties(const TMap<FString, FString>& InProperties)
+{
+    Super::SetProperties(InProperties);
+    const FString* TempStr = nullptr;
+    TempStr = InProperties.Find(TEXT("FinalIndexU"));
+    if (TempStr)
+    {
+        finalIndexU = FString::ToFloat(*TempStr);
+    }
+    TempStr = InProperties.Find(TEXT("FinalIndexV"));
+    if (TempStr)
+    {
+        finalIndexV = FString::ToFloat(*TempStr);
+    }
+    TempStr = InProperties.Find(TEXT("TexturePath"));
+    if (TempStr)
+    {
+        TexturePath = TempStr->ToWideString();
+        Texture = UEditorEngine::resourceMgr.GetTexture(TexturePath);
+    }
 }
 
 bool UBillboardComponent::CheckPickingOnNDC(const TArray<FVector>& checkQuad, float& hitDistance)

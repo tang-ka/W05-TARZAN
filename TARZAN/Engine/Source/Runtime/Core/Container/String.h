@@ -162,6 +162,10 @@ public:
 
 	static float ToFloat(const FString& InString);
 
+    static int ToInt(const FString& InString);
+
+    
+
     // --- Printf 함수 ---
     /**
      * @brief 가변 인자를 사용하여 포맷팅된 FString을 생성합니다. printf와 유사하게 동작합니다.
