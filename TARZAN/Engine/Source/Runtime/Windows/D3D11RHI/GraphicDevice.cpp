@@ -11,6 +11,7 @@ void FGraphicsDevice::Initialize(HWND hWindow) {
     CreateDepthStencilBuffer(hWindow);
     CreateDepthStencilState();
     CreateRasterizerState();
+    CreateBlendState();
     CurrentRasterizer = RasterizerStateSOLID;
 }
 
@@ -283,6 +284,21 @@ void FGraphicsDevice::CreateLightPassBuffer()
     LightPassRTVs[1] = LightPassRTV_Position;
 }
 
+void FGraphicsDevice::CreateBlendState()
+{
+    D3D11_BLEND_DESC blendDesc = {};
+    blendDesc.RenderTarget[0].BlendEnable = TRUE;
+    blendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+    blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+    blendDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+    blendDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+    blendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
+    blendDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+    blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+    Device->CreateBlendState(&blendDesc, &LineBlendState);
+}
+
 void FGraphicsDevice::ReleaseDeviceAndSwapChain()
 {
     if (DeviceContext)
@@ -399,6 +415,15 @@ void FGraphicsDevice::ReleaseDepthStencilResources()
     }
 }
 
+void FGraphicsDevice::ReleaseBlendState()
+{
+    if (LineBlendState)
+    {
+        LineBlendState->Release();
+        LineBlendState = nullptr;
+    }
+}
+
 void FGraphicsDevice::Release() 
 {
     ReleaseRasterizerState();
@@ -409,6 +434,7 @@ void FGraphicsDevice::Release()
     ReleaseLightPassBuffer();
     ReleaseDepthStencilResources();
     ReleaseDeviceAndSwapChain();
+    ReleaseBlendState();
 }
 
 void FGraphicsDevice::SwapBuffer() {
@@ -419,12 +445,15 @@ void FGraphicsDevice::Prepare()
 {
     DeviceContext->ClearRenderTargetView(FrameBufferRTV, ClearColor); // 렌더 타겟 뷰에 저장된 이전 프레임 데이터를 삭제
     DeviceContext->ClearRenderTargetView(UUIDFrameBufferRTV, ClearColor); 
+  
     DeviceContext->ClearRenderTargetView(GBufferRTV_Normal, ClearColor); 
     DeviceContext->ClearRenderTargetView(GBufferRTV_Albedo, ClearColor); 
     DeviceContext->ClearRenderTargetView(GBufferRTV_Ambient, ClearColor); 
     DeviceContext->ClearRenderTargetView(GBufferRTV_Position, ClearColor);
+
     DeviceContext->ClearRenderTargetView(LightPassRTV_Color, ClearColor);
-    DeviceContext->ClearRenderTargetView(LightPassRTV_Position, ClearColor);
+    DeviceContext->ClearRenderTargetView(LightPassRTV_Position, ClearColor)
+        ;
     DeviceContext->ClearDepthStencilView(DepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0); // 깊이 버퍼 초기화 추가
 
     DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST); // 정정 연결 방식 설정

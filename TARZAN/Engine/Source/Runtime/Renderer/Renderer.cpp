@@ -262,6 +262,8 @@ void FRenderer::PrepareLineShader() const
     if (ConstantBuffer && GridConstantBuffer)
     {
         Graphics->DeviceContext->VSSetConstantBuffers(0, 1, &ConstantBuffer);     // MatrixBuffer (b0)
+        Graphics->DeviceContext->PSSetConstantBuffers(0, 1, &ConstantBuffer);
+
         Graphics->DeviceContext->VSSetConstantBuffers(1, 1, &GridConstantBuffer); // GridParameters (b1)
         Graphics->DeviceContext->PSSetConstantBuffers(1, 1, &GridConstantBuffer);
         Graphics->DeviceContext->VSSetConstantBuffers(3, 1, &LinePrimitiveBuffer);
@@ -280,6 +282,7 @@ void FRenderer::CreateConstantBuffer()
     //ConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FConstants));
     SubUVConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FSubUVConstant));
     GridConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FGridParameters));
+
     LinePrimitiveBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FPrimitiveCounts));
     //MaterialConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FMaterialConstants));
     SubMeshConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FSubMeshConstants));
@@ -869,8 +872,15 @@ void FRenderer::RenderOverlayPass()
     // Gizmo
     RenderGizmos(World, ActiveViewport);
 
+    FVector CamPos = ActiveViewport->GetCameraLocation();
+    FVector4 CamPos4 = FVector4(CamPos.x, CamPos.y, CamPos.z, 1.f);
+
+    float blendFactor[4] = { 0.f, 0.f, 0.f, 0.f };
+    Graphics->DeviceContext->OMSetBlendState(Graphics->LineBlendState, blendFactor, 0xffffffff);
     // Grid
-    UPrimitiveBatch::GetInstance().RenderBatch(ConstantBuffer, ActiveViewport->GetViewMatrix(), ActiveViewport->GetProjectionMatrix());
+    UPrimitiveBatch::GetInstance().RenderBatch(ConstantBuffer, 
+        ActiveViewport->GetViewMatrix(), ActiveViewport->GetProjectionMatrix(), CamPos4);
+    Graphics->DeviceContext->OMSetBlendState(nullptr, nullptr, 0xffffffff);
 }
 #pragma endregion MultiPass
 
