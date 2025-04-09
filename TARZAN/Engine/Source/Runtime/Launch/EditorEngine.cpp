@@ -9,7 +9,7 @@
 #include "slate/Widgets/Layout/SSplitter.h"
 #include "LevelEditor/SLevelEditor.h"
 #include "UnrealEd/SceneMgr.h"
-
+#include "Sound/SoundManager.h"
 
 class ULevel;
 
@@ -133,6 +133,17 @@ void UEditorEngine::PreparePIE()
 
 void UEditorEngine::StartPIE()
 {
+    // todo : remove
+    SoundManager soundManager;
+    if (FAILED(soundManager.InitializeAudio()))
+    {
+        MessageBoxW(hWnd, L"Audio Initialization Failed!", L"Error", MB_OK);
+    }
+    if (FAILED(soundManager.PlayBGM(L"Sounds/bgm1.wav")))
+    {
+        MessageBoxW(hWnd, L"BGM Load/Play Failed!", L"Error", MB_OK);
+    }
+
     // 1. BeingPlay() 호출
     GWorld->BeginPlay();
     levelType = LEVELTICK_All;
@@ -155,6 +166,11 @@ void UEditorEngine::ResumingPIE()
 
 void UEditorEngine::StopPIE()
 {
+    // todo : remove
+    SoundManager soundManager;
+    soundManager.StopBGM();
+    soundManager.ShutdownAudio();
+
     // 1. World Clear
     GWorld = worldContexts[0].thisCurrentWorld;
 
