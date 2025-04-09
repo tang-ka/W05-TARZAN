@@ -1,4 +1,4 @@
-#include "UHeightFogComponent.h"
+#include "UHeightFogComponent.h" 
 #include "UnrealEd/EditorViewportClient.h"
 #include "Launch/EditorEngine.h"
 #include "Editor/LevelEditor/SLevelEditor.h"

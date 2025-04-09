@@ -368,7 +368,6 @@ void FRenderer::PrepareRender()
             }
             if (UHeightFogComponent* HeightFog = Cast<UHeightFogComponent>(iter))
             {
-                if (!HeightFog->OnFogChanged)
                     SubscribeToFogUpdates(HeightFog);
             }
         }
@@ -692,8 +691,7 @@ void FRenderer::RenderFullScreenQuad()
 
 void FRenderer::SubscribeToFogUpdates(UHeightFogComponent* HeightFog)
 {
-    HeightFog->OnFogChanged = [this, HeightFog]()
-        {
+   
             FogData.FogDensity = HeightFog->GetFogDensity();
             FogData.FogHeightFalloff = HeightFog->GetFogHeightFalloff();
             FogData.FogStartDistance = HeightFog->GetStartDistance();
@@ -701,16 +699,10 @@ void FRenderer::SubscribeToFogUpdates(UHeightFogComponent* HeightFog)
             FogData.FogMaxOpacity = HeightFog->GetFogMaxOpacity();
             FogData.FogInscatteringColor = HeightFog->GetColor();
             FogData.CameraPosition = ActiveViewport->GetCameraLocation();
+            FogData.FogHeight = HeightFog->GetWorldLocation().z;
             FogData.InverseView = FMatrix::Inverse(ActiveViewport->GetViewMatrix());
             FogData.InverseProjection = FMatrix::Inverse(ActiveViewport->GetProjectionMatrix());
-            FogData.DisableFog = HeightFog->GetDisableFog();
-        };
-
-    // 초기 업데이트 위해 이벤트 강제 호출
-    if (HeightFog->OnFogChanged)
-    {
-        HeightFog->OnFogChanged();
-    }
+            FogData.DisableFog = HeightFog->GetDisableFog(); 
 }
 
 void FRenderer::RenderLight(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport)

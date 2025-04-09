@@ -12,6 +12,7 @@ cbuffer FogConstants : register(b0)
     row_major float4x4 InverseView;
     row_major float4x4 InverseProjection;
     float DisableFog;
+    float3 padding;
 };
 
 Texture2D LightColor : register(t0);
@@ -45,6 +46,7 @@ float3 ReconstructWorldPos(float2 UV, float Depth)
 
     return WorldPos.xyz;
 }
+
 
 float ComputeFogFactor(float3 worldPos)
 {
@@ -82,19 +84,15 @@ PS_OUTPUT mainPS(PS_INPUT input) : SV_TARGET
     {
         if (isValid == 0.5f)
         {
-            fogFactor = ComputeFogFactor(worldPos);
+            fogFactor = ComputeFogFactor(worldPos.xyz);
         }
-        else
+        else //배경
         {
             float3 worldPosH = ReconstructWorldPos(input.TexCoord, 1);
             fogFactor = ComputeFogFactor(worldPosH.xyz);
         }
     }
-    else
-    {
-        fogFactor = 0.0f;
-    }
-    
+
     float3 fogColor = lerp(FogColor.rgb, color.rgb, 1.0 - fogFactor);
     output.Color = float4(fogColor, color.a);
     return output;

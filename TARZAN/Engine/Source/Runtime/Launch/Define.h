@@ -413,6 +413,7 @@ struct FFogConstants
     FMatrix InverseView;
     FMatrix InverseProjection;
     float DisableFog;
+    FVector padding1;
 };
 
 struct FScreenConstants
