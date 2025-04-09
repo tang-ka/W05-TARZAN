@@ -12,19 +12,21 @@ cbuffer UUIDConstant : register(b2)
     float4 UUID;
 }
 
-struct PSInput {
+struct PS_INPUT {
     float4 position : SV_POSITION;
     float2 texCoord : TEXCOORD;
 };
 
-struct PSOutput
+struct PS_OUTPUT
 {
-    float4 color : SV_Target0;
-    float4 uuid : SV_Target1;
+    float4 Normal : SV_Target0;
+    float4 Albedo : SV_Target1;
+    //float4 uuid : SV_Target1;
 };
 
-float4 main(PSInput input) : SV_TARGET {
-    PSOutput output;
+PS_OUTPUT main(PS_INPUT input)
+{
+    PS_OUTPUT output;
     
     float2 uv = input.texCoord + float2(indexU, indexV);
     //float4 col = gTexture.Sample(gSampler, input.texCoord);
@@ -33,8 +35,9 @@ float4 main(PSInput input) : SV_TARGET {
     if (col.r < threshold && col.g < threshold && col.b < threshold)
         clip(-1); // 픽셀 버리기
     
-    output.color = col;
-    output.uuid = UUID;
+    //output.Color = col;
+    output.Albedo = float4(col.xyz, 0.7f);
+    //output.uuid = UUID;
     
-    return col;
+    return output;
 }
