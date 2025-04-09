@@ -40,11 +40,11 @@ struct FireballConstants
 //    float Roughness;
 //};
 
-cbuffer LightConstants : register(b0)
+cbuffer GlobalLightConstants : register(b0)
 {
     FLight GlobalLight;
     float3 CameraPosition;
-    float Padding;
+    float ViewMode;
 };
 
 cbuffer FireballBuffer : register(b1)
@@ -54,11 +54,11 @@ cbuffer FireballBuffer : register(b1)
     float3 padding;
 }
 
-//cbuffer FLitUnlitConstants : register(b2)
-//{
-//    int isLit;
-//    float3 Padding1;
-//}
+cbuffer ScreenInfo : register(b2)
+{
+    float2 ViewPortRatio;
+    float2 ViewPortPosition;
+}
 
 struct PS_Input
 {
@@ -153,38 +153,65 @@ PS_OUTPUT main(PS_Input input)
 {
     PS_OUTPUT output;
     
-    float2 uv = input.TexCoord;
+    float2 uv = input.TexCoord * ViewPortRatio + ViewPortPosition;
+    //output.Color = float4(uv.x, uv.y, 0, 1);
+    //return output;
     
     float4 normalTex = g_GBufferNormal.Sample(g_sampler, uv);
-    float3 albedo = g_GBufferAlbedo.Sample(g_sampler, uv).rgb;
+    float4 albedoTex = g_GBufferAlbedo.Sample(g_sampler, uv);
     float3 ambient = g_GBufferAmbient.Sample(g_sampler, uv).rgb;
     float4 worldPosTex = g_GBufferPosition.Sample(g_sampler, uv);
     
+    float3 albedo = albedoTex.rgb;
+    float isValidObject = albedoTex.a;
+    
     float3 worldPos = worldPosTex.xyz;
-    float isValidGeometry = worldPosTex.w;
-    
-    
-    //if (normalTex.a == 0)
-    //{
-    //    output.Color = float4(albedo.xyz, 1);
-    //    return output;
-    //}
+    float depth = worldPosTex.w;
         
     float3 normal = (normalTex.xyz - 0.5f) * 2.0f;
     
     float4 DirectionLightColor;
     float3 PointLightColor;
-    //float4 DirectionLightColor = ComputeDirectionalLight(normal, worldPos, albedo, ambient);
-    //PointLightColor = ComputeFireballLighting(float4(worldPos, 1), normal);
     
-    if (isValidGeometry == 0.5f)
+    if (isValidObject == 0.5f) // 배경 구분
     {
-        DirectionLightColor = ComputeDirectionalLight(normal, worldPos, albedo, ambient);
-        PointLightColor = ComputeFireballLighting(float4(worldPos, 1), normal);
+        switch (ViewMode)
+        {
+            case 0 : // Lit 모드: 일반 조명 계산 적용
+                DirectionLightColor = ComputeDirectionalLight(normal, worldPos, albedo, ambient);
+                PointLightColor = ComputeFireballLighting(float4(worldPos, 1), normal);
+                output.Color = DirectionLightColor + float4(PointLightColor.xyz, 1);
+                break;
+            case 1:
+            case 2: // Unlit 모드, WireFrame 모드: 조명 계산 생략, 재질 기본 색상 사용
+                output.Color = float4(albedo.xyz, 1.f); // 혹은 필요한 처리를 적용
+                break;
+            case 3: // Base Color 모드: 알베도 텍스처 또는 재질의 베이스 컬러 출력
+                output.Color = float4(albedo.xyz, 1.f);
+                break;
+            case 4: // Normal 모드
+                output.Color = float4(normal, 1.f);
+                break;
+            case 5: // Depth 모드
+                output.Color = float4(depth, depth, depth, 1.f);
+                break;
+            case 6: // World Position 모드
+                output.Color = float4(normalize(worldPos), 1.f);
+                break;
+            default: // 정의되지 않은 모드의 경우, 기본값 처리
+                output.Color = float4(1, 0, 1, 1); // 에러나 예외 처리를 위한 마젠타 색상 사용
+                break;
+        }
     }
+    else if (isValidObject == 0.7f)
+    {
+        output.Color = float4(albedo.xyz, 1.f);
+
+    }
+    else
+        output.Color = float4(albedo.xyz, 1.f);    
     
-    output.Color = DirectionLightColor + float4(PointLightColor.xyz, 1);
-    output.WorldPos = float4(worldPos.xyz, 1);
+    output.WorldPos = float4(worldPos.xyz, 1.f);
     
     return output;
 }

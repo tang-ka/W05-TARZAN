@@ -31,7 +31,6 @@
 #include "Runtime/Launch/ImGuiManager.h"
 #include "UnrealEd/UnrealEd.h"
 #include "UHeightFogComponent.h"
-#include "LevelEditor/SLevelEditor.h"
 
 extern UEditorEngine* GEngine;
 
@@ -56,6 +55,17 @@ void FRenderer::Initialize(FGraphicsDevice* graphics)
     // test
     CreateDummyPostProcessResources();
     SceneDepthSRV = Graphics->DepthStencilSRV;
+
+    D3D11_SAMPLER_DESC samplerDesc = {};
+    samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    samplerDesc.MinLOD = 0;
+    samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+    Graphics->Device->CreateSamplerState(&samplerDesc, &LPSamplerState);
 }
 
 void FRenderer::Render()
@@ -97,6 +107,9 @@ void FRenderer::RenderPass(UWorld* World, std::shared_ptr<FEditorViewportClient>
     ChangeViewMode(ActiveViewport->GetViewMode());
 
     RenderGBuffer(World, ActiveViewport);
+
+    Graphics->ChangeRasterizer(EViewModeIndex::VMI_Unlit);
+
 
     RenderLightPass(World, ActiveViewport);
 
@@ -234,6 +247,7 @@ void FRenderer::PrepareLightShader() const
     {
         Graphics->DeviceContext->PSSetConstantBuffers(0, 1, &LPLightConstantBuffer);
         Graphics->DeviceContext->PSSetConstantBuffers(1, 1, &FireballConstantBuffer);
+            Graphics->DeviceContext->PSSetConstantBuffers(2, 1, &ScreenConstantBuffer);
         //Graphics->DeviceContext->PSSetConstantBuffers(1, 1, &LPMaterialConstantBuffer);
     }
 }
@@ -300,6 +314,8 @@ void FRenderer::CreateConstantBuffer()
     FireballConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FFireballArrayInfo));
 
     FogConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FFogConstants));
+
+    ScreenConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FScreenConstants));
 }
 
 void FRenderer::ReleaseConstantBuffer()
@@ -317,6 +333,7 @@ void FRenderer::ReleaseConstantBuffer()
     RenderResourceManager.ReleaseBuffer(LPLightConstantBuffer);
     RenderResourceManager.ReleaseBuffer(LPMaterialConstantBuffer);
     RenderResourceManager.ReleaseBuffer(FogConstantBuffer);
+    RenderResourceManager.ReleaseBuffer(ScreenConstantBuffer);
 }
 #pragma endregion ConstantBuffer
 
@@ -543,7 +560,8 @@ void FRenderer::RenderStaticMeshes(UWorld* World, std::shared_ptr<FEditorViewpor
         FVector4 UUIDColor = StaticMeshComp->EncodeUUID() / 255.0f;
 
         bool isSelected = World->GetSelectedActor() == StaticMeshComp->GetOwner();
-        ConstantBufferUpdater.UpdateConstant(ConstantBuffer, MVP, Model, NormalMatrix, UUIDColor, isSelected);
+        ConstantBufferUpdater.UpdateConstantWithCamPos(ConstantBuffer, 
+            MVP, Model, NormalMatrix, UUIDColor, isSelected, ActiveViewport->GetCameraLocation());
 
         //if (USkySphereComponent* skysphere = Cast<USkySphereComponent>(StaticMeshComp))
         //{
@@ -747,20 +765,24 @@ void FRenderer::UpdateMaterial(const FObjMaterialInfo& MaterialInfo) const
 void FRenderer::RenderGBuffer(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport)
 {
     // StaticMesh
+   Graphics -> DeviceContext->OMSetRenderTargets(4, Graphics->gbuffers, Graphics->DepthStencilView);
+
     if (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_Primitives))
         RenderStaticMeshes(World, ActiveViewport);
 
     // Billboard
-    //if (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_BillboardText))
-    //    RenderBillboards(World, ActiveViewport);
+    if (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_BillboardText))
+        RenderBillboards(World, ActiveViewport);
 }
 
 void FRenderer::RenderLightPass(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport)
 {
+
     PrepareLightShader();
 
     //ID3D11RenderTargetView* rtv = Graphics->FrameBufferRTV;
     //Graphics->DeviceContext->OMSetRenderTargets(1, &rtv, Graphics->DepthStencilView);
+    int mode = ActiveViewport->GetViewMode();
 
     FLightConstant GlobalLight = {
         .Ambient = FVector4(0.1f, 0.1f, 0.1f, 1.f),
@@ -771,7 +793,7 @@ void FRenderer::RenderLightPass(UWorld* World, std::shared_ptr<FEditorViewportCl
         .Direction = FVector(1.0f, -1.0f, -1.0f),
         .Padding2 = 0,
         .CameraPosition = ActiveViewport->GetCameraLocation(),
-        .Padding = 0
+        .Padding = (float)ActiveViewport->GetViewMode(),
     };
 
     ConstantBufferUpdater.UpdateGlobalLightConstant(LPLightConstantBuffer, GlobalLight);
@@ -806,6 +828,7 @@ void FRenderer::RenderLightPass(UWorld* World, std::shared_ptr<FEditorViewportCl
         }
     }
     ConstantBufferUpdater.UpdateFireballConstant(FireballConstantBuffer, fireballArrayInfo);
+    ConstantBufferUpdater.UpdateScreenConstant(ScreenConstantBuffer, ActiveViewport);
     // Spot Light
 
 #pragma region d
@@ -823,18 +846,7 @@ void FRenderer::RenderLightPass(UWorld* World, std::shared_ptr<FEditorViewportCl
     };
     Graphics->DeviceContext->PSSetShaderResources(0, 4, SRVs);
 
-    ID3D11SamplerState* SamplerState;
-    D3D11_SAMPLER_DESC samplerDesc = {};
-    samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-    samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-    samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-    samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-    samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-    samplerDesc.MinLOD = 0;
-    samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
-
-    Graphics->Device->CreateSamplerState(&samplerDesc, &SamplerState);
-    Graphics->DeviceContext->PSSetSamplers(0, 1, &SamplerState);
+    Graphics->DeviceContext->PSSetSamplers(0, 1, &LPSamplerState);
 
     // 6. Fullscreen Quad 렌더링
     const FQuadRenderData& quad = UEditorEngine::resourceMgr.GetQuadRenderData();
