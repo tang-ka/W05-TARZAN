@@ -1,4 +1,4 @@
-#include "UHeightFogComponent.h"
+#include "Components/UHeightFogComponent.h"
 #include "UObject/ObjectFactory.h"
 UHeightFogComponent::UHeightFogComponent()
 { 

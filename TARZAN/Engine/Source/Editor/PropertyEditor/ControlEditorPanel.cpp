@@ -15,9 +15,9 @@
 #include "UnrealEd/EditorViewportClient.h"
 #include "PropertyEditor/ShowFlags.h"
 #include "UnrealEd/SceneMgr.h"
-#include "UHeightFogComponent.h"
+#include "Components/UHeightFogComponent.h"
 #include "SpotLightComp.h"
-#include "FireballComp.h"
+#include "Components/FireballComp.h"
 #include "UEditorStateManager.h"
 
 

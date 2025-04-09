@@ -1,4 +1,4 @@
-#include "FireballComp.h"
+#include "Components/FireballComp.h"
 #include "UObject/ObjectFactory.h"
 UFireballComponent::UFireballComponent()
 {

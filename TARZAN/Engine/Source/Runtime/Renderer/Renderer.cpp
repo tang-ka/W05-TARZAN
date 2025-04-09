@@ -20,7 +20,7 @@
 #include "PropertyEditor/ShowFlags.h"
 #include "UObject/UObjectIterator.h"
 #include "Components/SkySphereComponent.h"
-#include "FireballComp.h"
+#include "Components/FireballComp.h"
 #include "SpotLightComp.h"
 #include "Renderer/Pass/GBufferPass.h"
 #include "Renderer/Pass/LightingPass.h"
@@ -30,7 +30,7 @@
 #include "Editor/LevelEditor/SLevelEditor.h"
 #include "Runtime/Launch/ImGuiManager.h"
 #include "UnrealEd/UnrealEd.h"
-#include "UHeightFogComponent.h"
+#include "Components/UHeightFogComponent.h"
 
 extern UEditorEngine* GEngine;
 

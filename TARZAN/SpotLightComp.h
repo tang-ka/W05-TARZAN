@@ -1,5 +1,5 @@
 #pragma once
-#include "FireballComp.h"
+#include "Components/FireballComp.h"
 
 class USpotLightComponent : public UFireballComponent
 {
