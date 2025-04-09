@@ -712,11 +712,19 @@ void FRenderer::SubscribeToFogUpdates(UHeightFogComponent* HeightFog)
 
 void FRenderer::RenderLight()
 {
-    for (auto Light : LightObjs)
+    for (auto Light : FireballObjs)
     {
-        FMatrix Model = JungleMath::CreateModelMatrix(Light->GetWorldLocation(), Light->GetWorldRotation(), { 1, 1, 1 });
-        UPrimitiveBatch::GetInstance().AddCone(Light->GetWorldLocation(), Light->GetRadius(), 15, 140, Light->GetColor(), Model);
-        UPrimitiveBatch::GetInstance().RenderOBB(Light->GetBoundingBox(), Light->GetWorldLocation(), Model);
+        if (Light->GetLightType() == LightType::SpotLight)
+        {
+            USpotLightComponent* SpotLight = Cast<USpotLightComponent>(Light);
+            if (SpotLight)
+            {
+                if (GEngine->GetWorld()->WorldType == EWorldType::PIE) continue;
+                FMatrix Model = JungleMath::CreateModelMatrix(Light->GetWorldLocation(), Light->GetWorldRotation(), { 1, 1, 1 });
+                UPrimitiveBatch::GetInstance().AddCone(Light->GetWorldLocation(), Light->GetRadius()*tan(SpotLight->GetOuterSpotAngle()/2 * 3.14 / 180.0f), Light->GetRadius(), 140, Light->GetColor(), Model);
+                UPrimitiveBatch::GetInstance().RenderOBB(Light->GetBoundingBox(), Light->GetWorldLocation(), Model);
+            }
+        }
     }
 }
 

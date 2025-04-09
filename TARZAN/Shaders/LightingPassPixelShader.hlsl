@@ -132,8 +132,8 @@ float3 ComputeFireballLighting(float4 worldPos, float3 normal)
         {
             float3 spotDir = normalize(Fireball[i].Direction);
             float spotCos = dot(-L, spotDir);
-            float innerCos = cos(radians(Fireball[i].InnerAngle));
-            float outerCos = cos(radians(Fireball[i].OuterAngle));
+            float innerCos = cos(radians(Fireball[i].InnerAngle/2));
+            float outerCos = cos(radians(Fireball[i].OuterAngle/2));
             spotAttenuation = saturate((spotCos - outerCos) / (innerCos - outerCos));
         }
 

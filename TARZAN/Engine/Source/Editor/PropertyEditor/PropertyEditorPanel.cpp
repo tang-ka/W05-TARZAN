@@ -384,6 +384,14 @@ void PropertyEditorPanel::Render()
                     fireballObj->SetIntensity(IntensityVal);
                 }
             }
+            float RadiusFallOffVal = fireballObj->GetRadiusFallOff();
+            if (ImGui::SliderFloat("RadiusFallOff", &RadiusFallOffVal, 0.0f, 10.0f))
+            {
+                if (fireballObj)
+                {
+                    fireballObj->SetRadiusFallOff(RadiusFallOffVal);
+                }
+            }
             if (USpotLightComponent* SpotLight= Cast<USpotLightComponent>(fireballObj))
             {
                 float InnerAngle = SpotLight->GetInnerSpotAngle();
