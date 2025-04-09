@@ -118,6 +118,9 @@
     <Filter Include="Engine\Source\Runtime\Engine\Classes\Components\Material">
       <UniqueIdentifier>{057033e1-bf99-4de4-b992-4d13d03f2103}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine\Source\Runtime\Sound">
+      <UniqueIdentifier>{59778731-e04c-465a-9b01-e9bd4761460d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\Source\Editor\PropertyEditor\IWindowToggleable.h">
@@ -444,6 +447,9 @@
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\Movement\RotatingMovementComponent.h" />
     <ClInclude Include="SpotLightComp.h" />
     <ClInclude Include="Engine\Source\Runtime\CoreUObject\UObject\UObjectGlobals.h" />
+    <ClInclude Include="Engine\Source\Runtime\Sound\SoundManager.h">
+      <Filter>Engine\Source\Runtime\Sound</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\Source\ThirdParty\DirectXTK\Include\DDSTextureLoader.h" />
@@ -577,5 +583,8 @@
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\Movement\RotatingMovementComponent.cpp" />
     <ClCompile Include="SpotLightComp.cpp" />
     <ClCompile Include="Engine\Source\Runtime\CoreUObject\UObject\UObjectGlobals.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Sound\SoundManager.cpp">
+      <Filter>Engine\Source\Runtime\Sound</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
