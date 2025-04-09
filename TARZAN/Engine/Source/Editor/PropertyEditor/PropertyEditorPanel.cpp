@@ -369,7 +369,7 @@ void PropertyEditorPanel::Render()
            
                 radiusVal = fireballObj->GetRadius();
             
-            if (ImGui::SliderFloat("Radius", &radiusVal, 1.0f, 100.0f))
+            if (ImGui::SliderFloat("Radius", &radiusVal, 1.0f, 1000.0f))
             {
                 
                 
