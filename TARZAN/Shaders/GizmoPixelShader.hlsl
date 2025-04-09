@@ -16,6 +16,12 @@ cbuffer MaterialConstants : register(b0)
     FMaterial Material;
 }
 
+cbuffer ScreenInfo : register(b2)
+{
+    float2 ViewPortRatio;
+    float2 ViewPortPosition;
+}
+
 struct PS_INPUT
 {
     float4 Position : SV_POSITION; // 변환된 화면 좌표

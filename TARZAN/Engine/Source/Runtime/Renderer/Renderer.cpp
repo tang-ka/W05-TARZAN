@@ -58,7 +58,7 @@ void FRenderer::Render()
     //DeprecatedRender();
 
     SLevelEditor* LevelEditor = GEngine->GetLevelEditor();
-    ActiveViewport = LevelEditor->GetActiveViewportClient();
+    std::shared_ptr<FEditorViewportClient> CurrentViewport = LevelEditor->GetActiveViewportClient();
     World = GEngine->GetWorld();
 
     Graphics->Prepare();
@@ -67,10 +67,11 @@ void FRenderer::Render()
         for (int i = 0; i < 4; ++i)
         {
             LevelEditor->SetViewportClient(i);
+            ActiveViewport = LevelEditor->GetActiveViewportClient();
             PrepareRender();
             RenderPass();
         }
-        LevelEditor->SetViewportClient(ActiveViewport);
+        LevelEditor->SetViewportClient(CurrentViewport);
     }
     else
     {
@@ -94,7 +95,6 @@ void FRenderer::RenderPass()
     RenderLightPass();
 
     RenderPostProcessPass();
-
     RenderOverlayPass();
 }
 
