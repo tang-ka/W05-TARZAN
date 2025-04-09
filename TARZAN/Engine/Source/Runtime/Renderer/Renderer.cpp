@@ -346,6 +346,7 @@ void FRenderer::ClearRenderArr()
 
 void FRenderer::PrepareRender()
 {
+    bool bHasFog = false;
     if (GEngine->GetWorld()->WorldType == EWorldType::Editor)
     {
         for (const auto iter : TObjectRange<USceneComponent>())
@@ -375,7 +376,12 @@ void FRenderer::PrepareRender()
             if (UHeightFogComponent* HeightFog = Cast<UHeightFogComponent>(iter))
             {
                     SubscribeToFogUpdates(HeightFog);
+                    bHasFog = true;
             }
+        }
+        if (!bHasFog)
+        {
+            ResetFogUpdates();
         }
     }
     else if (GEngine->GetWorld()->WorldType == EWorldType::PIE)
@@ -405,8 +411,13 @@ void FRenderer::PrepareRender()
                 if (UHeightFogComponent* HeightFog = Cast<UHeightFogComponent>(iter2))
                 {
                         SubscribeToFogUpdates(HeightFog);
+                        bHasFog = true;
                 }
             }
+        }
+        if (!bHasFog)
+        {
+            ResetFogUpdates();
         }
     }
 }
@@ -710,6 +721,18 @@ void FRenderer::SubscribeToFogUpdates(UHeightFogComponent* HeightFog)
             FogData.InverseView = FMatrix::Inverse(ActiveViewport->GetViewMatrix());
             FogData.InverseProjection = FMatrix::Inverse(ActiveViewport->GetProjectionMatrix());
             FogData.DisableFog = HeightFog->GetDisableFog(); 
+}
+
+void FRenderer::ResetFogUpdates()
+{
+    FogData.FogDensity = 0.0f;
+    FogData.FogHeightFalloff = 0.0f;
+    FogData.FogStartDistance = 0.0f;
+    FogData.FogCutoffDistance = 0.0f;
+    FogData.FogMaxOpacity = 0.0f;
+    FogData.FogInscatteringColor = FLinearColor(1.0f, 1.0f, 1.0f,0.0f);
+    FogData.CameraPosition = FVector(0.0f, 0.0f, 0.0f);
+    FogData.FogHeight = 0.0f;
 }
 
 void FRenderer::RenderLight()
