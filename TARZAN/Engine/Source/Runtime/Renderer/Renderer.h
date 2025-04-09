@@ -168,10 +168,10 @@ public:
     //Render Pass Demo
     void PrepareRender();
     void ClearRenderArr();
-    void RenderStaticMeshes(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport);
-    void RenderGizmos(const UWorld* World, const std::shared_ptr<FEditorViewportClient>& ActiveViewport);
-    void RenderLight(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport);
-    void RenderBillboards(UWorld* World,std::shared_ptr<FEditorViewportClient> ActiveViewport);
+    void RenderStaticMeshes();
+    void RenderGizmos();
+    void RenderLight();
+    void RenderBillboards();
     void RenderFullScreenQuad();
 private:
     // GBuffer
