@@ -175,6 +175,7 @@ PS_OUTPUT main(PS_Input input)
     
     if (isValidObject == 0.5f) // 배경 구분
     {
+        output.WorldPos = float4(worldPos.xyz, 0.5f);
         switch (ViewMode)
         {
             case 0 : // Lit 모드: 일반 조명 계산 적용
@@ -206,12 +207,16 @@ PS_OUTPUT main(PS_Input input)
     else if (isValidObject == 0.7f)
     {
         output.Color = float4(albedo.xyz, 1.f);
+        output.WorldPos = float4(worldPos.xyz, 0.5);
 
     }
     else
-        output.Color = float4(albedo.xyz, 1.f);    
-    
-    output.WorldPos = float4(worldPos.xyz, 1.f);
+    {
+        output.Color = float4(albedo.xyz, 1.f);
+        output.WorldPos = float4(worldPos.xyz, 1.f);
+    }
+       
+  
     
     return output;
 }
