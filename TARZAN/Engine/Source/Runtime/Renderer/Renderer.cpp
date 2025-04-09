@@ -22,6 +22,7 @@
 #include "UObject/UObjectIterator.h"
 #include "Components/SkySphereComponent.h"
 #include "FireballComp.h"
+#include "SpotLightComp.h"
 #include "Renderer/Pass/GBufferPass.h"
 #include "Renderer/Pass/LightingPass.h"
 #include "Renderer/Pass/PostProcessPass.h"
@@ -213,6 +214,7 @@ void FRenderer::PrepareLightShader() const
     {
         Graphics->DeviceContext->PSSetConstantBuffers(0, 1, &LPLightConstantBuffer);
         Graphics->DeviceContext->PSSetConstantBuffers(1, 1, &FireballConstantBuffer);
+            Graphics->DeviceContext->PSSetConstantBuffers(2, 1, &ScreenConstantBuffer);
         //Graphics->DeviceContext->PSSetConstantBuffers(1, 1, &LPMaterialConstantBuffer);
     }
 }
@@ -290,6 +292,8 @@ void FRenderer::CreateConstantBuffer()
     FireballConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FFireballArrayInfo));
 
     FogConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FFogConstants));
+
+    ScreenConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FScreenConstants));
 }
 
 void FRenderer::ReleaseConstantBuffer()
@@ -307,6 +311,7 @@ void FRenderer::ReleaseConstantBuffer()
     RenderResourceManager.ReleaseBuffer(LPLightConstantBuffer);
     RenderResourceManager.ReleaseBuffer(LPMaterialConstantBuffer);
     RenderResourceManager.ReleaseBuffer(FogConstantBuffer);
+    RenderResourceManager.ReleaseBuffer(ScreenConstantBuffer);
 }
 #pragma endregion ConstantBuffer
 
@@ -388,7 +393,7 @@ void FRenderer::PrepareRender()
                 {
                     LightObjs.Add(pLightComp);
                 }
-                if (UFireballComponent* pFireComp = Cast<UFireballComponent>(iter))
+                if (UFireballComponent* pFireComp = Cast<UFireballComponent>(iter2))
                 {
                     FireballObjs.Add(pFireComp);
                 }
@@ -533,7 +538,8 @@ void FRenderer::RenderStaticMeshes(UWorld* World, std::shared_ptr<FEditorViewpor
         FVector4 UUIDColor = StaticMeshComp->EncodeUUID() / 255.0f;
 
         bool isSelected = World->GetSelectedActor() == StaticMeshComp->GetOwner();
-        ConstantBufferUpdater.UpdateConstant(ConstantBuffer, MVP, Model, NormalMatrix, UUIDColor, isSelected);
+        ConstantBufferUpdater.UpdateConstantWithCamPos(ConstantBuffer, 
+            MVP, Model, NormalMatrix, UUIDColor, isSelected, ActiveViewport->GetCameraLocation());
 
         //if (USkySphereComponent* skysphere = Cast<USkySphereComponent>(StaticMeshComp))
         //{
@@ -737,17 +743,24 @@ void FRenderer::RenderBatch(
 void FRenderer::RenderGBuffer()
 {
     // StaticMesh
+   Graphics -> DeviceContext->OMSetRenderTargets(4, Graphics->gbuffers, Graphics->DepthStencilView);
+
     if (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_Primitives))
         RenderStaticMeshes(World, ActiveViewport);
 
     // Billboard
-    //if (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_BillboardText))
-    //    RenderBillboards(World, ActiveViewport);
+    if (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_BillboardText))
+        RenderBillboards(World, ActiveViewport);
 }
 
 void FRenderer::RenderLightPass()
 {
+
     PrepareLightShader();
+
+    //ID3D11RenderTargetView* rtv = Graphics->FrameBufferRTV;
+    //Graphics->DeviceContext->OMSetRenderTargets(1, &rtv, Graphics->DepthStencilView);
+    int mode = ActiveViewport->GetViewMode();
 
     // Directional Light
     FLightConstant GlobalLight = {
@@ -759,17 +772,17 @@ void FRenderer::RenderLightPass()
         .Direction = FVector(1.0f, -1.0f, -1.0f),
         .Padding2 = 0,
         .CameraPosition = ActiveViewport->GetCameraLocation(),
-        .Padding = 0
+        .Padding = (float)ActiveViewport->GetViewMode(),
     };
     ConstantBufferUpdater.UpdateGlobalLightConstant(LPLightConstantBuffer, GlobalLight);
 
     RenderLight(World, ActiveViewport);
 
-    // Point Light
+    //  Light
+    FFireballArrayInfo fireballArrayInfo;
+    fireballArrayInfo.FireballCount = 0;
     if (FireballObjs.Num() > 0) 
     {
-        FFireballArrayInfo fireballArrayInfo;
-        fireballArrayInfo.FireballCount = 0;
         for (int i = 0; i < FireballObjs.Num(); i++)
         {
             if (FireballObjs[i] != nullptr)
@@ -780,12 +793,19 @@ void FRenderer::RenderLightPass()
                 fireballArrayInfo.FireballConstants[i].Color = fireballInfo.Color;
                 fireballArrayInfo.FireballConstants[i].RadiusFallOff = fireballInfo.RadiusFallOff;
                 fireballArrayInfo.FireballConstants[i].Position = FireballObjs[i]->GetWorldLocation();
+                fireballArrayInfo.FireballConstants[i].LightType = fireballInfo.Type;
+                if (USpotLightComponent* spotLight = Cast<USpotLightComponent>(FireballObjs[i]))
+                {
+                    fireballArrayInfo.FireballConstants[i].InnerAngle = spotLight->GetInnerSpotAngle();
+                    fireballArrayInfo.FireballConstants[i].OuterAngle = spotLight->GetOuterSpotAngle();
+                    fireballArrayInfo.FireballConstants[i].Direction = spotLight->GetForwardVector();
+                }
                 fireballArrayInfo.FireballCount++;
             }
         }
-        ConstantBufferUpdater.UpdateFireballConstant(FireballConstantBuffer, fireballArrayInfo);
     }
-
+    ConstantBufferUpdater.UpdateFireballConstant(FireballConstantBuffer, fireballArrayInfo);
+    ConstantBufferUpdater.UpdateScreenConstant(ScreenConstantBuffer, ActiveViewport);
     // Spot Light
 
     // 1. RenderTarget 설정 (Color, Position)

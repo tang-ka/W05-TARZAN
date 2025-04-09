@@ -30,6 +30,9 @@ public:
     void Tick(ELevelTick tickType, float deltaSeconds);
     void Release();
     void ReloadScene(const FString& FileName);
+    void NewScene();
+    void SaveScene(const FString& FileName);
+    
     void ClearScene();
     virtual UObject* Duplicate() const override;
     virtual void DuplicateSubObjects(const UObject* SourceObj) override;
@@ -41,7 +44,12 @@ public:
      */
     template <typename T>
         requires std::derived_from<T, AActor>
-    T* SpawnActor();
+    T* SpawnActor(FName InActorName = NAME_None);
+
+
+    //Class를 런타임으로 받아 액터를 Spawn합니다.
+    AActor* SpawnActor(UClass* ActorClass, FName InActorName = NAME_None);
+
 
     /** World에 존재하는 Actor를 제거합니다. */
     bool DestroyActor(AActor* ThisActor);
@@ -79,9 +87,9 @@ public:
 
 template <typename T>
     requires std::derived_from<T, AActor>
-T* UWorld::SpawnActor()
+T* UWorld::SpawnActor(FName InActorName)
 {
-    T* Actor = FObjectFactory::ConstructObject<T>();
+    T* Actor = FObjectFactory::ConstructObject<T>(this, InActorName);
     // TODO: 일단 AddComponent에서 Component마다 초기화
     // 추후에 RegisterComponent() 만들어지면 주석 해제
     // Actor->InitializeComponents();
@@ -90,3 +98,5 @@ T* UWorld::SpawnActor()
     Level->PendingBeginPlayActors.Add(Actor);
     return Actor;
 }
+
+

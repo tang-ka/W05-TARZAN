@@ -38,8 +38,8 @@ int32 UEditorEngine::Init(HWND hwnd)
 
     FWorldContext EditorContext;
     EditorContext.WorldType = EWorldType::Editor;
-    EditorContext.thisCurrentWorld = std::shared_ptr<UWorld>(FObjectFactory::ConstructObject<UWorld>());
-    std::shared_ptr<UWorld> EditWorld = EditorContext.thisCurrentWorld;
+    EditorContext.thisCurrentWorld = FObjectFactory::ConstructObject<UWorld>(nullptr);
+    UWorld* EditWorld = EditorContext.thisCurrentWorld;
     EditWorld->InitWorld();
     EditWorld->WorldType = EWorldType::Editor;
     GWorld = EditWorld;
@@ -125,7 +125,7 @@ void UEditorEngine::Input()
 void UEditorEngine::PreparePIE()
 {
     // 1. World 복제
-    worldContexts[1].thisCurrentWorld = std::shared_ptr<UWorld>(Cast<UWorld>(GWorld->Duplicate()));
+    worldContexts[1].thisCurrentWorld = Cast<UWorld>(GWorld->Duplicate());
     GWorld = worldContexts[1].thisCurrentWorld;
     GWorld->WorldType = EWorldType::PIE;
     levelType = LEVELTICK_All;
@@ -166,7 +166,7 @@ void UEditorEngine::StopPIE()
     GUObjectArray.MarkRemoveObject(worldContexts[1].World()->GetLevel());
     worldContexts[1].World()->GetEditorPlayer()->Destroy();
     GUObjectArray.MarkRemoveObject( worldContexts[1].World()->GetWorld());
-    worldContexts[1].thisCurrentWorld.reset();
+    worldContexts[1].thisCurrentWorld = nullptr;
     
     // GWorld->WorldType = EWorldType::Editor;
     levelType = LEVELTICK_ViewportsOnly;

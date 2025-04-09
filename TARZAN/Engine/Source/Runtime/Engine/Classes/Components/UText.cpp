@@ -77,6 +77,41 @@ void UText::PostDuplicate()
     UBillboardComponent::PostDuplicate();
 }
 
+void UText::GetProperties(TMap<FString, FString>& OutProperties) const
+{
+    Super::GetProperties(OutProperties);
+
+    OutProperties.Add(TEXT("Text"), FString(text.c_str()));
+    OutProperties.Add(TEXT("RowCount"), FString::Printf(TEXT("%d"), RowCount));
+    OutProperties.Add(TEXT("ColumnCount"), FString::Printf(TEXT("%d"), ColumnCount));
+    
+}
+
+void UText::SetProperties(const TMap<FString, FString>& InProperties)
+{
+    Super::SetProperties(InProperties);
+    
+    const FString* TempStr = nullptr;
+    
+    TempStr = InProperties.Find(TEXT("Text"));
+    if (TempStr)
+    {
+        text = TempStr->ToWideString();
+    }
+    TempStr = InProperties.Find(TEXT("RowCount"));
+    if (TempStr)
+    {
+        RowCount = FString::ToInt(*TempStr);
+    }
+    TempStr = InProperties.Find(TEXT("ColumnCount"));
+    if (TempStr)
+    {
+        ColumnCount = FString::ToInt(*TempStr);
+    }
+
+    SetText(text);
+}
+
 
 void UText::SetText(FWString _text)
 {

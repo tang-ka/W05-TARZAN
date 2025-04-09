@@ -18,6 +18,18 @@ UHeightFogComponent::UHeightFogComponent()
     std::shared_ptr<FEditorViewportClient> ActiveViewport = GEngine->GetLevelEditor()->GetActiveViewportClient();
     DisableFog = (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_Fog)) ? 0 : 1;
 }
+
+UHeightFogComponent::UHeightFogComponent(const UHeightFogComponent& Other)
+    : USceneComponent(Other)
+    , FogDensity(Other.FogDensity)
+    , FogHeightFalloff(Other.FogHeightFalloff)
+    , StartDistance(Other.StartDistance)
+    , FogCutoffDistance(Other.FogCutoffDistance)
+    , FogMaxOpacity(Other.FogMaxOpacity)
+    , FogInscatteringColor(Other.FogInscatteringColor)
+{
+}
+
 UHeightFogComponent::~UHeightFogComponent()
 {
 }
@@ -29,3 +41,22 @@ void UHeightFogComponent::TickComponent(float DeltaTime)
 {
     Super::TickComponent(DeltaTime);
 }
+
+UObject* UHeightFogComponent::Duplicate() const
+{
+    UHeightFogComponent* NewComp = FObjectFactory::ConstructObjectFrom<UHeightFogComponent>(this);
+    NewComp->DuplicateSubObjects(this);
+    NewComp->PostDuplicate();
+    return NewComp;
+}
+
+void UHeightFogComponent::DuplicateSubObjects(const UObject* Source)
+{
+    Super::DuplicateSubObjects(Source);
+}
+
+void UHeightFogComponent::PostDuplicate()
+{
+    //Super::PostDuplicate();
+}
+

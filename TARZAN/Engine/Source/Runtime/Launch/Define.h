@@ -304,7 +304,10 @@ struct FConstants {
     FMatrix ModelMatrixInverseTranspose; // normal 변환을 위한 행렬
     FVector4 UUIDColor;
     bool IsSelected;
-    FVector pad;
+    FVector CameraPosition;
+    FVector2D ScreenSize;
+    FVector2D ViewportSize;
+    
 };
 
 struct FLitUnlitConstants {
@@ -352,6 +355,12 @@ struct FMaterial
     FVector Emissive;
     float Roughness;
 };
+
+//struct FViewModeConstatnt
+//{
+//    int ViewMode;
+//    FVector Padding;
+//};
 #pragma endregion
 
 struct FFireballConstant
@@ -360,9 +369,17 @@ struct FFireballConstant
     float Intensity = 2;
     float Radius = 2;
     float RadiusFallOff = 2;
-    float pad0 = 0;
-    float pad1 = 0;
+    float InnerAngle = 15;
+    float OuterAngle = 45;
     FLinearColor Color = FLinearColor::Red();
+    FVector Direction = (0, 0, 0);
+    int LightType = 0; 
+};
+
+enum LightType {
+    PointLight = 0,
+    SpotLight = 1,
+    DirectionalLight = 2
 };
 
 struct FFireballInfo
@@ -371,6 +388,7 @@ struct FFireballInfo
     float Radius = 5;
     float RadiusFallOff = 2;
     FLinearColor Color = FLinearColor::Red();
+    LightType Type = LightType::PointLight;
 };
 
 struct FFireballArrayInfo
@@ -395,4 +413,10 @@ struct FFogConstants
     FMatrix InverseView;
     FMatrix InverseProjection;
     float DisableFog;
+};
+
+struct FScreenConstants
+{
+    FVector2D ViewportRatio;
+    FVector2D ViewportPosition;
 };

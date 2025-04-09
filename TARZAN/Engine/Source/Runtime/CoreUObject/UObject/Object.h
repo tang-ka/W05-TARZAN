@@ -16,8 +16,6 @@ class UWorld;
 class UObject
 {
 private:
-
-
     UObject& operator=(const UObject&) = delete;
     UObject(UObject&&) = delete;
     UObject& operator=(UObject&&) = delete;
@@ -33,6 +31,21 @@ public:
     {
     }
     static UClass* StaticClass();
+
+    /* 1. 정적 생성자 헬퍼 함수 정의 */ \
+    static UObject* Construct_UObject(UObject* Outer, FName Name) \
+    { \
+    /* 실제 객체 생성 (new 사용) */ \
+        UObject* Obj = new UObject(); \
+    /* 생성된 객체 기본 설정 */ \
+        Obj->ClassPrivate = UObject::StaticClass(); \
+    return Obj; \
+    } \
+    
+    struct FAutoRegisterUObject { 
+    FAutoRegisterUObject();
+    }; 
+    static FAutoRegisterUObject AutoRegisterUObjectInstance; 
 
     virtual UObject* Duplicate() const
     {
@@ -53,6 +66,7 @@ private:
 
     FName NamePrivate;
     UClass* ClassPrivate = nullptr;
+    UObject* OuterPrivate = nullptr; // Outer 객체의 포인터
 
 public:
     UObject();
@@ -73,6 +87,8 @@ public:
     uint32 GetInternalIndex() const { return InternalIndex; }
 
     UClass* GetClass() const { return ClassPrivate; }
+    UObject* GetOuter() const { return OuterPrivate; }
+    
 
 
     /** this가 SomeBase인지, SomeBase의 자식 클래스인지 확인합니다. */

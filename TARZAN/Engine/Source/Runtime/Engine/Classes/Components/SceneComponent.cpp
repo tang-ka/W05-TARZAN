@@ -17,7 +17,7 @@ USceneComponent::USceneComponent(const USceneComponent& Other)
 }
 USceneComponent::~USceneComponent()
 {
-	if (uuidText) delete uuidText;
+	
 }
 void USceneComponent::InitializeComponent()
 {
@@ -68,6 +68,8 @@ void USceneComponent::AddLocation(FVector _added)
 void USceneComponent::AddRotation(FVector _added)
 {
 	RelativeRotation = RelativeRotation + _added;
+    
+    QuatRotation = JungleMath::EulerToQuaternion(RelativeRotation);
 
 }
 
@@ -160,3 +162,50 @@ void USceneComponent::DuplicateSubObjects(const UObject* Source)
 }
 
 void USceneComponent::PostDuplicate() {}
+
+void USceneComponent::GetProperties(TMap<FString, FString>& OutProperties) const
+{
+    
+    Super::GetProperties(OutProperties);
+    // --- 이제 자신의 속성을 동일한 OutProperties 맵에 추가 ---
+    // 1. AttachParentID 저장
+    USceneComponent* ParentComp = GetAttachParent();
+    if (ParentComp != nullptr) {
+        OutProperties.Add(TEXT("AttachParentID"), ParentComp->GetName());
+    }
+    else
+    {
+        OutProperties.Add(TEXT("AttachParentID"), "nullptr");
+    }
+
+    // 2. RelativeTransform 저장
+    //FTransform RelativeTransform = GetRelativeTransform();
+    // ... Location, Rotation, Scale 문자열로 변환 ...
+    OutProperties.Add(TEXT("RelativeLocation"), RelativeLocation.ToString());
+    OutProperties.Add(TEXT("RelativeRotation"), RelativeRotation.ToString());
+    OutProperties.Add(TEXT("RelativeScale"), RelativeScale3D.ToString());
+    OutProperties.Add(TEXT("QuatRotation"), QuatRotation.ToString());
+    
+    
+    return;
+}
+
+void USceneComponent::SetProperties(const TMap<FString, FString>& Properties)
+{
+    Super::SetProperties(Properties);
+
+    // const FString* TempStr = nullptr;
+    //
+    // // --- SceneComponent 자체의 상태 복원 ---
+    //
+    // // 예시: 가시성(Visibility) 상태 복원
+    // // (GetProperties에서 "bVisible" 키로 저장했다고 가정)
+    // TempStr = Properties.Find(TEXT("bVisible"));
+    // if (TempStr)
+    // {
+    //     // SetVisibility 함수는 bVisible 멤버 변수 설정 및
+    //     // 렌더링 상태 업데이트 등의 추가 작업을 수행할 수 있음.
+    //     //SetVisibility(TempStr->ToBool()); // FString::ToBool() 사용 가정
+    //     
+    // }
+}

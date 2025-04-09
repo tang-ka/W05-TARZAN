@@ -25,19 +25,19 @@ void UWorld::InitWorld()
 {
     // TODO: Load Scene
     CreateBaseObject();
-    Level = FObjectFactory::ConstructObject<ULevel>();
+    Level = FObjectFactory::ConstructObject<ULevel>(this);
 }
 
 void UWorld::CreateBaseObject()
 {
     if (EditorPlayer == nullptr)
     {
-        EditorPlayer = FObjectFactory::ConstructObject<AEditorPlayer>();
+        EditorPlayer = FObjectFactory::ConstructObject<AEditorPlayer>(this);
     }
     
     if (LocalGizmo == nullptr)
     {
-        LocalGizmo = FObjectFactory::ConstructObject<UTransformGizmo>();
+        LocalGizmo = FObjectFactory::ConstructObject<UTransformGizmo>(this);
     }
 }
 
@@ -45,15 +45,19 @@ void UWorld::ReleaseBaseObject()
 {
     if (LocalGizmo)
     {
-        delete LocalGizmo;
+        //delete LocalGizmo;  액터라 DestroyActor에서 처리됨
         LocalGizmo = nullptr;
     }
     
     if (EditorPlayer)
     {
-        delete EditorPlayer;
+        //delete EditorPlayer;
         EditorPlayer = nullptr;
     }
+
+    SelectedActor = nullptr;
+    pickingGizmo = nullptr;
+    
 
 }
 
@@ -106,6 +110,8 @@ void UWorld::Release()
 void UWorld::ClearScene()
 {
     // 1. 모든 Actor Destroy
+
+    //TObjectRange<AActor>();
     
     for (AActor* actor : TObjectRange<AActor>())
     {
@@ -126,7 +132,7 @@ void UWorld::DuplicateSubObjects(const UObject* SourceObj)
 {
     UObject::DuplicateSubObjects(SourceObj);
     Level = Cast<ULevel>(Level->Duplicate());
-    EditorPlayer = FObjectFactory::ConstructObject<AEditorPlayer>();
+    EditorPlayer = FObjectFactory::ConstructObject<AEditorPlayer>(this);
 }
 
 void UWorld::PostDuplicate()
@@ -136,15 +142,77 @@ void UWorld::PostDuplicate()
 
 void UWorld::ReloadScene(const FString& FileName)
 {
-    FString NewFile = GEngine->GetSceneManager()->LoadSceneFromFile(FileName);
+
+    ClearScene(); // 기존 오브젝트 제거
+    CreateBaseObject();
+    
+    GEngine->GetSceneManager()->LoadSceneFromFile(FileName, *this);
 
     // if (SceneOctree && SceneOctree->GetRoot())
     //     SceneOctree->GetRoot()->TickBuffers(GCurrentFrame, 0);
 
-    ClearScene(); // 기존 오브젝트 제거
-    CreateBaseObject();
-    GEngine->GetSceneManager()->ParseSceneData(NewFile);
+
+    //GEngine->GetSceneManager()->ParseSceneData(NewFile);
 }
+
+void UWorld::NewScene()
+{
+    ClearScene();
+    CreateBaseObject();
+}
+
+
+
+
+void UWorld::SaveScene(const FString& FileName)
+{
+    //FSceneData SceneData = GEngine->GetSceneManager()->CreateSceneData(*this);
+
+    GEngine->GetSceneManager()->SaveSceneToFile(FileName, *this);
+    int a= 0;
+}
+
+
+AActor* UWorld::SpawnActor(UClass* ActorClass, FName InActorName)
+{
+    if (!ActorClass)
+    {
+        UE_LOG(LogLevel::Error, TEXT("SpawnActor failed: ActorClass is null."));
+        return nullptr;
+    }
+
+    // 스폰하려는 클래스가 AActor에서 파생되었는지 확인
+    if (!ActorClass->IsChildOf(AActor::StaticClass()))
+    {
+        UE_LOG(LogLevel::Error, TEXT("SpawnActor failed: Class '%s' is not derived from AActor."), *ActorClass->GetName());
+        return nullptr;
+    }
+
+    // 액터 이름 결정 (SpawnParams 또는 자동 생성)
+    FName ActorName = InActorName; // 우선 기본값
+    // TODO: SpawnParams에서 이름 가져오거나, 필요시 여기서 자동 생성
+    // if (SpawnParams.Name != NAME_None) ActorName = SpawnParams.Name;
+
+    // FObjectFactory를 사용하여 객체 생성 시도 (Outer는 this 월드)
+    UObject* NewUObject = FObjectFactory::ConstructObjectFromClass(ActorClass, this, ActorName);
+
+    // 생성된 객체를 AActor*로 캐스팅
+    AActor* Actor = Cast<AActor>(NewUObject); // Cast<T>(Obj) 함수 구현 필요
+
+    if (Actor)
+    {
+        Level->GetActors().Add(Actor);
+        Level->PendingBeginPlayActors.Add(Actor); // BeginPlay 호출 대기 목록에 추가
+    }
+    else
+    {
+        UE_LOG(LogLevel::Error, TEXT("SpawnActor failed: Constructed object '%s' of class '%s' is not an Actor. Destroying."), *NewUObject->GetName(), *ActorClass->GetName());
+        return nullptr;
+    }
+    
+    return Actor;
+}
+
 
 bool UWorld::DestroyActor(AActor* ThisActor)
 {

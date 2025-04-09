@@ -16,6 +16,7 @@
 #include "PropertyEditor/ShowFlags.h"
 #include "UnrealEd/SceneMgr.h"
 #include "UHeightFogComponent.h"
+#include "SpotLightComp.h"
 #include "FireballComp.h"
 #include "UEditorStateManager.h"
 #include "UObject/UObjectIterator.h"
@@ -104,6 +105,7 @@ void ControlEditorPanel::CreateMenuButton(ImVec2 ButtonSize, ImFont* IconFont)
         
         if (ImGui::MenuItem("New Scene"))
         {
+             GEngine->GetWorld()->NewScene();
             // TODO: New Scene
         }
 
@@ -134,9 +136,11 @@ void ControlEditorPanel::CreateMenuButton(ImVec2 ButtonSize, ImFont* IconFont)
                 return;
             }
 
-            // TODO: Save Scene
+            GEngine->GetWorld()->SaveScene(FileName);
 
-            tinyfd_messageBox("알림", "저장되었습니다.", "ok", "info", 1);
+            tinyfd_messageBox("알림",
+
+            "저장되었습니다.", "ok", "info", 1);
         }
 
         ImGui::Separator();
@@ -275,7 +279,7 @@ void ControlEditorPanel::CreateModifyButton(ImVec2 ButtonSize, ImFont* IconFont)
             if (ImGui::Selectable(primitive.label))
             {
                 // GEngineLoop.GetWorld()->SpawnObject(static_cast<OBJECTS>(primitive.obj));
-                UWorld* World = GEngine->GetWorld().get();
+                UWorld* World = GEngine->GetWorld();
                 AActor* SpawnedActor = nullptr;
                 AStaticMeshActor* TempActor = nullptr;
                 switch (static_cast<OBJECTS>(primitive.obj))
@@ -300,7 +304,7 @@ void ControlEditorPanel::CreateModifyButton(ImVec2 ButtonSize, ImFont* IconFont)
                 {
                     SpawnedActor = World->SpawnActor<AActor>();
                     SpawnedActor->SetActorLabel(TEXT("OBJ_SpotLight"));
-                    SpawnedActor->AddComponent<ULightComponentBase>();
+                    SpawnedActor->AddComponent<USpotLightComponent>();
                     UBillboardComponent* BillboardComponent = SpawnedActor->AddComponent<UBillboardComponent>();
                     BillboardComponent->SetTexture(L"Assets/Texture/spotLight.png");
                     break;
@@ -394,7 +398,7 @@ void ControlEditorPanel::CreateFlagButton() const
 
     ImGui::SameLine();
     
-    const char* ViewModeNames[] = { "Lit", "Unlit", "Wireframe" };
+    const char* ViewModeNames[] = { "Lit", "Unlit", "Wireframe", "Base Color", "Normal", "Depth", "World Position"};
     FString SelectLightControl = ViewModeNames[(int)ActiveViewport->GetViewMode()];
     ImVec2 LightTextSize = ImGui::CalcTextSize(GetData(SelectLightControl));
     

@@ -18,6 +18,8 @@ public:
 
     void SetData(OBJ::FStaticMeshRenderData* renderData);
 
+    FWString GetPathOjbectName() const { return staticMeshRenderData->PathName + staticMeshRenderData->ObjectName; }
+
 private:
     OBJ::FStaticMeshRenderData* staticMeshRenderData = nullptr;
     TArray<FStaticMaterial*> materials;

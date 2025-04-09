@@ -70,6 +70,7 @@ public:
     ID3D11Buffer* LPLightConstantBuffer = nullptr;
     ID3D11Buffer* LPMaterialConstantBuffer = nullptr;
     ID3D11Buffer* FogConstantBuffer = nullptr;
+    ID3D11Buffer* ScreenConstantBuffer = nullptr;
 
     // Data
     FLighting LightingData;
@@ -79,6 +80,8 @@ public:
     uint32 FullScreenStride;
     uint32 Stride;
     uint32 Stride2;
+
+    ID3D11SamplerState* LPSamplerState;
 
 public:
     void Initialize(FGraphicsDevice* graphics);
