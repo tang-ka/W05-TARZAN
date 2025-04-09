@@ -401,10 +401,9 @@ void FRenderer::PrepareRender()
                 }
                 if (UHeightFogComponent* HeightFog = Cast<UHeightFogComponent>(iter))
                 {
-                    if (!HeightFog->OnFogChanged)
-                    {
+                  
                         SubscribeToFogUpdates(HeightFog);
-                    }
+                    
                 }
             }
         }
