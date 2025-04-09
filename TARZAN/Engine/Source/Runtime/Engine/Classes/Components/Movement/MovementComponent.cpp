@@ -35,3 +35,30 @@ void UMovementComponent::PostDuplicate()
     //UActorComponent::PostDuplicate();
 }
 
+void UMovementComponent::GetProperties(TMap<FString, FString>& OutProperties) const
+{
+    Super::GetProperties(OutProperties);
+
+    
+    OutProperties.Add(TEXT("Speed"), FString::Printf(TEXT("%f"), Speed));
+    OutProperties.Add(TEXT("Velocity"), FString::Printf(TEXT("%s"), *Velocity.ToString()));
+}
+
+void UMovementComponent::SetProperties(const TMap<FString, FString>& InProperties)
+{
+    Super::SetProperties(InProperties);
+
+    const FString* TempStr = nullptr;
+    TempStr = InProperties.Find(TEXT("Speed"));
+    if (TempStr)
+    {
+        Speed = FString::ToFloat(*TempStr);
+    }
+    TempStr = InProperties.Find(TEXT("Velocity"));
+    if (TempStr)
+    {
+        Velocity.InitFromString(*TempStr);
+    }
+    
+}
+

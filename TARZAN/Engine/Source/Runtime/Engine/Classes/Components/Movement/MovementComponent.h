@@ -15,6 +15,10 @@ public:
     void DuplicateSubObjects(const UObject* Source) override;
     void PostDuplicate() override;
 
+    void GetProperties(TMap<FString, FString>& OutProperties) const override;
+    
+    void SetProperties(const TMap<FString, FString>& InProperties) override;
+
     float GetSpeed() const { return Speed; }
     void SetSpeed(float NewSpeed) { Speed = NewSpeed; }
     void AddSpeed(float DeltaSpeed) { Speed += DeltaSpeed; }
