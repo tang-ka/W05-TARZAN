@@ -399,11 +399,9 @@ void FRenderer::PrepareRender()
                 {
                     FireballObjs.Add(pFireComp);
                 }
-                if (UHeightFogComponent* HeightFog = Cast<UHeightFogComponent>(iter))
+                if (UHeightFogComponent* HeightFog = Cast<UHeightFogComponent>(iter2))
                 {
-                  
                         SubscribeToFogUpdates(HeightFog);
-                    
                 }
             }
         }
