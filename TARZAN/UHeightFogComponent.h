@@ -12,13 +12,14 @@ public:
     virtual void InitializeComponent() override;
     virtual void TickComponent(float DeltaTime) override;
 
-    // Setter: 값이 변경되면 OnFogChanged 이벤트를 발생시킴.
+    // Setters
     void SetFogDensity(float density) { FogDensity = density; TriggerFogChanged(); }
     void SetFogHeightFalloff(float falloff) { FogHeightFalloff = falloff; TriggerFogChanged(); }
     void SetStartDistance(float distance) { StartDistance = distance; TriggerFogChanged(); }
     void SetFogCutoffDistance(float distance) { FogCutoffDistance = distance; TriggerFogChanged(); }
     void SetFogMaxOpacity(float opacity) { FogMaxOpacity = opacity; TriggerFogChanged(); }
     void SetColor(const FLinearColor& color) { FogInscatteringColor = color; TriggerFogChanged(); }
+    void SetDisableFog(bool bDisable) { DisableFog = bDisable ? 1.0f : 0.0f; TriggerFogChanged(); }
 
     // Getters
     float GetFogDensity() const { return FogDensity; }
@@ -27,6 +28,7 @@ public:
     float GetFogCutoffDistance() const { return FogCutoffDistance; }
     float GetFogMaxOpacity() const { return FogMaxOpacity; }
     FLinearColor GetColor() const { return FogInscatteringColor; }
+    float GetDisableFog() const { return DisableFog; }
 
     // 이벤트 콜백. 값 변경시 호출됨.
     std::function<void()> OnFogChanged;
@@ -38,6 +40,7 @@ private:
     float FogCutoffDistance;
     float FogMaxOpacity;
     FLinearColor FogInscatteringColor;
+    float DisableFog;
 
     // 내부에서 값 변경 시 이벤트 트리거
     void TriggerFogChanged()

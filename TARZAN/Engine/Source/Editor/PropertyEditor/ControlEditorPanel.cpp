@@ -18,6 +18,7 @@
 #include "UHeightFogComponent.h"
 #include "FireballComp.h"
 #include "UEditorStateManager.h"
+#include "UObject/UObjectIterator.h"
 
 
 void ControlEditorPanel::Render()
@@ -448,6 +449,16 @@ void ControlEditorPanel::CreateFlagButton() const
             ImGui::Checkbox(items[i], &selected[i]);
         }
         ActiveViewport->SetShowFlag(ConvertSelectionToFlags(selected));
+
+        for (const auto iter : TObjectRange<USceneComponent>())
+        {
+            if (UHeightFogComponent* HeightFog = Cast<UHeightFogComponent>(iter))
+            {
+                bool bFogEnabled = (selected[4] == true);
+                HeightFog->SetDisableFog(!bFogEnabled);
+            }
+        }
+
         ImGui::EndPopup();
     }
 }

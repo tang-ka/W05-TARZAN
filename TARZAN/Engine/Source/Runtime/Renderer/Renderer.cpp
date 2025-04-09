@@ -697,7 +697,7 @@ void FRenderer::SubscribeToFogUpdates(UHeightFogComponent* HeightFog)
             FogData.CameraPosition = ActiveViewport->GetCameraLocation();
             FogData.InverseView = FMatrix::Inverse(ActiveViewport->GetViewMatrix());
             FogData.InverseProjection = FMatrix::Inverse(ActiveViewport->GetProjectionMatrix());
-            FogData.DisableFog = (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_Fog)) ? 0 : 1;
+            FogData.DisableFog = HeightFog->GetDisableFog();
         };
 
     // 초기 업데이트 위해 이벤트 강제 호출
