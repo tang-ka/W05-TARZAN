@@ -36,3 +36,31 @@ UObject* UClass::CreateDefaultObject()
 
     return ClassDefaultObject;
 }
+
+TMap<FName, FGetClassFunction>& GetGlobalClassRegistry()
+{
+    // 함수 내 지역 정적 변수: 처음 호출될 때 단 한 번 초기화됨
+    static TMap<FName, FGetClassFunction> ActualRegistryInstance;
+    return ActualRegistryInstance;
+}
+
+UClass* FindClassByName(FName ClassName)
+{
+    {
+        FGetClassFunction* FoundFunc = GetGlobalClassRegistry().Find(ClassName);
+        if (FoundFunc)
+        {
+            return (*FoundFunc)(); // 등록된 StaticClass 함수 호출
+        }
+        return nullptr; // 등록되지 않은 클래스
+    }
+}
+
+UClass* FindClassByName(const FString& ClassName)
+{
+    return FindClassByName(FName(*ClassName));
+}
+
+
+// 전역 레지스트리 정의
+//TMap<FName, FGetClassFunction> GClassRegistry;

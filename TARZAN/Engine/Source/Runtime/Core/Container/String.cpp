@@ -31,6 +31,11 @@ float FString::ToFloat(const FString& InString)
 	return std::stof(*InString);
 }
 
+int FString::ToInt(const FString& InString)
+{
+    return std::stoi(*InString);
+}
+
 void FString::Empty()
 {
     PrivateString.clear();

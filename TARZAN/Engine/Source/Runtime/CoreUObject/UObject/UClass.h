@@ -20,6 +20,10 @@ public:
     uint32 GetClassSize() const { return ClassSize; }
     uint32 GetClassAlignment() const { return ClassAlignment; }
 
+    typedef UObject* (*FObjectConstructorFunction)(UObject* Outer, FName Name);
+    
+    FObjectConstructorFunction ObjectConstructor = nullptr; // 생성자 함수 포인터
+
     /** SomeBase의 자식 클래스인지 확인합니다. */
     bool IsChildOf(const UClass* SomeBase) const;
 
@@ -62,4 +66,19 @@ private:
     UClass* SuperClass = nullptr;
 
     UObject* ClassDefaultObject = nullptr;
+
 };
+
+
+
+using FGetClassFunction = UClass* (*)();
+
+// GClassRegistry에 접근하는 함수 선언
+TMap<FName, FGetClassFunction>& GetGlobalClassRegistry();
+
+// 전역 클래스 레지스트리 (FName을 키로 사용)
+//extern  TMap<FName, FGetClassFunction> GClassRegistry;
+
+
+UClass* FindClassByName(FName ClassName);
+UClass* FindClassByName(const FString& ClassName);

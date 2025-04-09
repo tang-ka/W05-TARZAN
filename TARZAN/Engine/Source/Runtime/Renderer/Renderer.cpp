@@ -20,7 +20,7 @@
 #include "PropertyEditor/ShowFlags.h"
 #include "UObject/UObjectIterator.h"
 #include "Components/SkySphereComponent.h"
-#include "FireballComp.h"
+#include "Components/FireballComp.h"
 #include "SpotLightComp.h"
 #include "Renderer/Pass/GBufferPass.h"
 #include "Renderer/Pass/LightingPass.h"
@@ -30,8 +30,7 @@
 #include "Editor/LevelEditor/SLevelEditor.h"
 #include "Runtime/Launch/ImGuiManager.h"
 #include "UnrealEd/UnrealEd.h"
-#include "UHeightFogComponent.h"
-#include "LevelEditor/SLevelEditor.h"
+#include "Components/UHeightFogComponent.h"
 
 extern UEditorEngine* GEngine;
 
@@ -74,7 +73,7 @@ void FRenderer::Render()
     //DeprecatedRender();
 
     SLevelEditor* LevelEditor = GEngine->GetLevelEditor();
-    std::shared_ptr<UWorld> GWorld = GEngine->GetWorld();
+    UWorld* GWorld = GEngine->GetWorld();
 
     Graphics->Prepare();
     if (LevelEditor->IsMultiViewport())
@@ -84,14 +83,14 @@ void FRenderer::Render()
         {
             LevelEditor->SetViewportClient(i);
             PrepareRender();
-            RenderPass(GWorld.get(), LevelEditor->GetActiveViewportClient());
+            RenderPass(GWorld, LevelEditor->GetActiveViewportClient());
         }
         LevelEditor->SetViewportClient(viewportClient);
     }
     else
     {
         PrepareRender();
-        RenderPass(GWorld.get(), LevelEditor->GetActiveViewportClient());
+        RenderPass(GWorld, LevelEditor->GetActiveViewportClient());
     }
 
     ClearRenderArr();
@@ -110,6 +109,7 @@ void FRenderer::RenderPass(UWorld* World, std::shared_ptr<FEditorViewportClient>
     RenderGBuffer(World, ActiveViewport);
 
     Graphics->ChangeRasterizer(EViewModeIndex::VMI_Unlit);
+
 
     RenderLightPass(World, ActiveViewport);
 
@@ -247,6 +247,7 @@ void FRenderer::PrepareLightShader() const
     {
         Graphics->DeviceContext->PSSetConstantBuffers(0, 1, &LPLightConstantBuffer);
         Graphics->DeviceContext->PSSetConstantBuffers(1, 1, &FireballConstantBuffer);
+            Graphics->DeviceContext->PSSetConstantBuffers(2, 1, &ScreenConstantBuffer);
         //Graphics->DeviceContext->PSSetConstantBuffers(1, 1, &LPMaterialConstantBuffer);
     }
 }
@@ -313,6 +314,8 @@ void FRenderer::CreateConstantBuffer()
     FireballConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FFireballArrayInfo));
 
     FogConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FFogConstants));
+
+    ScreenConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FScreenConstants));
 }
 
 void FRenderer::ReleaseConstantBuffer()
@@ -330,6 +333,7 @@ void FRenderer::ReleaseConstantBuffer()
     RenderResourceManager.ReleaseBuffer(LPLightConstantBuffer);
     RenderResourceManager.ReleaseBuffer(LPMaterialConstantBuffer);
     RenderResourceManager.ReleaseBuffer(FogConstantBuffer);
+    RenderResourceManager.ReleaseBuffer(ScreenConstantBuffer);
 }
 #pragma endregion ConstantBuffer
 
@@ -406,9 +410,21 @@ void FRenderer::PrepareRender()
                 {
                     LightObjs.Add(pLightComp);
                 }
-                if (UFireballComponent* pFireComp = Cast<UFireballComponent>(iter))
+                if (UFireballComponent* pFireComp = Cast<UFireballComponent>(iter2))
                 {
                     FireballObjs.Add(pFireComp);
+                }
+                if (UHeightFogComponent* HeightFog = Cast<UHeightFogComponent>(iter2))
+                {
+                    fogData.FogDensity = HeightFog->GetFogDensity();
+                    fogData.FogHeightFalloff = HeightFog->GetFogHeightFalloff();
+                    fogData.StartDistance = HeightFog->GetStartDistance();
+                    fogData.FogCutoffDistance = HeightFog->GetFogCutoffDistance();
+                    fogData.FogMaxOpacity = HeightFog->GetFogMaxOpacity();
+                    fogData.FogInscatteringColor = HeightFog->GetColor();
+                    fogData.CameraPosition = GEngine->GetLevelEditor()->GetActiveViewportClient()->GetCameraLocation();
+                    fogData.FogHeight = HeightFog->GetWorldLocation().z;
+                    ConstantBufferUpdater.UpdateFogConstant(FogConstantBuffer, fogData);
                 }
             }
         }
@@ -749,6 +765,8 @@ void FRenderer::UpdateMaterial(const FObjMaterialInfo& MaterialInfo) const
 void FRenderer::RenderGBuffer(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport)
 {
     // StaticMesh
+   Graphics -> DeviceContext->OMSetRenderTargets(4, Graphics->gbuffers, Graphics->DepthStencilView);
+
     if (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_Primitives))
         RenderStaticMeshes(World, ActiveViewport);
 
@@ -761,10 +779,7 @@ void FRenderer::RenderLightPass(UWorld* World, std::shared_ptr<FEditorViewportCl
 {
     PrepareLightShader();
 
-    //ID3D11RenderTargetView* rtv = Graphics->FrameBufferRTV;
-    //Graphics->DeviceContext->OMSetRenderTargets(1, &rtv, Graphics->DepthStencilView);
-    int mode = ActiveViewport->GetViewMode();
-
+    // Directional Light
     FLightConstant GlobalLight = {
         .Ambient = FVector4(0.1f, 0.1f, 0.1f, 1.f),
         .Diffuse = FVector4(1.0f, 1.0f, 1.0f, 1.0f),
@@ -780,14 +795,13 @@ void FRenderer::RenderLightPass(UWorld* World, std::shared_ptr<FEditorViewportCl
     ConstantBufferUpdater.UpdateGlobalLightConstant(LPLightConstantBuffer, GlobalLight);
 
     RenderLight(World, ActiveViewport);
-    // Directional Light
 
     // Point Light
+    std::unique_ptr<FFireballArrayInfo> fireballArrayInfo = std::unique_ptr<FFireballArrayInfo>();
     if (FireballObjs.Num() > 0) 
     {
-        //FFireballArrayInfo fireballArrayInfo;
-        std::unique_ptr<FFireballArrayInfo> fireballArrayInfo = std::unique_ptr<FFireballArrayInfo>();
         fireballArrayInfo->FireballCount = 0;
+
         for (int i = 0; i < FireballObjs.Num(); i++)
         {
             if (FireballObjs[i] != nullptr)
@@ -808,9 +822,9 @@ void FRenderer::RenderLightPass(UWorld* World, std::shared_ptr<FEditorViewportCl
                 fireballArrayInfo->FireballCount++;
             }
         }
-        ConstantBufferUpdater.UpdateFireballConstant(FireballConstantBuffer, *fireballArrayInfo);
     }
-
+    ConstantBufferUpdater.UpdateFireballConstant(FireballConstantBuffer, *fireballArrayInfo);
+    ConstantBufferUpdater.UpdateScreenConstant(ScreenConstantBuffer, ActiveViewport);
     // Spot Light
 
 #pragma region d

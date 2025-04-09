@@ -68,6 +68,7 @@ public:
     ID3D11Buffer* LPLightConstantBuffer = nullptr;
     ID3D11Buffer* LPMaterialConstantBuffer = nullptr;
     ID3D11Buffer* FogConstantBuffer = nullptr;
+    ID3D11Buffer* ScreenConstantBuffer = nullptr;
 
     FLighting lightingData;
     FFogConstants fogData;

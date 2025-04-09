@@ -344,10 +344,10 @@
     <ClCompile Include="Engine\Source\ThirdParty\tinyfiledialogs\tinyfiledialogs.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\RenderResourceManager.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\ShaderManager.cpp" />
-    <ClCompile Include="FireballComp.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\FireballComp.cpp" />
     <ClCompile Include="SpotLightComp.cpp" />
     <ClCompile Include="UEditorStateManager.cpp" />
-    <ClCompile Include="UHeightFogComponent.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\UHeightFogComponent.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Color.h" />
@@ -415,7 +415,7 @@
     <ClInclude Include="Engine\Source\Runtime\Slate\Widgets\Layout\SSplitter.h" />
     <ClInclude Include="Engine\Source\ThirdParty\DirectXTK\Include\DDSTextureLoader.h" />
     <ClInclude Include="Engine\Source\ThirdParty\tinyfiledialogs\tinyfiledialogs.h" />
-    <ClInclude Include="FireballComp.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\FireballComp.h" />
     <ClInclude Include="Font\IconDefs.h" />
     <ClInclude Include="Font\RawFonts.h" />
     <ClInclude Include="Engine\Source\Runtime\InteractiveToolsFramework\BaseGizmos\GizmoBaseComponent.h" />
@@ -476,7 +476,7 @@
     <ClInclude Include="Engine\Source\Runtime\Renderer\RenderResourceManager.h" />
     <ClInclude Include="SpotLightComp.h" />
     <ClInclude Include="UEditorStateManager.h" />
-    <ClInclude Include="UHeightFogComponent.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\UHeightFogComponent.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\PostProcessPixelShader.hlsl">

@@ -305,6 +305,9 @@ struct FConstants {
     FVector4 UUIDColor;
     bool IsSelected;
     FVector CameraPosition;
+    FVector2D ScreenSize;
+    FVector2D ViewportSize;
+    
 };
 
 struct FLitUnlitConstants {
@@ -407,4 +410,10 @@ struct FFogConstants
     FLinearColor FogInscatteringColor = FLinearColor(1.0f, 1.0f, 1.0f, 1.0f);
     FVector CameraPosition;
     float FogHeight;
+};
+
+struct FScreenConstants
+{
+    FVector2D ViewportRatio;
+    FVector2D ViewportPosition;
 };

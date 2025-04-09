@@ -15,9 +15,9 @@
 #include "UnrealEd/EditorViewportClient.h"
 #include "PropertyEditor/ShowFlags.h"
 #include "UnrealEd/SceneMgr.h"
-#include "UHeightFogComponent.h"
+#include "Components/UHeightFogComponent.h"
 #include "SpotLightComp.h"
-#include "FireballComp.h"
+#include "Components/FireballComp.h"
 #include "UEditorStateManager.h"
 
 
@@ -278,7 +278,7 @@ void ControlEditorPanel::CreateModifyButton(ImVec2 ButtonSize, ImFont* IconFont)
             if (ImGui::Selectable(primitive.label))
             {
                 // GEngineLoop.GetWorld()->SpawnObject(static_cast<OBJECTS>(primitive.obj));
-                UWorld* World = GEngine->GetWorld().get();
+                UWorld* World = GEngine->GetWorld();
                 AActor* SpawnedActor = nullptr;
                 AStaticMeshActor* TempActor = nullptr;
                 switch (static_cast<OBJECTS>(primitive.obj))

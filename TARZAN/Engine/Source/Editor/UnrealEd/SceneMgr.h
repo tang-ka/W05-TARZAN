@@ -12,7 +12,7 @@ struct FComponentSaveData;
 
 // 액터 하나의 저장 정보를 담는 구조체
 struct FActorSaveData {
-    FString ActorID;       // 액터의 고유 ID (UUID 또는 이름)
+    FString ActorID;       // 액터의 고유 ID FName
     FString ActorClass;    // 액터의 클래스 이름 (예: "AStaticMeshActor", "APointLight")
     FString ActorLabel;    // 에디터에서 보이는 이름 (선택적)
     // FTransform ActorTransform; // 액터 자체의 트랜스폼 (보통 루트 컴포넌트가 결정) - 필요 여부 검토
@@ -23,7 +23,7 @@ struct FActorSaveData {
 
 // 컴포넌트 하나의 저장 정보를 담는 구조체
 struct FComponentSaveData {
-    FString ComponentID;   // 컴포넌트의 고유 ID (액터 내에서 유일해야 함, 예: 컴포넌트 이름)
+    FString ComponentID;   // 컴포넌트의 고유 ID (액터 내에서 유일해야 함, FName) 
     FString ComponentClass; // 컴포넌트 클래스 이름 (예: "UStaticMeshComponent", "UPointLightComponent")
     
 

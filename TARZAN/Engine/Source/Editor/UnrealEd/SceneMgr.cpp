@@ -218,22 +218,28 @@ bool FSceneMgr::LoadSceneFromData(const FSceneData& sceneData, UWorld* targetWor
     TMap<FString, AActor*> SpawnedActorsMap;
     //TMap<FString, UActorComponent*> SpawnedComponentsMap;
 
+
+    
+
     // --- 1단계: 액터 및 컴포넌트 생성 ---
     UE_LOG(LogLevel::Display, TEXT("Loading Scene Data: Phase 1 - Spawning Actors and Components..."));
     for (const FActorSaveData& actorData : sceneData.Actors)
     {
         // 1.1. 액터 클래스 찾기
-        AActor* SpawnedActor = nullptr;
+        
+        UClass* classAActor = FindClassByName(FName(actorData.ActorClass));
+        
+        AActor* SpawnedActor = targetWorld->SpawnActor(classAActor, FName(actorData.ActorID));
 
-        if (actorData.ActorClass == AActor::StaticClass()->GetName())
-        {
-            SpawnedActor = targetWorld->SpawnActor<AActor>();
-        }
-        if (actorData.ActorClass == AStaticMeshActor::StaticClass()->GetName())
-        {
-            SpawnedActor = targetWorld->SpawnActor<AStaticMeshActor>();
-        }
-        // 또는 특정 경로에서 클래스 로드: UClass* ActorClass = LoadClass<AActor>(nullptr, *actorData.ActorClass);
+        // if (actorData.ActorClass == AActor::StaticClass()->GetName())
+        // {
+        //     SpawnedActor = targetWorld->SpawnActor<AActor>();
+        // }
+        // if (actorData.ActorClass == AStaticMeshActor::StaticClass()->GetName())
+        // {
+        //     SpawnedActor = targetWorld->SpawnActor<AStaticMeshActor>();
+        // }
+        // // 또는 특정 경로에서 클래스 로드: UClass* ActorClass = LoadClass<AActor>(nullptr, *actorData.ActorClass);
         if (SpawnedActor == nullptr)
         {
             UE_LOG(LogLevel::Error, TEXT("LoadSceneFromData: Could not find Actor Class '%s'. Skipping Actor '%s'."),
@@ -266,8 +272,7 @@ bool FSceneMgr::LoadSceneFromData(const FSceneData& sceneData, UWorld* targetWor
         // 1.3. 컴포넌트 생성 및 속성 설정 (아직 부착 안 함)
         for (const FComponentSaveData& componentData : actorData.Components)
         {
-            //UClass* ComponentClass = FindObject<UClass>(ANY_PACKAGE, *componentData.ComponentClass);
-            
+            UClass* ComponentClass = FindClassByName(FName(componentData.ComponentClass));
 
 
             // 컴포넌트 생성 (액터를 Outer로 지정, 저장된 ID를 이름으로)
@@ -283,21 +288,23 @@ bool FSceneMgr::LoadSceneFromData(const FSceneData& sceneData, UWorld* targetWor
                 // TODO: 기존 컴포넌트를 제거해야 할 수도 있음? 아니면 그냥 새것으로 덮어쓰나? 정책 필요.
                 TargetComponent = nullptr; // 새로 생성하도록 리셋
             }
-            
+
+            // 기존 컴포넌트가 없으면 새로 생성
             if (TargetComponent == nullptr)
             {
-                if (componentData.ComponentClass == UStaticMesh::StaticClass()->GetName())
-                {
-                    TargetComponent = SpawnedActor->AddComponent<UStaticMeshComponent>();
-                }
-                else if (componentData.ComponentClass == UCubeComp::StaticClass()->GetName())
-                {
-                    TargetComponent = SpawnedActor->AddComponent<UCubeComp>();
-                }
-                else
-                {
-                    TargetComponent = SpawnedActor->AddComponent<UActorComponent>();
-                }
+                TargetComponent = SpawnedActor->AddComponent(ComponentClass, FName(componentData.ComponentID));
+                // if (componentData.ComponentClass == UStaticMesh::StaticClass()->GetName())
+                // {
+                //     TargetComponent = SpawnedActor->AddComponent<UStaticMeshComponent>();
+                // }
+                // else if (componentData.ComponentClass == UCubeComp::StaticClass()->GetName())
+                // {
+                //     TargetComponent = SpawnedActor->AddComponent<UCubeComp>();
+                // }
+                // else
+                // {
+                //     TargetComponent = SpawnedActor->AddComponent<UActorComponent>();
+                // }
                 
                 // !!! 중요: 컴포넌트 등록 !!!
                 //NewComponent->RegisterComponent();

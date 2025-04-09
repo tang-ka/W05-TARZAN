@@ -11,8 +11,8 @@
 #include "UObject/Casts.h"
 #include "UObject/ObjectFactory.h"
 #include <Components/CubeComp.h>
-#include "FireballComp.h"
-#include "UHeightFogComponent.h"
+#include "Components/FireballComp.h"
+#include "Components/UHeightFogComponent.h"
 #include "SpotLightComp.h"
 
 #include <Components/UParticleSubUVComp.h>
@@ -65,11 +65,18 @@ void PropertyEditorPanel::Render()
                     if (SceneComp->GetAttachParent() == nullptr)
                     {
                         DrawSceneComponentTree(SceneComp, PickedComponent);
-                        ImGui::Separator(); 
+                        
                     }
                     
                 }
-                else
+
+            }
+
+            ImGui::Separator();
+            
+            for (UActorComponent* Component : AllComponents)
+            {
+                if (!Component->IsA<USceneComponent>())
                 {
                     FString Label = *Component->GetName();
                     bool bSelected = (PickedComponent == Component);
@@ -93,7 +100,6 @@ void PropertyEditorPanel::Render()
                     }
                 }
             }
-
             if (ImGui::Button("+", ImVec2(ImGui::GetWindowContentRegionMax().x * 0.9f, 32)))
             {
                 ImGui::OpenPopup("AddComponentPopup");

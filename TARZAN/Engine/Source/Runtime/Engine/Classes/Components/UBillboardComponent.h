@@ -21,22 +21,23 @@ public:
         FVector& rayDirection, float& pfNearHitDistance
     ) override;
 
-    void SetTexture(FWString _fileName);
+    void SetTexture(const FWString& _fileName);
     void SetUUIDParent(USceneComponent* _parent);
     FMatrix CreateBillboardMatrix();
     virtual UObject* Duplicate() const override;
     virtual void DuplicateSubObjects(const UObject* Source) override;
     virtual void PostDuplicate() override;
 
+    void GetProperties(TMap<FString, FString>& OutProperties) const override;
+    
+    void SetProperties(const TMap<FString, FString>& InProperties) override;
+
     float finalIndexU = 0.0f;
     float finalIndexV = 0.0f;
     std::shared_ptr<FTexture> Texture;
+    FWString TexturePath;
+    
 protected:
-
-
-
-    USceneComponent* m_parent = nullptr;
-
     bool CheckPickingOnNDC(const TArray<FVector>& checkQuad, float& hitDistance);
 
 private:

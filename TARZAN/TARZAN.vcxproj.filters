@@ -428,7 +428,7 @@
     <ClInclude Include="Color.h">
       <Filter>Engine\Source\Runtime\Engine\Classes\Components\Engine</Filter>
     </ClInclude>
-    <ClInclude Include="FireballComp.h">
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\FireballComp.h">
       <Filter>Engine\Source\Runtime\Engine\Classes\Components</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Source\Runtime\Renderer\Pass\GBufferPass.h" />
@@ -436,13 +436,14 @@
     <ClInclude Include="Engine\Source\Runtime\Renderer\Pass\OverlayPass.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\Pass\PostProcessPass.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\Pass\RenderPass.h" />
-    <ClInclude Include="UHeightFogComponent.h">
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\UHeightFogComponent.h">
       <Filter>Engine\Source\Runtime\Engine\Classes\Components</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\Movement\MovementComponent.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\Movement\ProjectileMovementComponent.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\Movement\RotatingMovementComponent.h" />
     <ClInclude Include="SpotLightComp.h" />
+    <ClInclude Include="Engine\Source\Runtime\CoreUObject\UObject\UObjectGlobals.h" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\Source\ThirdParty\DirectXTK\Include\DDSTextureLoader.h" />
@@ -537,7 +538,7 @@
     <ClCompile Include="Engine\Source\Runtime\Launch\EditorEngine.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\RenderResourceManager.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\ShaderManager.cpp" />
-    <ClCompile Include="FireballComp.cpp">
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\FireballComp.cpp">
       <Filter>Engine\Source\Runtime\Engine\Classes\Components</Filter>
     </ClCompile>
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Engine\Texture.cpp" />
@@ -546,12 +547,13 @@
     <ClCompile Include="Engine\Source\Runtime\Renderer\Pass\OverlayPass.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\Pass\PostProcessPass.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\Pass\RenderPass.cpp" />
-    <ClCompile Include="UHeightFogComponent.cpp">
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\UHeightFogComponent.cpp">
       <Filter>Engine\Source\Runtime\Engine\Classes\Components</Filter>
     </ClCompile>
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\Movement\MovementComponent.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\Movement\ProjectileMovementComponent.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\Movement\RotatingMovementComponent.cpp" />
     <ClCompile Include="SpotLightComp.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\CoreUObject\UObject\UObjectGlobals.cpp" />
   </ItemGroup>
 </Project>
