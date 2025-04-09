@@ -15,6 +15,12 @@ cbuffer FogConstants : register(b0)
     float3 padding;
 };
 
+cbuffer ScreenInfo : register(b2)
+{
+    float2 ViewPortRatio;
+    float2 ViewPortPosition;
+};
+
 Texture2D LightColor : register(t0);
 Texture2D LightPos : register(t1);
 
@@ -54,7 +60,7 @@ float ComputeFogFactor(float3 worldPos)
 
     // 거리 기반
     float fogRange = FogCutoffDistance - FogStartDistance;
-    float disFactor = saturate((dist - FogStartDistance) / fogRange); // 0~1  50일떄 0
+    float disFactor = saturate((dist - FogStartDistance) / fogRange * FogDensity); // 0~1  50일떄 0
 
     // 높이 기반 (지수 감쇠)
     float heightDiff = worldPos.z - FogHeight;
@@ -72,14 +78,14 @@ float ComputeFogFactor(float3 worldPos)
 PS_OUTPUT mainPS(PS_INPUT input) : SV_TARGET
 {
     PS_OUTPUT output;
-
-    float4 color = LightColor.Sample(Sampler, input.TexCoord);
-    float4 worldPosTex = LightPos.Sample(Sampler, input.TexCoord);
+    float2 uv = input.TexCoord * ViewPortRatio + ViewPortPosition;
+    float4 color = LightColor.Sample(Sampler, uv);
+    float4 worldPosTex = LightPos.Sample(Sampler, uv);
     float3 worldPos = worldPosTex.xyz;
     float isValid = worldPosTex.w;
 
     float fogFactor;
-    
+    float3 fogColor;
     if (DisableFog < 0.5f)
     {
         if (isValid == 0.5f)
@@ -88,12 +94,17 @@ PS_OUTPUT mainPS(PS_INPUT input) : SV_TARGET
         }
         else //배경
         {
-            float3 worldPosH = ReconstructWorldPos(input.TexCoord, 1);
+            float3 worldPosH = ReconstructWorldPos(uv, 1);
             fogFactor = ComputeFogFactor(worldPosH.xyz);
         }
+         fogColor = lerp(FogColor.rgb, color.rgb, 1.0 - fogFactor);
     }
-
-    float3 fogColor = lerp(FogColor.rgb, color.rgb, 1.0 - fogFactor);
+    else
+    {
+        fogFactor = 0.0f;
+        fogColor = color.rgb;
+    }
+    
     output.Color = float4(fogColor, color.a);
     return output;
 }

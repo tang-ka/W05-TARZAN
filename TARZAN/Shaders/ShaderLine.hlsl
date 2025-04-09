@@ -15,6 +15,12 @@ cbuffer GridParametersData : register(b1)
     float Padding;
 };
 
+cbuffer ScreenInfo : register(b2)
+{
+    float2 ViewPortRatio;
+    float2 ViewPortPosition;
+}
+    
 cbuffer PrimitiveCounts : register(b3)
 {
     int BoundingBoxCount; // 렌더링할 AABB의 개수
