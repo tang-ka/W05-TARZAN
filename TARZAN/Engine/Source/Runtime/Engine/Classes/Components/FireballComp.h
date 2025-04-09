@@ -30,6 +30,8 @@ public:
     FLinearColor GetColor() { return FireballInfo.Color; }
     int GetLightType() { return FireballInfo.Type; }
     void SetLightType(LightType LightType) { FireballInfo.Type = LightType; }
+    void SetRadiusFallOff(float RadiusFallOff) { FireballInfo.RadiusFallOff = RadiusFallOff; }
+    float GetRadiusFallOff() { return FireballInfo.RadiusFallOff; }
     
     FFireballInfo GetFireballInfo() const { return FireballInfo; }
 private:

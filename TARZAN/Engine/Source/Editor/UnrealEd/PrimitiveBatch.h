@@ -16,7 +16,7 @@ public:
     void ClearGrid() {};
     float GetSpacing() { return GridParam.gridSpacing; }
     void GenerateGrid(float spacing, int gridCount);
-    void RenderBatch(ID3D11Buffer* ConstantBuffer, const FMatrix& View, const FMatrix& Projection);
+    void RenderBatch(ID3D11Buffer* ConstantBuffer, const FMatrix& View, const FMatrix& Projection, const FVector4 CamPos);
     void InitializeVertexBuffer();
     void UpdateBoundingBoxResources();
     void ReleaseBoundingBoxResources();

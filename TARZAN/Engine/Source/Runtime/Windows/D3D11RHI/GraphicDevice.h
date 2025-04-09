@@ -74,6 +74,8 @@ public:
 
     ID3D11DepthStencilState* DepthStateDisable = nullptr;
 
+    ID3D11BlendState* LineBlendState = nullptr;
+
     void Initialize(HWND hWindow);
 
     void CreateDeviceAndSwapChain(HWND hWindow);
@@ -83,6 +85,7 @@ public:
     void CreateGBuffer();
     void CreateFrameBuffer();
     void CreateLightPassBuffer();
+    void CreateBlendState();
     
     void ReleaseDeviceAndSwapChain();
     void ReleaseGBuffer();
@@ -90,6 +93,7 @@ public:
     void ReleaseLightPassBuffer();
     void ReleaseRasterizerState();
     void ReleaseDepthStencilResources();
+    void ReleaseBlendState();
     void Release();
     
     void SwapBuffer();

@@ -307,7 +307,6 @@ struct FConstants {
     FVector CameraPosition;
     FVector2D ScreenSize;
     FVector2D ViewportSize;
-    
 };
 
 struct FLitUnlitConstants {

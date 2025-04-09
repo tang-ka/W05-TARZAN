@@ -2,6 +2,9 @@
 cbuffer MatrixBuffer : register(b0)
 {
     row_major float4x4 MVP;
+    row_major float4x4 ModelMatrix;
+    row_major float4x4 NormalMatrix;
+    float4 CamPos;
 };
 
 cbuffer GridParametersData : register(b1)
@@ -78,6 +81,7 @@ struct PS_INPUT
 {
     float4 Position : SV_Position;
     float4 Color : COLOR;
+    float4 WorldPos : TEXCOORD0;
 };
 
 /////////////////////////////////////////////////////////////////////////
@@ -299,8 +303,6 @@ PS_INPUT mainVS(VS_INPUT input)
         uint coneIndex = coneInstanceID / (2 * N);
         
         color = g_ConeData[coneIndex].Color;
-   
-        
     }
     else
     {
@@ -313,6 +315,7 @@ PS_INPUT mainVS(VS_INPUT input)
     }
 
     // 출력 변환
+    output.WorldPos = float4(pos, 1.0);
     output.Position = mul(float4(pos, 1.0), MVP);
     output.Color = color;
     return output;
@@ -320,5 +323,24 @@ PS_INPUT mainVS(VS_INPUT input)
 
 float4 mainPS(PS_INPUT input) : SV_Target
 {
-    return input.Color;
+    float3 worldPos = input.WorldPos.xyz;
+    float3 camPos = CamPos.xyz;
+
+    camPos.z = 0;
+    worldPos.z = 0;
+    
+    float dist = length(worldPos - camPos);
+
+    // 지수 기반 페이드 아웃 - 더 자연스러운 안개 느낌
+    float startDist = 80;
+    float density = 0.02f; // 밀도 조절
+    
+    float fadeDist = max(0, dist - startDist);
+    float fogFactor = saturate(1.0f - exp(-density * fadeDist));
+    
+    float alpha = 1.0f - fogFactor;
+    
+    float4 color = float4(input.Color.xyz, alpha);
+    
+    return color;
 }

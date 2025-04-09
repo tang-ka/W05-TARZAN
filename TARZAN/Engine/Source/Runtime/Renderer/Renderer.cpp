@@ -263,6 +263,8 @@ void FRenderer::PrepareLineShader() const
     if (ConstantBuffer && GridConstantBuffer)
     {
         Graphics->DeviceContext->VSSetConstantBuffers(0, 1, &ConstantBuffer);     // MatrixBuffer (b0)
+        Graphics->DeviceContext->PSSetConstantBuffers(0, 1, &ConstantBuffer);
+
         Graphics->DeviceContext->VSSetConstantBuffers(1, 1, &GridConstantBuffer); // GridParameters (b1)
         Graphics->DeviceContext->PSSetConstantBuffers(1, 1, &GridConstantBuffer);
         Graphics->DeviceContext->VSSetConstantBuffers(3, 1, &LinePrimitiveBuffer);
@@ -281,6 +283,7 @@ void FRenderer::CreateConstantBuffer()
     //ConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FConstants));
     SubUVConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FSubUVConstant));
     GridConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FGridParameters));
+
     LinePrimitiveBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FPrimitiveCounts));
     //MaterialConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FMaterialConstants));
     SubMeshConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FSubMeshConstants));
@@ -399,12 +402,9 @@ void FRenderer::PrepareRender()
                 {
                     FireballObjs.Add(pFireComp);
                 }
-                if (UHeightFogComponent* HeightFog = Cast<UHeightFogComponent>(iter))
+                if (UHeightFogComponent* HeightFog = Cast<UHeightFogComponent>(iter2))
                 {
-                    if (!HeightFog->OnFogChanged)
-                    {
                         SubscribeToFogUpdates(HeightFog);
-                    }
                 }
             }
         }
@@ -714,11 +714,19 @@ void FRenderer::SubscribeToFogUpdates(UHeightFogComponent* HeightFog)
 
 void FRenderer::RenderLight()
 {
-    for (auto Light : LightObjs)
+    for (auto Light : FireballObjs)
     {
-        FMatrix Model = JungleMath::CreateModelMatrix(Light->GetWorldLocation(), Light->GetWorldRotation(), { 1, 1, 1 });
-        UPrimitiveBatch::GetInstance().AddCone(Light->GetWorldLocation(), Light->GetRadius(), 15, 140, Light->GetColor(), Model);
-        UPrimitiveBatch::GetInstance().RenderOBB(Light->GetBoundingBox(), Light->GetWorldLocation(), Model);
+        if (Light->GetLightType() == LightType::SpotLight)
+        {
+            USpotLightComponent* SpotLight = Cast<USpotLightComponent>(Light);
+            if (SpotLight)
+            {
+                if (GEngine->GetWorld()->WorldType == EWorldType::PIE) continue;
+                FMatrix Model = JungleMath::CreateModelMatrix(Light->GetWorldLocation(), Light->GetWorldRotation(), { 1, 1, 1 });
+                UPrimitiveBatch::GetInstance().AddCone(Light->GetWorldLocation(), Light->GetRadius()*tan(SpotLight->GetOuterSpotAngle()/2 * 3.14 / 180.0f), Light->GetRadius(), 140, Light->GetColor(), Model);
+                UPrimitiveBatch::GetInstance().RenderOBB(Light->GetBoundingBox(), Light->GetWorldLocation(), Model);
+            }
+        }
     }
 }
 
@@ -868,12 +876,16 @@ void FRenderer::RenderOverlayPass()
     // Enable Depth Test
     Graphics->DeviceContext->OMSetRenderTargets(1, &Graphics->FrameBufferRTV, Graphics->DepthStencilView);
     
-    // Pixel Shader를 OveralayGizmoPixelShader로 변경
+    // Line
+    FVector CamPos = ActiveViewport->GetCameraLocation();
+    FVector4 CamPos4 = FVector4(CamPos.x, CamPos.y, CamPos.z, 1.f);
+    float blendFactor[4] = { 0.f, 0.f, 0.f, 0.f };
+    Graphics->DeviceContext->OMSetBlendState(Graphics->LineBlendState, blendFactor, 0xffffffff);
+    UPrimitiveBatch::GetInstance().RenderBatch(ConstantBuffer, ActiveViewport->GetViewMatrix(), ActiveViewport->GetProjectionMatrix(), CamPos4);
+    Graphics->DeviceContext->OMSetBlendState(nullptr, nullptr, 0xffffffff);
+
     // Gizmo
     RenderGizmos();
-
-    // Grid
-    UPrimitiveBatch::GetInstance().RenderBatch(ConstantBuffer, ActiveViewport->GetViewMatrix(), ActiveViewport->GetProjectionMatrix());
 }
 #pragma endregion MultiPass
 
