@@ -59,7 +59,7 @@ void FRenderer::Render()
 
     SLevelEditor* LevelEditor = GEngine->GetLevelEditor();
     ActiveViewport = LevelEditor->GetActiveViewportClient();
-    World = GEngine->GetWorld().get();
+    World = GEngine->GetWorld();
 
     Graphics->Prepare();
     if (LevelEditor->IsMultiViewport())
@@ -743,7 +743,7 @@ void FRenderer::RenderBatch(
 void FRenderer::RenderGBuffer()
 {
     // StaticMesh
-   Graphics -> DeviceContext->OMSetRenderTargets(4, Graphics->gbuffers, Graphics->DepthStencilView);
+   Graphics -> DeviceContext->OMSetRenderTargets(4, Graphics->GBufferRTVs, Graphics->DepthStencilView);
 
     if (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_Primitives))
         RenderStaticMeshes(World, ActiveViewport);

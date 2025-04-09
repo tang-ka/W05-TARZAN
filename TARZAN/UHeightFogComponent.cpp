@@ -3,6 +3,7 @@
 #include "Launch/EditorEngine.h"
 #include "Editor/LevelEditor/SLevelEditor.h"
 #include "PropertyEditor/ShowFlags.h"
+#include "UObject/ObjectFactory.h"
 
 extern UEditorEngine* GEngine;
 
