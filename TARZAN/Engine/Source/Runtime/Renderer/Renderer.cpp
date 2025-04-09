@@ -797,7 +797,8 @@ void FRenderer::RenderLightPass(UWorld* World, std::shared_ptr<FEditorViewportCl
     RenderLight(World, ActiveViewport);
 
     // Point Light
-    std::unique_ptr<FFireballArrayInfo> fireballArrayInfo = std::unique_ptr<FFireballArrayInfo>();
+    std::unique_ptr<FFireballArrayInfo> fireballArrayInfo = std::make_unique<FFireballArrayInfo>();
+
     if (FireballObjs.Num() > 0) 
     {
         fireballArrayInfo->FireballCount = 0;
