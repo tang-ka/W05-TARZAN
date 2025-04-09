@@ -574,6 +574,8 @@ void FRenderer::RenderGizmos(const UWorld* World, const std::shared_ptr<FEditorV
         return;
     }
 
+    PrepareShader();
+
 #pragma region GizmoDepth
     ID3D11DepthStencilState* DepthStateDisable = Graphics->DepthStateDisable;
     Graphics->DeviceContext->OMSetDepthStencilState(DepthStateDisable, 0);
