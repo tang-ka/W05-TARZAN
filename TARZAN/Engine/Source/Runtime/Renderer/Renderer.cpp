@@ -75,6 +75,7 @@ void FRenderer::Render()
     }
     else
     {
+        ActiveViewport = LevelEditor->GetActiveViewportClient();
         PrepareRender();
         RenderPass();
     }
