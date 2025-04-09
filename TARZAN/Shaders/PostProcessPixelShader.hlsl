@@ -79,7 +79,7 @@ PS_OUTPUT mainPS(PS_INPUT input) : SV_TARGET
     float isValid = worldPosTex.w;
 
     float fogFactor;
-    
+    float3 fogColor;
     if (DisableFog < 0.5f)
     {
         if (isValid == 0.5f)
@@ -91,9 +91,14 @@ PS_OUTPUT mainPS(PS_INPUT input) : SV_TARGET
             float3 worldPosH = ReconstructWorldPos(input.TexCoord, 1);
             fogFactor = ComputeFogFactor(worldPosH.xyz);
         }
+         fogColor = lerp(FogColor.rgb, color.rgb, fogFactor);
     }
-
-    float3 fogColor = lerp(FogColor.rgb, color.rgb, 1.0 - fogFactor);
+    else
+    {
+        fogFactor = 0.0f;
+        fogColor = color.rgb;
+    }
+    
     output.Color = float4(fogColor, color.a);
     return output;
 }
