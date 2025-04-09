@@ -56,46 +56,44 @@ void FRenderer::Render()
     //DeprecatedRender();
 
     SLevelEditor* LevelEditor = GEngine->GetLevelEditor();
-    std::shared_ptr<UWorld> GWorld = GEngine->GetWorld();
+    ActiveViewport = LevelEditor->GetActiveViewportClient();
+    World = GEngine->GetWorld().get();
 
     Graphics->Prepare();
     if (LevelEditor->IsMultiViewport())
     {
-        std::shared_ptr<FEditorViewportClient> viewportClient = LevelEditor->GetActiveViewportClient();
         for (int i = 0; i < 4; ++i)
         {
             LevelEditor->SetViewportClient(i);
             PrepareRender();
-            RenderPass(GWorld.get(), LevelEditor->GetActiveViewportClient());
+            RenderPass();
         }
-        LevelEditor->SetViewportClient(viewportClient);
+        LevelEditor->SetViewportClient(ActiveViewport);
     }
     else
     {
         PrepareRender();
-        RenderPass(GWorld.get(), LevelEditor->GetActiveViewportClient());
+        RenderPass();
     }
 
     ClearRenderArr();
-
     RenderImGui();
-
     GEngine->graphicDevice.SwapBuffer();
 }
 
-void FRenderer::RenderPass(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport)
+void FRenderer::RenderPass()
 {
     Graphics->DeviceContext->RSSetViewports(1, &ActiveViewport->GetD3DViewport());
     Graphics->ChangeRasterizer(ActiveViewport->GetViewMode());
     ChangeViewMode(ActiveViewport->GetViewMode());
 
-    RenderGBuffer(World, ActiveViewport);
+    RenderGBuffer();
 
-    RenderLightPass(World, ActiveViewport);
+    RenderLightPass();
 
-    RenderPostProcessPass(World, ActiveViewport);
+    RenderPostProcessPass();
 
-    RenderOverlayPass(World, ActiveViewport);
+    RenderOverlayPass();
 }
 
 void FRenderer::RenderImGui()
@@ -370,10 +368,11 @@ void FRenderer::PrepareRender()
                 FogData.FogCutoffDistance = HeightFog->GetFogCutoffDistance();
                 FogData.FogMaxOpacity = HeightFog->GetFogMaxOpacity();
                 FogData.FogInscatteringColor = HeightFog->GetColor();
-                FogData.CameraPosition = GEngine->GetLevelEditor()->GetActiveViewportClient()->GetCameraLocation();
+                FogData.CameraPosition = ActiveViewport->GetCameraLocation();
                 FogData.FogHeight = HeightFog->GetWorldLocation().z;
-                FogData.InverseView = FMatrix::Inverse(GEngine->GetLevelEditor()->GetActiveViewportClient()->GetViewMatrix());
-                FogData.InverseProjection = FMatrix::Inverse(GEngine->GetLevelEditor()->GetActiveViewportClient()->GetProjectionMatrix());
+                FogData.InverseView = FMatrix::Inverse(ActiveViewport->GetViewMatrix());
+                FogData.InverseProjection = FMatrix::Inverse(ActiveViewport->GetProjectionMatrix());
+                FogData.DisableFog = (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_Fog)) ? 0 : 1;
             }
         }
     }
@@ -713,21 +712,18 @@ void FRenderer::RenderBatch(
 #pragma endregion Render
 
 #pragma region MultiPass
-void FRenderer::RenderGBuffer(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport)
+void FRenderer::RenderGBuffer()
 {
     // StaticMesh
     if (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_Primitives))
         RenderStaticMeshes(World, ActiveViewport);
-
-    // Grid
-    //UPrimitiveBatch::GetInstance().RenderBatch(ConstantBuffer, ActiveViewport->GetViewMatrix(), ActiveViewport->GetProjectionMatrix());
 
     // Billboard
     //if (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_BillboardText))
     //    RenderBillboards(World, ActiveViewport);
 }
 
-void FRenderer::RenderLightPass(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport)
+void FRenderer::RenderLightPass()
 {
     PrepareLightShader();
 
@@ -794,7 +790,7 @@ void FRenderer::RenderLightPass(UWorld* World, std::shared_ptr<FEditorViewportCl
     Graphics->DeviceContext->PSSetShaderResources(0, 4, nullSRVs);
 }
 
-void FRenderer::RenderPostProcessPass(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport)
+void FRenderer::RenderPostProcessPass()
 {
     // 1. Prepare Shader
     PreparePostProcessShader();
@@ -825,7 +821,7 @@ void FRenderer::RenderPostProcessPass(UWorld* World, std::shared_ptr<FEditorView
     Graphics->DeviceContext->PSSetShaderResources(0, 2, nullSRVs);
 }
 
-void FRenderer::RenderOverlayPass(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport)
+void FRenderer::RenderOverlayPass()
 {
     // Enable Depth Test
     Graphics->DeviceContext->OMSetRenderTargets(1, &Graphics->FrameBufferRTV, Graphics->DepthStencilView);

@@ -394,4 +394,5 @@ struct FFogConstants
     float FogHeight;
     FMatrix InverseView;
     FMatrix InverseProjection;
+    float DisableFog;
 };

@@ -11,6 +11,7 @@ cbuffer FogConstants : register(b0)
     float FogHeight; 
     row_major float4x4 InverseView;
     row_major float4x4 InverseProjection;
+    float DisableFog;
 };
 
 Texture2D LightColor : register(t0);
@@ -76,23 +77,26 @@ PS_OUTPUT mainPS(PS_INPUT input) : SV_TARGET
     float isValid = worldPosTex.w;
 
     float fogFactor;
-
-    if (isValid == 0.5f)
+    
+    if (DisableFog < 0.5f)
     {
-        // 지오메트리 존재할 경우
-        fogFactor = ComputeFogFactor(worldPos);
-        float3 fogColor = lerp(FogColor.rgb, color.rgb, 1.0 - fogFactor);
-        output.Color = float4(fogColor, color.a);
+        if (isValid == 0.5f)
+        {
+            fogFactor = ComputeFogFactor(worldPos);
+        }
+        else
+        {
+            float3 worldPosH = ReconstructWorldPos(input.TexCoord, 1);
+            fogFactor = ComputeFogFactor(worldPosH.xyz);
+        }
     }
     else
     {
-        float3 worldPosH = ReconstructWorldPos(input.TexCoord, 1);
-
-        fogFactor = ComputeFogFactor(worldPosH.xyz);
-        float3 fogColor = lerp(FogColor.rgb, color.rgb, 1.0 - fogFactor);
-        output.Color = float4(fogColor, color.a);
+        fogFactor = 0.0f;
     }
-
+    
+    float3 fogColor = lerp(FogColor.rgb, color.rgb, 1.0 - fogFactor);
+    output.Color = float4(fogColor, color.a);
     return output;
 }
 

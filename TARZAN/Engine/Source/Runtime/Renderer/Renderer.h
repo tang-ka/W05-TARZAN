@@ -32,7 +32,7 @@ public:
     ~FRenderer();
     void Render();
 private:
-    void RenderPass(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport);
+    void RenderPass();
     void RenderImGui();
 private:
     float litFlag = 0;
@@ -115,10 +115,10 @@ public:
 
 private:
     // Render Pass
-    void RenderGBuffer(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport);
-    void RenderLightPass(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport);
-    void RenderPostProcessPass(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport);
-    void RenderOverlayPass(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport);
+    void RenderGBuffer();
+    void RenderLightPass();
+    void RenderPostProcessPass();
+    void RenderOverlayPass();
 
 public:
     ID3D11VertexShader* VertexTextureShader = nullptr;
@@ -206,5 +206,8 @@ private:
 
     ID3D11SamplerState* SamplerState;
     D3D11_SAMPLER_DESC SamplerDesc = {};
+
+    std::shared_ptr<FEditorViewportClient> ActiveViewport;
+    UWorld* World;
 };
 
