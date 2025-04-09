@@ -48,7 +48,7 @@ void FRenderer::Initialize(FGraphicsDevice* graphics)
     CreateConstantBuffer();
     ConstantBufferUpdater.UpdateLitUnlitConstant(FlagBuffer, 1);
     SetSampler();
-    
+
     //UIMgr = new UImGuiManager;
     //UIMgr->Initialize(hWnd, graphicDevice.Device, graphicDevice.DeviceContext);
 }
@@ -205,7 +205,7 @@ void FRenderer::PrepareLightShader() const
     {
         Graphics->DeviceContext->PSSetConstantBuffers(0, 1, &LPLightConstantBuffer);
         Graphics->DeviceContext->PSSetConstantBuffers(1, 1, &FireballConstantBuffer);
-            Graphics->DeviceContext->PSSetConstantBuffers(2, 1, &ScreenConstantBuffer);
+        Graphics->DeviceContext->PSSetConstantBuffers(2, 1, &ScreenConstantBuffer);
         //Graphics->DeviceContext->PSSetConstantBuffers(1, 1, &LPMaterialConstantBuffer);
     }
 }
@@ -374,7 +374,7 @@ void FRenderer::PrepareRender()
             }
             if (UHeightFogComponent* HeightFog = Cast<UHeightFogComponent>(iter))
             {
-                    SubscribeToFogUpdates(HeightFog);
+                SubscribeToFogUpdates(HeightFog);
             }
         }
     }
@@ -404,7 +404,7 @@ void FRenderer::PrepareRender()
                 }
                 if (UHeightFogComponent* HeightFog = Cast<UHeightFogComponent>(iter2))
                 {
-                        SubscribeToFogUpdates(HeightFog);
+                    SubscribeToFogUpdates(HeightFog);
                 }
             }
         }
@@ -540,7 +540,7 @@ void FRenderer::RenderStaticMeshes()
         FVector4 UUIDColor = StaticMeshComp->EncodeUUID() / 255.0f;
 
         bool isSelected = World->GetSelectedActor() == StaticMeshComp->GetOwner();
-        ConstantBufferUpdater.UpdateConstantWithCamPos(ConstantBuffer, 
+        ConstantBufferUpdater.UpdateConstantWithCamPos(ConstantBuffer,
             MVP, Model, NormalMatrix, UUIDColor, isSelected, ActiveViewport->GetCameraLocation());
 
         //if (USkySphereComponent* skysphere = Cast<USkySphereComponent>(StaticMeshComp))
@@ -696,18 +696,18 @@ void FRenderer::RenderFullScreenQuad()
 
 void FRenderer::SubscribeToFogUpdates(UHeightFogComponent* HeightFog)
 {
-   
-            FogData.FogDensity = HeightFog->GetFogDensity();
-            FogData.FogHeightFalloff = HeightFog->GetFogHeightFalloff();
-            FogData.FogStartDistance = HeightFog->GetStartDistance();
-            FogData.FogCutoffDistance = HeightFog->GetFogCutoffDistance();
-            FogData.FogMaxOpacity = HeightFog->GetFogMaxOpacity();
-            FogData.FogInscatteringColor = HeightFog->GetColor();
-            FogData.CameraPosition = ActiveViewport->GetCameraLocation();
-            FogData.FogHeight = HeightFog->GetWorldLocation().z;
-            FogData.InverseView = FMatrix::Inverse(ActiveViewport->GetViewMatrix());
-            FogData.InverseProjection = FMatrix::Inverse(ActiveViewport->GetProjectionMatrix());
-            FogData.DisableFog = HeightFog->GetDisableFog(); 
+
+    FogData.FogDensity = HeightFog->GetFogDensity();
+    FogData.FogHeightFalloff = HeightFog->GetFogHeightFalloff();
+    FogData.FogStartDistance = HeightFog->GetStartDistance();
+    FogData.FogCutoffDistance = HeightFog->GetFogCutoffDistance();
+    FogData.FogMaxOpacity = HeightFog->GetFogMaxOpacity();
+    FogData.FogInscatteringColor = HeightFog->GetColor();
+    FogData.CameraPosition = ActiveViewport->GetCameraLocation();
+    FogData.FogHeight = HeightFog->GetWorldLocation().z;
+    FogData.InverseView = FMatrix::Inverse(ActiveViewport->GetViewMatrix());
+    FogData.InverseProjection = FMatrix::Inverse(ActiveViewport->GetProjectionMatrix());
+    FogData.DisableFog = HeightFog->GetDisableFog();
 }
 
 void FRenderer::RenderLight()
@@ -739,9 +739,9 @@ void FRenderer::RenderBatch(
 #pragma region MultiPass
 void FRenderer::RenderGBuffer()
 {
-    // StaticMesh
-   Graphics -> DeviceContext->OMSetRenderTargets(4, Graphics->GBufferRTVs, Graphics->DepthStencilView);
+    Graphics->DeviceContext->OMSetRenderTargets(4, Graphics->GBufferRTVs, Graphics->DepthStencilView);
 
+    // StaticMesh
     if (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_Primitives))
         RenderStaticMeshes();
 
@@ -777,7 +777,7 @@ void FRenderer::RenderLightPass()
     // Point Light
     std::unique_ptr<FFireballArrayInfo> fireballArrayInfo = std::make_unique<FFireballArrayInfo>();
 
-    if (FireballObjs.Num() > 0) 
+    if (FireballObjs.Num() > 0)
     {
         fireballArrayInfo->FireballCount = 0;
 
@@ -865,7 +865,7 @@ void FRenderer::RenderOverlayPass()
 {
     // Enable Depth Test
     Graphics->DeviceContext->OMSetRenderTargets(1, &Graphics->FrameBufferRTV, Graphics->DepthStencilView);
-    
+
     // Line
     FVector CamPos = ActiveViewport->GetCameraLocation();
     FVector4 CamPos4 = FVector4(CamPos.x, CamPos.y, CamPos.z, 1.f);
@@ -924,7 +924,7 @@ ID3D11ShaderResourceView* FRenderer::CreateBoundingBoxSRV(ID3D11Buffer* pBoundin
 
     Graphics->Device->CreateShaderResourceView(pBoundingBoxBuffer, &srvDesc, &pBBSRV);
     return pBBSRV;
-}     
+}
 
 ID3D11ShaderResourceView* FRenderer::CreateOBBSRV(ID3D11Buffer* pBoundingBoxBuffer, UINT numBoundingBoxes)
 {

@@ -216,7 +216,5 @@ PS_OUTPUT main(PS_Input input)
         output.WorldPos = float4(worldPos.xyz, 1.f);
     }
        
-  
-    
     return output;
 }
