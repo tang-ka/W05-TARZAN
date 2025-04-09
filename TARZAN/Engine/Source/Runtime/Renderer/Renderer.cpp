@@ -868,19 +868,16 @@ void FRenderer::RenderOverlayPass()
     // Enable Depth Test
     Graphics->DeviceContext->OMSetRenderTargets(1, &Graphics->FrameBufferRTV, Graphics->DepthStencilView);
     
-    // Pixel Shader를 OveralayGizmoPixelShader로 변경
-    // Gizmo
-    RenderGizmos(World, ActiveViewport);
-
+    // Grid
     FVector CamPos = ActiveViewport->GetCameraLocation();
     FVector4 CamPos4 = FVector4(CamPos.x, CamPos.y, CamPos.z, 1.f);
-
     float blendFactor[4] = { 0.f, 0.f, 0.f, 0.f };
     Graphics->DeviceContext->OMSetBlendState(Graphics->LineBlendState, blendFactor, 0xffffffff);
-    // Grid
-    UPrimitiveBatch::GetInstance().RenderBatch(ConstantBuffer, 
-        ActiveViewport->GetViewMatrix(), ActiveViewport->GetProjectionMatrix(), CamPos4);
+    UPrimitiveBatch::GetInstance().RenderBatch(ConstantBuffer, ActiveViewport->GetViewMatrix(), ActiveViewport->GetProjectionMatrix(), CamPos4);
     Graphics->DeviceContext->OMSetBlendState(nullptr, nullptr, 0xffffffff);
+
+    // Gizmo
+    RenderGizmos(World, ActiveViewport);
 }
 #pragma endregion MultiPass
 
