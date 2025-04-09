@@ -25,6 +25,7 @@ class UBillboardComponent;
 class UStaticMeshComponent;
 class UGizmoBaseComponent;
 class FRenderResourceManager;
+class UHeightFogComponent;
 
 class FRenderer 
 {
@@ -142,7 +143,8 @@ public:
         ID3D11ShaderResourceView* _TextureSRV,
         ID3D11SamplerState* _SamplerState) const;
 
-public: // line shader
+public:
+    // line
     void PrepareLineShader() const;
     void RenderBatch(const FGridParameters& gridParam, ID3D11Buffer* pVertexBuffer, int boundingBoxCount, int coneCount, int coneSegmentCount, int obbCount) const;
     void UpdateGridConstantBuffer(const FGridParameters& gridParams) const;
@@ -209,5 +211,7 @@ private:
 
     std::shared_ptr<FEditorViewportClient> ActiveViewport;
     UWorld* World;
+
+    void SubscribeToFogUpdates(UHeightFogComponent* HeightFog);
 };
 

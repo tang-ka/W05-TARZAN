@@ -1,5 +1,6 @@
 #include "Renderer.h"
 #include <d3dcompiler.h>
+#include <functional>
 
 #include "Engine/World.h"
 #include "Actors/Player.h"
@@ -362,17 +363,8 @@ void FRenderer::PrepareRender()
             }
             if (UHeightFogComponent* HeightFog = Cast<UHeightFogComponent>(iter))
             {
-                FogData.FogDensity = HeightFog->GetFogDensity();
-                FogData.FogHeightFalloff = HeightFog->GetFogHeightFalloff();
-                FogData.FogStartDistance = HeightFog->GetStartDistance();
-                FogData.FogCutoffDistance = HeightFog->GetFogCutoffDistance();
-                FogData.FogMaxOpacity = HeightFog->GetFogMaxOpacity();
-                FogData.FogInscatteringColor = HeightFog->GetColor();
-                FogData.CameraPosition = ActiveViewport->GetCameraLocation();
-                FogData.FogHeight = HeightFog->GetWorldLocation().z;
-                FogData.InverseView = FMatrix::Inverse(ActiveViewport->GetViewMatrix());
-                FogData.InverseProjection = FMatrix::Inverse(ActiveViewport->GetProjectionMatrix());
-                FogData.DisableFog = (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_Fog)) ? 0 : 1;
+                if (!HeightFog->OnFogChanged)
+                    SubscribeToFogUpdates(HeightFog);
             }
         }
     }
@@ -399,6 +391,13 @@ void FRenderer::PrepareRender()
                 if (UFireballComponent* pFireComp = Cast<UFireballComponent>(iter))
                 {
                     FireballObjs.Add(pFireComp);
+                }
+                if (UHeightFogComponent* HeightFog = Cast<UHeightFogComponent>(iter))
+                {
+                    if (!HeightFog->OnFogChanged)
+                    {
+                        SubscribeToFogUpdates(HeightFog);
+                    }
                 }
             }
         }
@@ -685,6 +684,29 @@ void FRenderer::RenderFullScreenQuad()
     Graphics->DeviceContext->DrawIndexed(Quad.numIndices, 0, 0);
 }
 
+void FRenderer::SubscribeToFogUpdates(UHeightFogComponent* HeightFog)
+{
+    HeightFog->OnFogChanged = [this, HeightFog]()
+        {
+            FogData.FogDensity = HeightFog->GetFogDensity();
+            FogData.FogHeightFalloff = HeightFog->GetFogHeightFalloff();
+            FogData.FogStartDistance = HeightFog->GetStartDistance();
+            FogData.FogCutoffDistance = HeightFog->GetFogCutoffDistance();
+            FogData.FogMaxOpacity = HeightFog->GetFogMaxOpacity();
+            FogData.FogInscatteringColor = HeightFog->GetColor();
+            FogData.CameraPosition = ActiveViewport->GetCameraLocation();
+            FogData.InverseView = FMatrix::Inverse(ActiveViewport->GetViewMatrix());
+            FogData.InverseProjection = FMatrix::Inverse(ActiveViewport->GetProjectionMatrix());
+            FogData.DisableFog = (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_Fog)) ? 0 : 1;
+        };
+
+    // 초기 업데이트 위해 이벤트 강제 호출
+    if (HeightFog->OnFogChanged)
+    {
+        HeightFog->OnFogChanged();
+    }
+}
+
 void FRenderer::RenderLight(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport)
 {
     for (auto Light : LightObjs)
@@ -968,3 +990,5 @@ void FRenderer::UpdateLinePrimitveCountBuffer(int numBoundingBoxes, int numCones
     pData->ConeCount = numCones;
     Graphics->DeviceContext->Unmap(LinePrimitiveBuffer, 0);
 }
+
+// Fog 데이터 업데이트 이벤트를 구독하는 함수 (한번만 설정하면 됨)
