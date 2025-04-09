@@ -18,6 +18,7 @@
 #include "Engine/FLoaderOBJ.h"
 #include "LevelEditor/SLevelEditor.h"
 #include "UObject/UObjectGlobals.h"
+#include "Sound/SoundManager.h"
 using json = nlohmann::json;
 
 /**
@@ -188,15 +189,15 @@ void FSceneMgr::LoadSceneFromFile(const FString& filename, UWorld& world)
 
     inFile.close();
 
-    FSceneData SceneDate;
-    bool Result = ParseSceneData(j,SceneDate);
+    FSceneData SceneData;
+    bool Result = ParseSceneData(j,SceneData);
     if (!Result)
     {
         UE_LOG(LogLevel::Error, "Failed to parse scene data from file: %s", *filename);
         return ;
     }
 
-    LoadSceneFromData(SceneDate, &world);
+    LoadSceneFromData(SceneData, &world);
     
     
     int a = 0;
