@@ -344,10 +344,10 @@
     <ClCompile Include="Engine\Source\ThirdParty\tinyfiledialogs\tinyfiledialogs.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\RenderResourceManager.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\ShaderManager.cpp" />
-    <ClCompile Include="FireballComp.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\FireballComp.cpp" />
     <ClCompile Include="SpotLightComp.cpp" />
     <ClCompile Include="UEditorStateManager.cpp" />
-    <ClCompile Include="UHeightFogComponent.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\UHeightFogComponent.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Color.h" />
@@ -415,7 +415,7 @@
     <ClInclude Include="Engine\Source\Runtime\Slate\Widgets\Layout\SSplitter.h" />
     <ClInclude Include="Engine\Source\ThirdParty\DirectXTK\Include\DDSTextureLoader.h" />
     <ClInclude Include="Engine\Source\ThirdParty\tinyfiledialogs\tinyfiledialogs.h" />
-    <ClInclude Include="FireballComp.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\FireballComp.h" />
     <ClInclude Include="Font\IconDefs.h" />
     <ClInclude Include="Font\RawFonts.h" />
     <ClInclude Include="Engine\Source\Runtime\InteractiveToolsFramework\BaseGizmos\GizmoBaseComponent.h" />
@@ -476,9 +476,25 @@
     <ClInclude Include="Engine\Source\Runtime\Renderer\RenderResourceManager.h" />
     <ClInclude Include="SpotLightComp.h" />
     <ClInclude Include="UEditorStateManager.h" />
-    <ClInclude Include="UHeightFogComponent.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\UHeightFogComponent.h" />
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="Shaders\FullScreenVertexShader.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="Shaders\LightingPassPixelShader.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="Shaders\MeshPixelShader.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="Shaders\MeshVertexShader.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
     <FxCompile Include="Shaders\PostProcessPixelShader.hlsl">
       <ObjectFileOutput>$(OutDir)%(Filename).cso</ObjectFileOutput>
       <TrackerLogDirectory>$(IntDir)TARZAN.tlog\</TrackerLogDirectory>
@@ -498,6 +514,8 @@
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">mainPS</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">mainPS</EntryPointName>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </FxCompile>
     <FxCompile Include="Shaders\PixelTextureShader.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
@@ -516,6 +534,10 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="Shaders\StaticMeshVertexShader.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </FxCompile>
     <FxCompile Include="Shaders\VertexTextureShader.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>

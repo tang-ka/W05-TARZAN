@@ -1,6 +1,11 @@
 #include "ConstantBufferUpdater.h"
 #include <Engine/Texture.h>
-
+#include "EditorEngine.h"
+#include "LevelEditor/SLevelEditor.h"
+#include "ViewportClient.h"
+#include "UnrealEd/EditorViewportClient.h"
+#include "Engine/Unrealclient.h"
+#include "d3d11.h"
 void FConstantBufferUpdater::Initialize(ID3D11DeviceContext* InDeviceContext)
 {
     DeviceContext = InDeviceContext;
@@ -20,6 +25,30 @@ void FConstantBufferUpdater::UpdateConstant(ID3D11Buffer* ConstantBuffer, const 
             constants->ModelMatrixInverseTranspose = NormalMatrix;
             constants->UUIDColor = UUIDColor;
             constants->IsSelected = IsSelected;
+            constants->ScreenSize = FVector2D(GEngine->graphicDevice.screenWidth, GEngine->graphicDevice.screenHeight);
+            FViewport* viewport = GEngine->GetLevelEditor()->GetActiveViewportClient()->GetViewport();
+            constants->ViewportSize = FVector2D(viewport->GetViewport().Width, viewport->GetViewport().Height); //Assuming a fixed viewport size for simplicity
+        }
+        DeviceContext->Unmap(ConstantBuffer, 0);
+    }
+}
+
+void FConstantBufferUpdater::UpdateConstantWithCamPos(ID3D11Buffer* ConstantBuffer, 
+    const FMatrix& MVP, const FMatrix& Model, const FMatrix& NormalMatrix, FVector4 UUIDColor, bool IsSelected, FVector CamPos) const
+{
+    if (ConstantBuffer)
+    {
+        D3D11_MAPPED_SUBRESOURCE ConstantBufferMSR;
+
+        DeviceContext->Map(ConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &ConstantBufferMSR); // update constant buffer every frame
+        {
+            FConstants* constants = static_cast<FConstants*>(ConstantBufferMSR.pData);
+            constants->MVP = MVP;
+            constants->ModelMatrix = Model;
+            constants->ModelMatrixInverseTranspose = NormalMatrix;
+            constants->UUIDColor = UUIDColor;
+            constants->IsSelected = IsSelected;
+            constants->CameraPosition = CamPos;
         }
         DeviceContext->Unmap(ConstantBuffer, 0);
     }
@@ -77,6 +106,7 @@ void FConstantBufferUpdater::UpdateGlobalLightConstant(ID3D11Buffer* GlobalLight
         constants->Emissive = GlobalLight.Emissive;
         constants->Direction = GlobalLight.Direction;
         constants->CameraPosition = GlobalLight.CameraPosition;
+        constants->Padding = GlobalLight.Padding;
     }
     DeviceContext->Unmap(GlobalLightBuffer, 0);
 }
@@ -161,5 +191,18 @@ void FConstantBufferUpdater::UpdateFogConstant(ID3D11Buffer* FogConstantBuffer, 
         DeviceContext->Map(FogConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &ConstantBufferMSR); // update constant buffer every frame
         memcpy(ConstantBufferMSR.pData, &FogConstants, sizeof(FFogConstants));
         DeviceContext->Unmap(FogConstantBuffer, 0);
+    }
+}
+void FConstantBufferUpdater::UpdateScreenConstant(ID3D11Buffer* ScreenConstantBuffer, std::shared_ptr<FEditorViewportClient>viewport) const
+{
+    if (ScreenConstantBuffer)
+    {
+        D3D11_MAPPED_SUBRESOURCE constantbufferMSR;
+        DeviceContext->Map(ScreenConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &constantbufferMSR); // update constant buffer every frame
+        auto constants = static_cast<FScreenConstants*>(constantbufferMSR.pData);
+        D3D11_VIEWPORT ActiveViewport = viewport.get()->GetD3DViewport();
+        constants->ViewportRatio = FVector2D(ActiveViewport.Width/ GEngine->graphicDevice.screenWidth, ActiveViewport.Height/ GEngine->graphicDevice.screenHeight);
+        constants->ViewportPosition = FVector2D(ActiveViewport.TopLeftX / GEngine->graphicDevice.screenWidth, ActiveViewport.TopLeftY/GEngine->graphicDevice.screenHeight);
+        DeviceContext->Unmap(ScreenConstantBuffer, 0);
     }
 }

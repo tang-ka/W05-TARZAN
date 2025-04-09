@@ -1,5 +1,12 @@
-#include "UHeightFogComponent.h"
+#include "Components/UHeightFogComponent.h"
+#include "UnrealEd/EditorViewportClient.h"
+#include "Launch/EditorEngine.h"
+#include "Editor/LevelEditor/SLevelEditor.h"
+#include "PropertyEditor/ShowFlags.h"
 #include "UObject/ObjectFactory.h"
+
+extern UEditorEngine* GEngine;
+
 UHeightFogComponent::UHeightFogComponent()
 { 
     FogDensity = 1.00f;
@@ -8,6 +15,9 @@ UHeightFogComponent::UHeightFogComponent()
     FogCutoffDistance = 800.0f;
     FogMaxOpacity = 1.0f;
     FogInscatteringColor = FLinearColor(0.6f, 0.1f, 0.1f, 1.0f); // 어두운 빨강
+
+    std::shared_ptr<FEditorViewportClient> ActiveViewport = GEngine->GetLevelEditor()->GetActiveViewportClient();
+    DisableFog = (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_Fog)) ? 0 : 1;
 }
 
 UHeightFogComponent::UHeightFogComponent(const UHeightFogComponent& Other)

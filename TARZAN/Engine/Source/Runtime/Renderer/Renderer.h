@@ -25,16 +25,15 @@ class UBillboardComponent;
 class UStaticMeshComponent;
 class UGizmoBaseComponent;
 class FRenderResourceManager;
+class UHeightFogComponent;
 
 class FRenderer 
 {
 public:
-    //FRenderer() : UIMgr(nullptr) {}
     ~FRenderer();
-    
     void Render();
 private:
-    void RenderPass(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport);
+    void RenderPass();
     void RenderImGui();
 private:
     float litFlag = 0;
@@ -46,18 +45,21 @@ public:
     ID3D11InputLayout* FullScreenInputLayout = nullptr;
     
     // GBuffer Shader
-    ID3D11VertexShader* GBufferVS= nullptr;
+    ID3D11VertexShader* GBufferVS = nullptr;
     ID3D11PixelShader* GBufferPS = nullptr;
     ID3D11InputLayout* GBufferInputLayout = nullptr;
     
     // Lighting Shader
     ID3D11PixelShader* LightingPassPS = nullptr;
 
+    // PostProcess Shader
+    ID3D11PixelShader* PostProcessPassPS = nullptr;
+
     ID3D11VertexShader* VertexShader = nullptr;
     ID3D11PixelShader* PixelShader = nullptr;
-    ID3D11PixelShader* PostProcessPixelShader = nullptr;
     ID3D11InputLayout* InputLayout = nullptr;
 
+    // Constant Buffer
     ID3D11Buffer* ConstantBuffer = nullptr;
     ID3D11Buffer* LightingBuffer = nullptr;
     ID3D11Buffer* FlagBuffer = nullptr;
@@ -68,50 +70,61 @@ public:
     ID3D11Buffer* LPLightConstantBuffer = nullptr;
     ID3D11Buffer* LPMaterialConstantBuffer = nullptr;
     ID3D11Buffer* FogConstantBuffer = nullptr;
+    ID3D11Buffer* ScreenConstantBuffer = nullptr;
 
-    FLighting lightingData;
-    FFogConstants fogData;
+    // Data
+    FLighting LightingData;
+    FFogConstants FogData;
 
+    // Stride
     uint32 FullScreenStride;
-
     uint32 Stride;
     uint32 Stride2;
+
+    ID3D11SamplerState* LPSamplerState;
 
 public:
     void Initialize(FGraphicsDevice* graphics);
    
-    void PrepareShader() const;
-    
     //Render
     void RenderPrimitive(ID3D11Buffer* pBuffer, UINT numVertices) const;
     void RenderPrimitive(ID3D11Buffer* pVertexBuffer, UINT numVertices, ID3D11Buffer* pIndexBuffer, UINT numIndices) const;
     void RenderPrimitive(OBJ::FStaticMeshRenderData* renderData, TArray<FStaticMaterial*> materials, TArray<UMaterial*> overrideMaterial, int selectedSubMeshIndex) const;
    
     void RenderTexturedModelPrimitive(ID3D11Buffer* pVertexBuffer, UINT numVertices, ID3D11Buffer* pIndexBuffer, UINT numIndices, ID3D11ShaderResourceView* InTextureSRV, ID3D11SamplerState* InSamplerState) const;
+    
     //Release
     void Release();
     void ReleaseShader();
     void ReleaseConstantBuffer();
 
+    // Shader
     void CreateShader();
-    
+    void PrepareShader() const;
+    void PrepareLightShader() const;
+    void PreparePostProcessShader() const;
+    void PrepareTextureShader() const;
+    void PrepareSubUVConstant() const;
+
+    // Sampler State
+    void SetSampler();
+
     void ChangeViewMode(EViewModeIndex evi) const;
     
     // CreateBuffer
     void CreateConstantBuffer();
 
-    // update
+    // Material
     void UpdateMaterial(const FObjMaterialInfo& MaterialInfo) const;
 
 private:
-#pragma region Render Pass
-    void RenderGBuffer(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport);
-    void RenderLightPass(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport);
-    void RenderPostProcessPass(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport);
-    void RenderOverlayPass(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport);
-#pragma endregion
+    // Render Pass
+    void RenderGBuffer();
+    void RenderLightPass();
+    void RenderPostProcessPass();
+    void RenderOverlayPass();
 
-public://텍스쳐용 기능 추가
+public:
     ID3D11VertexShader* VertexTextureShader = nullptr;
     ID3D11PixelShader* PixelTextureShader = nullptr;
     ID3D11InputLayout* TextureInputLayout = nullptr;
@@ -125,9 +138,6 @@ public://텍스쳐용 기능 추가
     ID3D11Buffer* SubUVConstantBuffer = nullptr;
 
 public:
-    void PrepareLightShader() const;
-    void PrepareTextureShader() const;
-
     void RenderTexturePrimitive(ID3D11Buffer* pVertexBuffer, UINT numVertices,
         ID3D11Buffer* pIndexBuffer, UINT numIndices,
         ID3D11ShaderResourceView* _TextureSRV,
@@ -136,10 +146,8 @@ public:
         ID3D11ShaderResourceView* _TextureSRV,
         ID3D11SamplerState* _SamplerState) const;
 
-    void PrepareSubUVConstant() const;
-
-
-public: // line shader
+public:
+    // line
     void PrepareLineShader() const;
     void RenderBatch(const FGridParameters& gridParam, ID3D11Buffer* pVertexBuffer, int boundingBoxCount, int coneCount, int coneSegmentCount, int obbCount) const;
     void UpdateGridConstantBuffer(const FGridParameters& gridParams) const;
@@ -156,18 +164,20 @@ public: // line shader
     //Render Pass Demo
     void PrepareRender();
     void ClearRenderArr();
-    void Render(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport);
     void RenderStaticMeshes(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport);
     void RenderGizmos(const UWorld* World, const std::shared_ptr<FEditorViewportClient>& ActiveViewport);
     void RenderLight(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport);
     void RenderBillboards(UWorld* World,std::shared_ptr<FEditorViewportClient> ActiveViewport);
+    void RenderFullScreenQuad();
 private:
     // GBuffer
     TArray<UStaticMeshComponent*> StaticMeshObjs;
     TArray<UBillboardComponent*> BillboardObjs;
+
     // Lighting
     TArray<ULightComponentBase*> LightObjs;
     TArray<UFireballComponent*> FireballObjs;
+
     // Overaly
     TArray<UGizmoBaseComponent*> GizmoObjs;
 
@@ -184,7 +194,6 @@ public:
     FRenderResourceManager& GetResourceManager() { return RenderResourceManager; }
     FShaderManager& GetShaderManager() { return ShaderManager; }
     FConstantBufferUpdater& GetConstantBufferUpdater() { return ConstantBufferUpdater; }
-    //UnrealEd* GetUnrealEditor() { return UnrealEditor; }
 
 private:
     FRenderResourceManager RenderResourceManager;
@@ -200,16 +209,12 @@ private:
 private:
     ID3D11DeviceContext* Context;
 
-private:
-    // PostProcess용 Dummy Data (Todo : 추후 LightPass와 연결)
-    ID3D11Texture2D* DummyColorTexture = nullptr;
-    ID3D11ShaderResourceView* DummyColorSRV = nullptr;
-    void CreateDummyPostProcessResources();
-    
-    ID3D11ShaderResourceView* PostProcessColorSRV = nullptr; // t0
-    ID3D11ShaderResourceView* SceneDepthSRV = nullptr;       // t1
+    ID3D11SamplerState* SamplerState;
+    D3D11_SAMPLER_DESC SamplerDesc = {};
 
-    ID3D11SamplerState* PostProcessSampler = nullptr; // s0
-    ID3D11SamplerState* DepthSampler = nullptr;       // s1
+    std::shared_ptr<FEditorViewportClient> ActiveViewport;
+    UWorld* World;
+
+    void SubscribeToFogUpdates(UHeightFogComponent* HeightFog);
 };
 

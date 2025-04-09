@@ -33,14 +33,15 @@ struct PS_INPUT
     float3 Normal : NORMAL; // 정규화된 노멀 벡터
     float2 TexCoord : TEXCOORD1;
     float4 WorldPosition : POSITION; // 버텍스 위치
+    float SceneDepth : TEXCOORD2;
 };
 
 struct PS_OUTPUT
 {
     float4 Normal : SV_Target0;
-    float4 Albedo : SV_Target1;
+    float4 Albedo : SV_Target1; // Color(rgb) + Object Validation(0.5: Valid)
     float4 Ambient : SV_Target2;
-    float4 WorldPos : SV_Target3;
+    float4 WorldPos : SV_Target3; // World Position(xyz) + Depth(0-1)
 };
 
 PS_OUTPUT main(PS_INPUT input)
@@ -53,8 +54,8 @@ PS_OUTPUT main(PS_INPUT input)
     
     float2 uv = input.TexCoord;
     float4 textureColor = g_DiffuseMap.Sample(g_sampler0, uv);
-    bool isInvalidTexture = all(abs(textureColor) < 1e-5f);
     
+    bool isInvalidTexture = all(abs(textureColor) < 1e-5f);
     if (isInvalidTexture)
         output.Albedo = float4(1.f, 0.f, 1.f, 1.f);
     else
@@ -65,11 +66,9 @@ PS_OUTPUT main(PS_INPUT input)
         output.Albedo = diffuseColor * textureColor;   
     }
     
-    output.Ambient = (Material.AmbientColor.xyz, 1.f);
-    //output.WorldPos = input.WorldPosition;
-    output.WorldPos = float4(input.WorldPosition.xyz, 0.5f);
-    
-    //output.Albedo = float4(input.color.rgb, 1.0); // Albedo
+    output.Ambient = (Material.AmbientColor.xyz, 1.0f);
+    output.Albedo.w = 0.5f;
+    output.WorldPos = float4(input.WorldPosition.xyz, input.SceneDepth);
     
     return output;
 }

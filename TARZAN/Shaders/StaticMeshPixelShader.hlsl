@@ -75,19 +75,6 @@ cbuffer FireballBuffer : register(b6)
     float3 padding;
 }
 
-cbuffer FogConstants : register(b7)
-{
-    float FogDensity;
-    float FogHeightFalloff;
-    float FogStartDistance;
-    float FogCutoffDistance;
-    float FogMaxOpacity;
-    float3 FogPad0;
-    float4 FogColor;
-    float3 CameraPosition; 
-    float FogHeight;
-};
-
 float3 ComputeFireballLighting(float4 worldPos, float3 normal)
 {
     float3 N = normalize(normal);
@@ -113,32 +100,6 @@ float3 ComputeFireballLighting(float4 worldPos, float3 normal)
     }
     return totalLighting;
 }
-
-float ComputeFogFactor(float3 worldPos)
-{
-    float dist = distance(CameraPosition, worldPos);
-
-    // 거리 기반
-    float fogRange = FogCutoffDistance - FogStartDistance;
-    float disFactor = saturate((dist - FogStartDistance) / fogRange); // 0~1  50일떄 0
-
-    // 높이 기반 (지수 감쇠)
-    float heightDiff = worldPos.z - FogHeight; 
-    heightDiff = max(heightDiff, 0.0); 
-    float heightFactor = saturate(exp(-heightDiff * FogHeightFalloff)); // 0~1
-    
-    float fogFactor =  heightFactor * disFactor;
-
-    // 밀도 곱
-    fogFactor *= FogDensity;
-
-    // 최대 불투명도 제한
-   fogFactor = min(fogFactor, FogMaxOpacity);
-
-    return fogFactor;
-}
-
-
 
 struct PS_INPUT
 {
@@ -213,7 +174,7 @@ PS_OUTPUT mainPS(PS_INPUT input)
             color = float3(1, 1, 1);
     }
     
-    float fogFactor = ComputeFogFactor(input.Worldposition.xyz);
+    // float fogFactor = ComputeFogFactor(input.Worldposition.xyz);
   
     if (IsLit == 1)
     {
@@ -232,12 +193,11 @@ PS_OUTPUT mainPS(PS_INPUT input)
             float3 specularLight = specular * Material.SpecularColor * LightColor;
 
             color = ambient + (diffuseLight * color) + specularLight;
-            
         }
         float3 fireballLighting = ComputeFireballLighting(input.Worldposition, input.normal);
         color += fireballLighting;
         color += Material.EmissiveColor;
-        color = lerp(FogColor.rgb, color, 1.0 - fogFactor);
+        //color = lerp(FogColor.rgb, color, 1.0 - fogFactor);
         output.color = float4(color, Material.TransparencyScalar);
         return output;
     }
@@ -245,18 +205,16 @@ PS_OUTPUT mainPS(PS_INPUT input)
     {
         if (input.normalFlag < 0.5)
         {
-            color = lerp(FogColor.rgb, color, 1.0 - fogFactor);
+            // color = lerp(FogColor.rgb, color, 1.0 - fogFactor);
 
             output.color = float4(color, Material.TransparencyScalar);
             return output;
         }
-
-     
-        color = lerp(FogColor.rgb, color, 1.0 - fogFactor);
+        
+        //color = lerp(FogColor.rgb, color, 1.0 - fogFactor);
 
         output.color = float4(color, Material.TransparencyScalar);
         //output.color = float4(input.normal.xyz, 1);
         return output;
     }
-
 }

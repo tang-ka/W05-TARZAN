@@ -15,10 +15,11 @@
 #include "UnrealEd/EditorViewportClient.h"
 #include "PropertyEditor/ShowFlags.h"
 #include "UnrealEd/SceneMgr.h"
-#include "UHeightFogComponent.h"
+#include "Components/UHeightFogComponent.h"
 #include "SpotLightComp.h"
-#include "FireballComp.h"
+#include "Components/FireballComp.h"
 #include "UEditorStateManager.h"
+#include "UObject/UObjectIterator.h"
 
 
 void ControlEditorPanel::Render()
@@ -447,7 +448,7 @@ void ControlEditorPanel::CreateFlagButton() const
 
     ImGui::SameLine();
     
-    const char* ViewModeNames[] = { "Lit", "Unlit", "Wireframe" };
+    const char* ViewModeNames[] = { "Lit", "Unlit", "Wireframe", "Base Color", "Normal", "Depth", "World Position"};
     FString SelectLightControl = ViewModeNames[(int)ActiveViewport->GetViewMode()];
     ImVec2 LightTextSize = ImGui::CalcTextSize(GetData(SelectLightControl));
     
@@ -483,7 +484,7 @@ void ControlEditorPanel::CreateFlagButton() const
         ImGui::OpenPopup("ShowControl");
     }
     
-    const char* items[] = { "AABB", "Primitive", "BillBoard", "UUID"};
+    const char* items[] = { "AABB", "Primitive", "BillBoard", "UUID", "Fog" };
     uint64 ActiveViewportFlags = ActiveViewport->GetShowFlag();
 
     if (ImGui::BeginPopup("ShowControl"))
@@ -493,14 +494,25 @@ void ControlEditorPanel::CreateFlagButton() const
             (ActiveViewportFlags & static_cast<uint64>(EEngineShowFlags::SF_AABB)) != 0,
             (ActiveViewportFlags & static_cast<uint64>(EEngineShowFlags::SF_Primitives)) != 0,
             (ActiveViewportFlags & static_cast<uint64>(EEngineShowFlags::SF_BillboardText)) != 0,
-            (ActiveViewportFlags & static_cast<uint64>(EEngineShowFlags::SF_UUIDText)) != 0
-        };  // 각 항목의 체크 상태 저장
+            (ActiveViewportFlags & static_cast<uint64>(EEngineShowFlags::SF_UUIDText)) != 0,
+            (ActiveViewportFlags & static_cast<uint64>(EEngineShowFlags::SF_Fog)) != 0
+        };
         
         for (int i = 0; i < IM_ARRAYSIZE(items); i++)
         {
             ImGui::Checkbox(items[i], &selected[i]);
         }
         ActiveViewport->SetShowFlag(ConvertSelectionToFlags(selected));
+
+        for (const auto iter : TObjectRange<USceneComponent>())
+        {
+            if (UHeightFogComponent* HeightFog = Cast<UHeightFogComponent>(iter))
+            {
+                bool bFogEnabled = (selected[4] == true);
+                HeightFog->SetDisableFog(!bFogEnabled);
+            }
+        }
+
         ImGui::EndPopup();
     }
 }
@@ -606,6 +618,8 @@ uint64 ControlEditorPanel::ConvertSelectionToFlags(const bool selected[]) const
         flags |= static_cast<uint64>(EEngineShowFlags::SF_BillboardText);
     if (selected[3])
         flags |= static_cast<uint64>(EEngineShowFlags::SF_UUIDText);
+    if (selected[4])
+        flags |= static_cast<uint64>(EEngineShowFlags::SF_Fog);
     return flags;
 }
 

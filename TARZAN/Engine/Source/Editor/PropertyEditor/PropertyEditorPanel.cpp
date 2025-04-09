@@ -11,8 +11,8 @@
 #include "UObject/Casts.h"
 #include "UObject/ObjectFactory.h"
 #include <Components/CubeComp.h>
-#include "FireballComp.h"
-#include "UHeightFogComponent.h"
+#include "Components/FireballComp.h"
+#include "Components/UHeightFogComponent.h"
 #include "SpotLightComp.h"
 
 #include <Components/UParticleSubUVComp.h>

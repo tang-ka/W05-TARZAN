@@ -7,6 +7,7 @@ void FGraphicsDevice::Initialize(HWND hWindow) {
     CreateDeviceAndSwapChain(hWindow);
     CreateFrameBuffer();
     CreateGBuffer();
+    CreateLightPassBuffer();
     CreateDepthStencilBuffer(hWindow);
     CreateDepthStencilState();
     CreateRasterizerState();
@@ -134,19 +135,14 @@ void FGraphicsDevice::CreateDepthStencilState()
     dsDesc.BackFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
     dsDesc.BackFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
 
-    //// DepthStencil 상태 생성
-    HRESULT hr = Device->CreateDepthStencilState(&dsDesc, &DepthStencilState);
-    if (FAILED(hr)) {
-        // 오류 처리
-        return;
-    }
+    // DepthStencil 상태 생성
+    Device->CreateDepthStencilState(&dsDesc, &DepthStencilState);
 
     D3D11_DEPTH_STENCIL_DESC depthStencilDesc = {};
     depthStencilDesc.DepthEnable = FALSE;  // 깊이 테스트 유지
     depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;  // 깊이 버퍼에 쓰지 않음
     depthStencilDesc.DepthFunc = D3D11_COMPARISON_ALWAYS;  // 깊이 비교를 항상 통과
     Device->CreateDepthStencilState(&depthStencilDesc, &DepthStateDisable);
-
 }
 
 void FGraphicsDevice::CreateRasterizerState()
@@ -206,10 +202,10 @@ void FGraphicsDevice::CreateGBuffer()
     Device->CreateShaderResourceView(GBufferTexture_Ambient, &GBufferSRVDesc, &GBufferSRV_Ambient);
     Device->CreateShaderResourceView(GBufferTexture_Position, &GBufferSRVDesc, &GBufferSRV_Position);
 
-    gbuffers[0] = GBufferRTV_Normal;
-    gbuffers[1] = GBufferRTV_Albedo;
-    gbuffers[2] = GBufferRTV_Ambient;
-    gbuffers[3] = GBufferRTV_Position;
+    GBufferRTVs[0] = GBufferRTV_Normal;
+    GBufferRTVs[1] = GBufferRTV_Albedo;
+    GBufferRTVs[2] = GBufferRTV_Ambient;
+    GBufferRTVs[3] = GBufferRTV_Position;
 }
 
 void FGraphicsDevice::CreateFrameBuffer()
@@ -244,6 +240,47 @@ void FGraphicsDevice::CreateFrameBuffer()
 
     RTVs[0] = FrameBufferRTV;
     RTVs[1] = UUIDFrameBufferRTV;
+}
+
+void FGraphicsDevice::CreateLightPassBuffer()
+{
+    D3D11_TEXTURE2D_DESC LightPassTexDesc = {};
+    {
+        LightPassTexDesc.Width = screenWidth;
+        LightPassTexDesc.Height = screenHeight;
+        LightPassTexDesc.MipLevels = 1;
+        LightPassTexDesc.ArraySize = 1;
+        LightPassTexDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+        LightPassTexDesc.SampleDesc.Count = 1;
+        LightPassTexDesc.Usage = D3D11_USAGE_DEFAULT;
+        LightPassTexDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+    }
+
+    D3D11_RENDER_TARGET_VIEW_DESC LightPassRTVDesc = {};
+    {
+        LightPassRTVDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;      
+        LightPassRTVDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D; 
+    }
+
+    D3D11_SHADER_RESOURCE_VIEW_DESC LightPassSRVDesc = {};
+    {
+        LightPassSRVDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+        LightPassSRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+        LightPassSRVDesc.Texture2D.MipLevels = 1;
+        LightPassSRVDesc.Texture2D.MostDetailedMip = 0;
+    }
+
+    Device->CreateTexture2D(&LightPassTexDesc, nullptr, &LightPassTexture_Color);
+    Device->CreateTexture2D(&LightPassTexDesc, nullptr, &LightPassTexture_Position);
+
+    Device->CreateRenderTargetView(LightPassTexture_Color, &LightPassRTVDesc, &LightPassRTV_Color);
+    Device->CreateRenderTargetView(LightPassTexture_Position, &LightPassRTVDesc, &LightPassRTV_Position);
+
+    Device->CreateShaderResourceView(LightPassTexture_Color, &LightPassSRVDesc, &LightPassSRV_Color);
+    Device->CreateShaderResourceView(LightPassTexture_Position, &LightPassSRVDesc, &LightPassSRV_Position);
+
+    LightPassRTVs[0] = LightPassRTV_Color;
+    LightPassRTVs[1] = LightPassRTV_Position;
 }
 
 void FGraphicsDevice::ReleaseDeviceAndSwapChain()
@@ -314,6 +351,17 @@ void FGraphicsDevice::ReleaseFrameBuffer()
     }
 }
 
+void FGraphicsDevice::ReleaseLightPassBuffer()
+{
+    if (LightPassTexture_Color) { LightPassTexture_Color->Release(); LightPassTexture_Color = nullptr; }
+    if (LightPassRTV_Color) { LightPassRTV_Color->Release();     LightPassRTV_Color = nullptr; }
+    if (LightPassSRV_Color) { LightPassSRV_Color->Release();     LightPassSRV_Color = nullptr; }
+
+    if (LightPassTexture_Position) { LightPassTexture_Position->Release(); LightPassTexture_Position = nullptr; }
+    if (LightPassRTV_Position) { LightPassRTV_Position->Release();     LightPassRTV_Position = nullptr; }
+    if (LightPassSRV_Position) { LightPassSRV_Position->Release();     LightPassSRV_Position = nullptr; }
+}
+
 void FGraphicsDevice::ReleaseRasterizerState()
 {
     if (RasterizerStateSOLID)
@@ -335,17 +383,16 @@ void FGraphicsDevice::ReleaseDepthStencilResources()
         DepthStencilView = nullptr;
     }
 
-    // 깊이/스텐실 버퍼 해제
     if (DepthStencilBuffer) {
         DepthStencilBuffer->Release();
         DepthStencilBuffer = nullptr;
     }
 
-    // 깊이/스텐실 상태 해제
     if (DepthStencilState) {
         DepthStencilState->Release();
         DepthStencilState = nullptr;
     }
+
     if (DepthStateDisable) {
         DepthStateDisable->Release();
         DepthStateDisable = nullptr;
@@ -359,6 +406,7 @@ void FGraphicsDevice::Release()
 
     ReleaseGBuffer();
     ReleaseFrameBuffer();
+    ReleaseLightPassBuffer();
     ReleaseDepthStencilResources();
     ReleaseDeviceAndSwapChain();
 }
@@ -370,11 +418,13 @@ void FGraphicsDevice::SwapBuffer() {
 void FGraphicsDevice::Prepare()
 {
     DeviceContext->ClearRenderTargetView(FrameBufferRTV, ClearColor); // 렌더 타겟 뷰에 저장된 이전 프레임 데이터를 삭제
-    DeviceContext->ClearRenderTargetView(UUIDFrameBufferRTV, ClearColor); // 렌더 타겟 뷰에 저장된 이전 프레임 데이터를 삭제
-    DeviceContext->ClearRenderTargetView(GBufferRTV_Normal, ClearColor); // 렌더 타겟 뷰에 저장된 이전 프레임 데이터를 삭제
-    DeviceContext->ClearRenderTargetView(GBufferRTV_Albedo, ClearColor); // 렌더 타겟 뷰에 저장된 이전 프레임 데이터를 삭제
-    DeviceContext->ClearRenderTargetView(GBufferRTV_Ambient, ClearColor); // 렌더 타겟 뷰에 저장된 이전 프레임 데이터를 삭제
-    DeviceContext->ClearRenderTargetView(GBufferRTV_Position, ClearColor); // 렌더 타겟 뷰에 저장된 이전 프레임 데이터를 삭제
+    DeviceContext->ClearRenderTargetView(UUIDFrameBufferRTV, ClearColor); 
+    DeviceContext->ClearRenderTargetView(GBufferRTV_Normal, ClearColor); 
+    DeviceContext->ClearRenderTargetView(GBufferRTV_Albedo, ClearColor); 
+    DeviceContext->ClearRenderTargetView(GBufferRTV_Ambient, ClearColor); 
+    DeviceContext->ClearRenderTargetView(GBufferRTV_Position, ClearColor);
+    DeviceContext->ClearRenderTargetView(LightPassRTV_Color, ClearColor);
+    DeviceContext->ClearRenderTargetView(LightPassRTV_Position, ClearColor);
     DeviceContext->ClearDepthStencilView(DepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0); // 깊이 버퍼 초기화 추가
 
     DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST); // 정정 연결 방식 설정
@@ -384,25 +434,8 @@ void FGraphicsDevice::Prepare()
 
     DeviceContext->OMSetDepthStencilState(DepthStencilState, 0);
 
-    //DeviceContext->OMSetRenderTargets(2, RTVs, DepthStencilView); // 렌더 타겟 설정(백버퍼를 가르킴)
-    DeviceContext->OMSetRenderTargets(4, gbuffers, DepthStencilView);
+    DeviceContext->OMSetRenderTargets(4, GBufferRTVs, DepthStencilView);  // 렌더 타겟 설정(백버퍼를 가르킴)
 
-    DeviceContext->OMSetBlendState(nullptr, nullptr, 0xffffffff); // 블렌뎅 상태 설정, 기본블렌딩 상태임
-}
-
-void FGraphicsDevice::Prepare(D3D11_VIEWPORT* viewport)
-{
-    DeviceContext->ClearRenderTargetView(FrameBufferRTV, ClearColor); // 렌더 타겟 뷰에 저장된 이전 프레임 데이터를 삭제
-    DeviceContext->ClearDepthStencilView(DepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0); // 깊이 버퍼 초기화 추가
-
-    DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST); // 정정 연결 방식 설정
-
-    DeviceContext->RSSetViewports(1, viewport); // GPU가 화면을 렌더링할 영역 설정
-    DeviceContext->RSSetState(CurrentRasterizer); //레스터 라이저 상태 설정
-
-    DeviceContext->OMSetDepthStencilState(DepthStencilState, 0);
-
-    DeviceContext->OMSetRenderTargets(1, &FrameBufferRTV, DepthStencilView); // 렌더 타겟 설정(백버퍼를 가르킴)
     DeviceContext->OMSetBlendState(nullptr, nullptr, 0xffffffff); // 블렌뎅 상태 설정, 기본블렌딩 상태임
 }
 
@@ -411,6 +444,7 @@ void FGraphicsDevice::OnResize(HWND hWindow)
     // 먼저 기존 GBuffer 관련 리소스를 해제합니다.
     ReleaseFrameBuffer();
     ReleaseGBuffer();
+    ReleaseLightPassBuffer();
 
     if (DepthStencilView)
     {
@@ -431,9 +465,10 @@ void FGraphicsDevice::OnResize(HWND hWindow)
     screenWidth = SwapchainDesc.BufferDesc.Width;
     screenHeight = SwapchainDesc.BufferDesc.Height;
 
-    // GBuffer와 DepthStencilBuffer를 재생성합니다.
+    // Buffer 재생성
     CreateFrameBuffer();
     CreateGBuffer();
+    CreateLightPassBuffer();
     CreateDepthStencilBuffer(hWindow);
 }
 

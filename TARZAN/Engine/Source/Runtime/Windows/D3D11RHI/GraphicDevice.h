@@ -34,7 +34,6 @@ public:
     ID3D11Texture2D* GBufferTexture_Ambient = nullptr;
     ID3D11Texture2D* GBufferTexture_Position = nullptr;
 
-
     ID3D11RenderTargetView* GBufferRTV_Normal = nullptr;
     ID3D11RenderTargetView* GBufferRTV_Albedo = nullptr;
     ID3D11RenderTargetView* GBufferRTV_Ambient = nullptr;
@@ -45,9 +44,25 @@ public:
     ID3D11ShaderResourceView* GBufferSRV_Ambient = nullptr;
     ID3D11ShaderResourceView* GBufferSRV_Position = nullptr;
 
-    ID3D11RenderTargetView* gbuffers[4];
+    ID3D11RenderTargetView* GBufferRTVs[4];
     // - 
-    
+
+    // LightPass(Color, Position)
+    ID3D11Texture2D* LightPassTexture_Color = nullptr;
+    ID3D11Texture2D* LightPassTexture_Position = nullptr;
+
+    ID3D11RenderTargetView* LightPassRTV_Color = nullptr;
+    ID3D11RenderTargetView* LightPassRTV_Position = nullptr;
+
+    ID3D11ShaderResourceView* LightPassSRV_Color = nullptr;
+    ID3D11ShaderResourceView* LightPassSRV_Position = nullptr;
+
+    ID3D11RenderTargetView* LightPassRTVs[2];
+    // -
+
+    // PostProcessPass
+    // -
+
     UINT screenWidth = 0;
     UINT screenHeight = 0;
     // Depth-Stencil 관련 변수
@@ -67,17 +82,18 @@ public:
     void CreateRasterizerState();
     void CreateGBuffer();
     void CreateFrameBuffer();
+    void CreateLightPassBuffer();
     
     void ReleaseDeviceAndSwapChain();
     void ReleaseGBuffer();
     void ReleaseFrameBuffer();
+    void ReleaseLightPassBuffer();
     void ReleaseRasterizerState();
     void ReleaseDepthStencilResources();
     void Release();
     
     void SwapBuffer();
     void Prepare();
-    void Prepare(D3D11_VIEWPORT* viewport);
     void OnResize(HWND hWindow);
     ID3D11RasterizerState* GetCurrentRasterizer() { return CurrentRasterizer; }
     void ChangeRasterizer(EViewModeIndex evi);

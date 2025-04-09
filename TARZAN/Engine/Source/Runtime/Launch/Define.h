@@ -304,7 +304,10 @@ struct FConstants {
     FMatrix ModelMatrixInverseTranspose; // normal 변환을 위한 행렬
     FVector4 UUIDColor;
     bool IsSelected;
-    FVector pad;
+    FVector CameraPosition;
+    FVector2D ScreenSize;
+    FVector2D ViewportSize;
+    
 };
 
 struct FLitUnlitConstants {
@@ -352,6 +355,12 @@ struct FMaterial
     FVector Emissive;
     float Roughness;
 };
+
+//struct FViewModeConstatnt
+//{
+//    int ViewMode;
+//    FVector Padding;
+//};
 #pragma endregion
 
 struct FFireballConstant
@@ -394,11 +403,21 @@ struct FFogConstants
 {
     float FogDensity = 0.5f;
     float FogHeightFalloff = 0.5f;
-    float StartDistance = 0.0f;
+    float FogStartDistance = 0.0f;
     float FogCutoffDistance = 1000.0f;
     float FogMaxOpacity = 1.0f;
     FVector padding;
     FLinearColor FogInscatteringColor = FLinearColor(1.0f, 1.0f, 1.0f, 1.0f);
     FVector CameraPosition;
     float FogHeight;
+    FMatrix InverseView;
+    FMatrix InverseProjection;
+    float DisableFog;
+    FVector padding1;
+};
+
+struct FScreenConstants
+{
+    FVector2D ViewportRatio;
+    FVector2D ViewportPosition;
 };
