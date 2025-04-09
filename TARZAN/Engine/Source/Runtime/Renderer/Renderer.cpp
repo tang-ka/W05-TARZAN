@@ -31,7 +31,6 @@
 #include "Runtime/Launch/ImGuiManager.h"
 #include "UnrealEd/UnrealEd.h"
 #include "UHeightFogComponent.h"
-#include "LevelEditor/SLevelEditor.h"
 
 extern UEditorEngine* GEngine;
 
@@ -110,6 +109,7 @@ void FRenderer::RenderPass(UWorld* World, std::shared_ptr<FEditorViewportClient>
     RenderGBuffer(World, ActiveViewport);
 
     Graphics->ChangeRasterizer(EViewModeIndex::VMI_Unlit);
+
 
     RenderLightPass(World, ActiveViewport);
 
@@ -247,6 +247,7 @@ void FRenderer::PrepareLightShader() const
     {
         Graphics->DeviceContext->PSSetConstantBuffers(0, 1, &LPLightConstantBuffer);
         Graphics->DeviceContext->PSSetConstantBuffers(1, 1, &FireballConstantBuffer);
+            Graphics->DeviceContext->PSSetConstantBuffers(2, 1, &ScreenConstantBuffer);
         //Graphics->DeviceContext->PSSetConstantBuffers(1, 1, &LPMaterialConstantBuffer);
     }
 }
@@ -313,6 +314,8 @@ void FRenderer::CreateConstantBuffer()
     FireballConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FFireballArrayInfo));
 
     FogConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FFogConstants));
+
+    ScreenConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FScreenConstants));
 }
 
 void FRenderer::ReleaseConstantBuffer()
@@ -330,6 +333,7 @@ void FRenderer::ReleaseConstantBuffer()
     RenderResourceManager.ReleaseBuffer(LPLightConstantBuffer);
     RenderResourceManager.ReleaseBuffer(LPMaterialConstantBuffer);
     RenderResourceManager.ReleaseBuffer(FogConstantBuffer);
+    RenderResourceManager.ReleaseBuffer(ScreenConstantBuffer);
 }
 #pragma endregion ConstantBuffer
 
@@ -761,6 +765,8 @@ void FRenderer::UpdateMaterial(const FObjMaterialInfo& MaterialInfo) const
 void FRenderer::RenderGBuffer(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport)
 {
     // StaticMesh
+   Graphics -> DeviceContext->OMSetRenderTargets(4, Graphics->gbuffers, Graphics->DepthStencilView);
+
     if (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_Primitives))
         RenderStaticMeshes(World, ActiveViewport);
 
@@ -771,6 +777,7 @@ void FRenderer::RenderGBuffer(UWorld* World, std::shared_ptr<FEditorViewportClie
 
 void FRenderer::RenderLightPass(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport)
 {
+
     PrepareLightShader();
 
     //ID3D11RenderTargetView* rtv = Graphics->FrameBufferRTV;
@@ -821,6 +828,7 @@ void FRenderer::RenderLightPass(UWorld* World, std::shared_ptr<FEditorViewportCl
         }
     }
     ConstantBufferUpdater.UpdateFireballConstant(FireballConstantBuffer, fireballArrayInfo);
+    ConstantBufferUpdater.UpdateScreenConstant(ScreenConstantBuffer, ActiveViewport);
     // Spot Light
 
 #pragma region d

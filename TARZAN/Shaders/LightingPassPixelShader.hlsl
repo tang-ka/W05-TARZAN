@@ -54,6 +54,12 @@ cbuffer FireballBuffer : register(b1)
     float3 padding;
 }
 
+cbuffer ScreenInfo : register(b2)
+{
+    float2 ViewPortRatio;
+    float2 ViewPortPosition;
+}
+
 struct PS_Input
 {
     float4 Position : SV_POSITION;
@@ -147,7 +153,9 @@ PS_OUTPUT main(PS_Input input)
 {
     PS_OUTPUT output;
     
-    float2 uv = input.TexCoord;
+    float2 uv = input.TexCoord * ViewPortRatio + ViewPortPosition;
+    //output.Color = float4(uv.x, uv.y, 0, 1);
+    //return output;
     
     float4 normalTex = g_GBufferNormal.Sample(g_sampler, uv);
     float4 albedoTex = g_GBufferAlbedo.Sample(g_sampler, uv);

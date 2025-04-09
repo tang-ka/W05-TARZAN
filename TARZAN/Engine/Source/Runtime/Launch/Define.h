@@ -411,3 +411,9 @@ struct FFogConstants
     FVector CameraPosition;
     float FogHeight;
 };
+
+struct FScreenConstants
+{
+    FVector2D ViewportRatio;
+    FVector2D ViewportPosition;
+};

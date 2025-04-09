@@ -5,6 +5,7 @@
 #include "ViewportClient.h"
 #include "UnrealEd/EditorViewportClient.h"
 #include "Engine/Unrealclient.h"
+#include "d3d11.h"
 void FConstantBufferUpdater::Initialize(ID3D11DeviceContext* InDeviceContext)
 {
     DeviceContext = InDeviceContext;
@@ -190,5 +191,18 @@ void FConstantBufferUpdater::UpdateFogConstant(ID3D11Buffer* FogConstantBuffer, 
         DeviceContext->Map(FogConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &ConstantBufferMSR); // update constant buffer every frame
         memcpy(ConstantBufferMSR.pData, &FogConstants, sizeof(FFogConstants));
         DeviceContext->Unmap(FogConstantBuffer, 0);
+    }
+}
+void FConstantBufferUpdater::UpdateScreenConstant(ID3D11Buffer* ScreenConstantBuffer, std::shared_ptr<FEditorViewportClient>viewport) const
+{
+    if (ScreenConstantBuffer)
+    {
+        D3D11_MAPPED_SUBRESOURCE constantbufferMSR;
+        DeviceContext->Map(ScreenConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &constantbufferMSR); // update constant buffer every frame
+        auto constants = static_cast<FScreenConstants*>(constantbufferMSR.pData);
+        D3D11_VIEWPORT ActiveViewport = viewport.get()->GetD3DViewport();
+        constants->ViewportRatio = FVector2D(ActiveViewport.Width/ GEngine->graphicDevice.screenWidth, ActiveViewport.Height/ GEngine->graphicDevice.screenHeight);
+        constants->ViewportPosition = FVector2D(ActiveViewport.TopLeftX / GEngine->graphicDevice.screenWidth, ActiveViewport.TopLeftY/GEngine->graphicDevice.screenHeight);
+        DeviceContext->Unmap(ScreenConstantBuffer, 0);
     }
 }
